@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { isMobile } from 'react-device-detect'
 import { Button } from "antd";
 import { BsTelegram } from "react-icons/bs";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import {
   LogoText
 } from '@/components'
@@ -106,7 +107,7 @@ export default () => {
           //   <w3m-network-button />,
           //   <w3m-button />
           // ]
-          return <div>1</div>
+          return <WalletMultiButton />
         }}
         menuFooterRender={(props) => {
           if (props?.collapsed) return undefined;

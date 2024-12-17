@@ -1,5 +1,41 @@
-export const PROJECT_NAME = 'BananaTools一键发币平台'
-export const BananaTools_Address = '0x13b1Dd3CD88C95A7534981438Add90005903C888'
-
-export const QQLINK = 'http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=2x5uyLRZ-VtIKUu6jElhnk_KvGYV1KW6&authKey=z%2BT6MzqbdAyKUiO5VDfMY%2FchpNBRH%2B87SBa%2BFyD1ths8hW%2BHJ3Es4jZQNEhXCitm&noverify=0&group_code=580375545'
 export const TELEGRAMLINK = 'https://t.me/BananaTools'
+
+
+export const isMainnet = true
+
+export const Devnet = 'https://devnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075'
+export const Mainnet = "https://mainnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075"
+
+export const NetworkURL = isMainnet ? Mainnet : Devnet;
+
+export const OPENBOOK_PROGRAM_ID_MAINNET = 'srmqPvymJeFKQ4zGQed1GFppgkRHL9kaELCbyksJtPX'
+export const OPENBOOK_PROGRAM_ID_DEVNET = 'EoTcMgcDRTJVZDMZWBoU6rhYHZfkNTVEAfz3uUJRcYGj'
+//   EoTcMgcDRTJVZDMZWBoU6rhYHZfkNTVEAfz3uUJRcYGj
+export const OPENBOOK_PROGRAM_ID = isMainnet ? OPENBOOK_PROGRAM_ID_MAINNET : OPENBOOK_PROGRAM_ID_DEVNET;
+
+export const PROJECT_NAME = 'BananaTools'
+export const PROJECT_ADDRESS = 'HoeFkdmh4oKFwC1wLmCkC63bSuahRhvCPWYY8sybwEyn'
+
+export const CREATE_TOKEN_FEE = 0.1 //创建代币费用
+export const AUTHORITY_FEE = 0.05  //权限放弃费用
+export const MINT_TOKEN_FEE = 0.05 // 代币增发
+export const FREE_TOKEN_FEE = 0.08 //冻结账户
+export const BURN_FEE = 0.05 //烧烧代币
+export const MARKET_FEE = 0.02 //市场 --没用
+export const MULTISEND_FEE = 0.01 //批量转账费用
+export const COLLECT_FEE = 0.01 //批量归集
+export const PUMP_CREATE_FEE = 0.05// pump创建代币
+export const SWAP_BOT_FEE = 0.003 //市值每笔收费
+export const PUMP_SWAP_BOT_FEE = 0.002 //pump市值收费
+
+
+export const Input_Style = 'form-control block w-full px-4 py-2 text-xl font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none'
+
+export const Button_Style = 'px-8 m-2 btn animate-pulse bg-gradient-to-r from-[#9945FF] to-[#14F195] hover:from-pink-500 hover:to-yellow-500 ...'
+
+export const Button_Style1 = 'px-8 m-2 btn'
+
+
+export const Text_Style = 'autowb font-bold text-transparent bg-clip-text bg-gradient-to-tr from-[#9945FF] to-[#14F195]'
+
+
