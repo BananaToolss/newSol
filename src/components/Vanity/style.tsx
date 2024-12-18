@@ -4,6 +4,9 @@ export const VanityPage = styled.div`
     display: flex;
     justify-content: space-between;
     font-size: 16px;
+    .tokenaddr {
+        word-break:break-all;
+    }
     .page {
     background-color: #f6f6f6;
     padding: 20px;

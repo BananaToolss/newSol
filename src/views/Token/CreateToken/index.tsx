@@ -204,6 +204,11 @@ function CreateToken() {
     messageApi.success('copy success')
   }
 
+  const callBack = (secretKey: Uint8Array) => {
+    const addres = Keypair.fromSecretKey(secretKey)
+    console.log(addres.publicKey.toBase58())
+  }
+
   return (
 
     <Page>
@@ -342,7 +347,7 @@ function CreateToken() {
           <div className='mr-3 font-semibold'>创建靓号代币</div>
           <Switch checked={isVanity} onChange={(e) => setIsVanity(e)} />
         </div>
-        <Vanity />
+        <Vanity callBack={callBack} />
 
         <div className='flex items-center mb-5 '>
           <div className='flex flex-wrap justify-between flex-1'>
