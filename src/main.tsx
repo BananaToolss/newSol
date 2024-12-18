@@ -4,6 +4,7 @@ import { Provider } from 'react-redux'
 import { BrowserRouter, HashRouter } from "react-router-dom"
 import Web3Modal from './utils/wagmi'
 import { store } from './store'
+import './assets/locals'; // 引入i18n配置
 import Routers from './router'
 import './index.css'
 

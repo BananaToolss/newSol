@@ -8,7 +8,8 @@ import { Button } from "antd";
 import { BsTelegram } from "react-icons/bs";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import {
-  LogoText
+  LogoText,
+  Language
 } from '@/components'
 import { PROJECT_NAME, TELEGRAMLINK } from '@/config'
 import { getImage } from '@/utils'
@@ -107,7 +108,10 @@ export default () => {
           //   <w3m-network-button />,
           //   <w3m-button />
           // ]
-          return <WalletMultiButton />
+          return [
+            <Language/>,
+            <WalletMultiButton />
+          ]
         }}
         menuFooterRender={(props) => {
           if (props?.collapsed) return undefined;
