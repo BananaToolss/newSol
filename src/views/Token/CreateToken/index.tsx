@@ -18,10 +18,8 @@ import { getTxLink } from '@/utils'
 import type { TOKEN_TYPE } from '@/type'
 import { Vanity, UpdataImage } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
-import {
-  Page,
-  CreatePage
-} from './style'
+import { Page } from '@/styles'
+import { CreatePage } from './style'
 
 const { TextArea } = Input
 
@@ -286,6 +284,17 @@ function CreateToken() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className='itemSwapper'>
+          <div className='textarea'>
+            <div className='mb-1'>{t('Describe')}（选填）</div>
+            <TextArea
+              className={Input_Style}
+              placeholder='请输入Token描述'
+              value={config.description}
+              onChange={configChange} name='description' />
           </div>
         </div>
 
