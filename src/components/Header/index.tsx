@@ -21,7 +21,7 @@ function Header(props: PropsType) {
 
   return (
     <HeaderS>
-      <h1 className={Text_Style}>{title}</h1>
+      <h1 className={`${Text_Style} text-4xl`}>{title}</h1>
       <p className='hint'>{hint}</p>
     </HeaderS>
   )
