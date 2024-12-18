@@ -1,7 +1,7 @@
 export const TELEGRAMLINK = 'https://t.me/BananaTools'
 
 
-export const isMainnet = true
+export const isMainnet = false
 
 export const Devnet = 'https://devnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075'
 export const Mainnet = "https://mainnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075"
@@ -38,5 +38,7 @@ export const Button_Style1 = 'px-8 m-2 btn'
 
 
 export const Text_Style = 'text-3xl autowb font-bold text-transparent bg-clip-text bg-gradient-to-tr from-[#9945FF] to-[#14F195]'
+export const Text_Style1 = 'text-xl autowb font-bold text-transparent bg-clip-text bg-gradient-to-tr from-[#9945FF] to-[#14F195]'
+
 
 

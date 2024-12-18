@@ -14,7 +14,7 @@ import {
 import bs58 from 'bs58';
 import { Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
-import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE } from '@/config'
+import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
 import UpdataImage from '@/components/updaImage'
 import { getTxLink } from '@/utils'
 import type { TOKEN_TYPE } from '@/type'
@@ -86,7 +86,7 @@ function CreateToken() {
 
       const lamports = await getMinimumBalanceForRentExemptMint(connection);
       const mintKeypair = Keypair.generate();
-      console.log(mintKeypair,'mintKeypair')
+      console.log(mintKeypair, 'mintKeypair')
       const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, publicKey);
 
       const createMetadataInstruction = createCreateMetadataAccountV3Instruction(
@@ -109,7 +109,7 @@ function CreateToken() {
             data: {
               name: config.name,
               symbol: config.symbol,
-              uri: '',
+              uri: metadata_url,
               creators: null,
               sellerFeeBasisPoints: 0,
               uses: null,
@@ -133,7 +133,7 @@ function CreateToken() {
           mintKeypair.publicKey,
           Number(config.decimals),
           publicKey,
-          publicKey, //freezeAuthority: PublicKey | null,
+          isRevokeFreeze ? null : publicKey, //freezeAuthority: PublicKey | null,
           TOKEN_PROGRAM_ID),
         createAssociatedTokenAccountInstruction(
           publicKey,
@@ -149,14 +149,19 @@ function CreateToken() {
         ),
         createMetadataInstruction,
       );
-      // createSetAuthorityInstruction(
-      //   mintKeypair.publicKey,
-      //   publicKey,
-      //   AuthorityType.MintTokens,
-      //   null,
-      //   [],
-      //   TOKEN_PROGRAM_ID
-      // ),
+      if (isRevokeMint) {
+        createNewTokenTransaction.add(
+          createSetAuthorityInstruction(
+            mintKeypair.publicKey,
+            publicKey,
+            AuthorityType.MintTokens,
+            null,
+            [],
+            TOKEN_PROGRAM_ID
+          )
+        )
+      }
+      // 冻结权限
       // createSetAuthorityInstruction(
       //   mintKeypair.publicKey,
       //   publicKey,
@@ -166,8 +171,6 @@ function CreateToken() {
       //   TOKEN_PROGRAM_ID
       // ),
       const result = await sendTransaction(createNewTokenTransaction, connection, { signers: [mintKeypair] });
-      console.log(result, 'result')
-      // const _signature = bs58.encode(result.signature)
       const confirmed = await connection.confirmTransaction(
         result,
         "processed"
@@ -178,7 +181,6 @@ function CreateToken() {
       setIscreating(false)
     } catch (error) {
       console.log(error)
-
       setIscreating(false)
       setTokenAddresss('')
       const err = (error as any)?.message;
@@ -394,7 +396,7 @@ function CreateToken() {
                 <strong className="underline">{t('Click to view')}</strong>
               </a>
               <div className='flex'>
-                <div className={Text_Style}>{tokenAddresss} </div>
+                <div className={Text_Style1}>{tokenAddresss} </div>
                 <BsCopy onClick={copyClick} style={{ marginLeft: '6px' }} className='pointer' />
               </div>
             </div>
