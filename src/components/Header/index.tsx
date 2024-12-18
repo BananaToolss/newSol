@@ -1,5 +1,5 @@
-import { Text_Style } from '@/config'
 import styled from 'styled-components'
+import { Text_Style } from '@/config'
 
 const HeaderS = styled.div`
   .hint {
