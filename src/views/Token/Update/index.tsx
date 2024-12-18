@@ -3,52 +3,76 @@ import { PublicKey } from '@solana/web3.js';
 import { Metadata, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { useTranslation } from "react-i18next";
-import { Button } from 'antd'
-import { Header } from '@/components';
+import { Button, Input } from 'antd'
+import { Header, UpdataImage } from '@/components';
 import { getAsset } from '@/utils/sol'
 import { Page } from '@/styles';
+import { fetcher } from '@/utils'
+import type { TOKEN_TYPE } from '@/type'
 import { Button_Style, Input_Style } from '@/config'
+import { CreatePage } from '../CreateToken/style'
 import { UpdatePage } from './style'
+
+const { TextArea } = Input
+
 
 function Update() {
   const { t } = useTranslation()
   const { connection } = useConnection()
-  const [tokenAddress, setTokenAddress] = useState('KnAp2ANTEgkWSR5WakFV2PAVkZT1p9qMCRPsSN6ZLS2')
+  const [tokenAddress, setTokenAddress] = useState('AsLhTDywyQT8L4dtceWKX7knxGn4n2v2QAkQRX6ANbmX')
+
+  const [config, setConfig] = useState({
+    name: '',
+    symbol: '',
+    decimals: '9',
+    supply: '1000000',
+    description: '',
+    website: '',
+    telegram: '',
+    twitter: '',
+    discord: '',
+    image: '',
+    freeze_authority: '',
+    mint_authority: ''
+  })
+  const [imageFile, setImageFile] = useState(null);
+
+  const configChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
+    setConfig({ ...config, [e.target.name]: e.target.value })
+  }
 
   const getTokenMetadata = async () => {
     try {
-      const response = await getAsset(tokenAddress)
-      if (response.token_info) {
-        const token_info = response.token_info
-        const decimals = token_info.decimals
-        const supply = token_info.supply
-        const freeze_authority = token_info.freeze_authority ?? null
-        const mint_authority = token_info.mint_authority ?? null
+      const data = await getAsset(tokenAddress)
+      console.log(data, 'data')
+      const token_info = data.token_info
+      const metadata = data.content.metadata
 
-        console.log(decimals,
-          supply, freeze_authority, mint_authority
-        )
-      }
+      const name = metadata.name
+      const symbol = metadata.symbol
 
-      const tokenMint = new PublicKey(tokenAddress);
-      const metadataPDA = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("metadata"),
-          PROGRAM_ID.toBuffer(),
-          tokenMint.toBuffer(),
-        ],
-        PROGRAM_ID,
-      )[0]
-      console.log(metadataPDA.toBase58());
-      const metadataAccount = await connection.getAccountInfo(metadataPDA);
-      console.log(metadataAccount);
-      const metadata = Metadata.deserialize(metadataAccount.data);
-      console.log(metadata, 'metadata')
-      // console.log(metadata);
-      // let logoRes = await fetch(metadata.data.uri);
-      // let logoJson = await logoRes.json();
-      // console.log(logoJson, 'logoJson')
-      // let { image } = logoJson;
+      const description = metadata.description ?? ''
+      const website = metadata.website ?? ''
+      const telegram = metadata.telegram ?? ''
+      const discord = metadata.discord ?? ''
+      const twitter = metadata.twitter ?? ''
+
+
+      const image = data.content.links.image ?? ''
+
+      const decimals = token_info.decimals
+      const supply = token_info.supply
+      const freeze_authority = token_info.freeze_authority ?? ''
+      const mint_authority = token_info.mint_authority ?? ''
+
+      setConfig({
+        name, symbol, description, website, twitter,
+        telegram, discord, image, decimals, supply,
+        freeze_authority, mint_authority
+      })
+
+
+
     } catch (error) {
       console.log(error)
     }
@@ -77,6 +101,146 @@ function Update() {
           </div>
         </div>
       </UpdatePage>
+
+      <CreatePage className="my-6">
+        <div className='itemSwapper'>
+          <div className='item'>
+            <div className='mb-1 start'>Token名称</div>
+            <input
+              type="text"
+              className={Input_Style}
+              placeholder='请输入Token名称'
+              value={config.name}
+              onChange={configChange}
+              name='name'
+            />
+          </div>
+          <div className='item'>
+            <div className='mb-1 start'>Token符号</div>
+            <input
+              type="text"
+              className={Input_Style}
+              placeholder='请输入Token符号'
+              value={config.symbol}
+              onChange={configChange}
+              name='symbol'
+            />
+          </div>
+        </div>
+
+        <div className='itemSwapper'>
+          <div className='item'>
+            <div className='mb26 mb10'>
+              <div className='mb-1 start'>{t('Supply')}</div>
+              <input
+                type="number"
+                className={Input_Style}
+                placeholder='请输入Token总数'
+                value={config.supply}
+                onChange={configChange}
+                name='supply'
+              />
+            </div>
+            <div>
+              <div className='mb-1 start'>Token精度</div>
+              <input
+                type="number"
+                className={Input_Style}
+                placeholder={t('Please enter a Decimals')}
+                value={config.decimals}
+                onChange={configChange}
+                name='decimals'
+              />
+            </div>
+          </div>
+
+          <div className='item'>
+            <div className='mb-1 start'>Token Logo</div>
+            <div className='flex imgswapper'>
+              <UpdataImage setImageFile={setImageFile} />
+              <div className='imagetext'>
+                <div>
+                  <div>支持图片格式：WEBP/PNG/GIF/JPG</div>
+                  <div>建议尺寸大小 1000x1000像素</div>
+                </div>
+                <div className='hit'>符合以上要求，可以在各个平台和应用中更好的展示</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className='itemSwapper'>
+          <div className='textarea'>
+            <div className='mb-1'>{t('Describe')}（选填）</div>
+            <TextArea
+              className={Input_Style}
+              placeholder='请输入Token描述'
+              value={config.description}
+              onChange={configChange} name='description' />
+          </div>
+        </div>
+
+        <div >
+          <div className='itemSwapper'>
+            <div className='item'>
+              <div className='mb-1'>官网</div>
+              <input
+                type="text"
+                className={Input_Style}
+                placeholder='请输入您的官网链接'
+                value={config.website}
+                onChange={configChange}
+                name='website'
+              />
+            </div>
+            <div className='item'>
+              <div className='mb-1'>X</div>
+              <input
+                type="text"
+                className={Input_Style}
+                placeholder='请输入您的推特链接'
+                value={config.twitter}
+                onChange={configChange}
+                name='twitter'
+              />
+            </div>
+          </div>
+          <div className='itemSwapper'>
+            <div className='item'>
+              <div className='mb-1'>Telegram</div>
+              <input
+                type="text"
+                className={Input_Style}
+                placeholder='请输入您的Telegram链接'
+                value={config.telegram}
+                onChange={configChange}
+                name='telegram'
+              />
+            </div>
+            <div className='item'>
+              <div className='mb-1'>Discord</div>
+              <input
+                type="text"
+                className={Input_Style}
+                placeholder='请输入您的Discord'
+                value={config.discord}
+                onChange={configChange}
+                name='discord'
+              />
+            </div>
+          </div>
+        </div>
+
+
+        <div className='btn'>
+          <div className='buttonSwapper'>
+            <Button className={Button_Style} >
+              <span>{t('Token Creator')}</span>
+            </Button>
+          </div>
+          <div className='fee'>全网最低服务费: 1 SOL</div>
+        </div>
+      </CreatePage>
 
     </Page>
   )

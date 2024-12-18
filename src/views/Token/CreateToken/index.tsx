@@ -31,11 +31,11 @@ function CreateToken() {
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
 
-  const [config, setConfig] = useState<TOKEN_TYPE>({
+  const [config, setConfig] = useState({
     name: '',
     symbol: '',
     decimals: '9',
-    amount: '1000000',
+    supply: '1000000',
     description: '',
     website: '',
     telegram: '',
@@ -75,7 +75,7 @@ function CreateToken() {
       if (!config.symbol) return messageApi.error(t('Please fill in the short name'))
       if (!config.decimals) return messageApi.error(t('Please fill in the Decimals'))
       if (Number(config.decimals) > 9) return messageApi.error(t('The maximum Decimals is 9'))
-      if (!config.amount) return messageApi.error(t('Please fill in the supply quantity'))
+      if (!config.supply) return messageApi.error(t('Please fill in the supply quantity'))
       if (!imageFile) return messageApi.error(t('Please upload a picture logo'))
       if (config.description && config.description.length > 200) return messageApi.error(t('Description up to 200 words'))
 
@@ -150,7 +150,7 @@ function CreateToken() {
           mintKeypair.publicKey,
           tokenATA,
           publicKey,
-          Number(config.amount) * Math.pow(10, Number(config.decimals)),
+          Number(config.supply) * Math.pow(10, Number(config.decimals)),
         ),
         createMetadataInstruction,
       );
@@ -253,9 +253,9 @@ function CreateToken() {
                 type="number"
                 className={Input_Style}
                 placeholder='请输入Token总数'
-                value={config.amount}
+                value={config.supply}
                 onChange={configChange}
-                name='amount'
+                name='supply'
               />
             </div>
             <div>
