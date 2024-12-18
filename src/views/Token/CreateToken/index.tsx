@@ -4,6 +4,16 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { BsCopy } from "react-icons/bs";
 import { useTranslation } from "react-i18next";
 import copy from 'copy-to-clipboard';
+import {
+  MINT_SIZE, TOKEN_PROGRAM_ID, createInitializeMintInstruction,
+  getMinimumBalanceForRentExemptMint, getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction, createMintToInstruction,
+  createSetAuthorityInstruction,
+  AuthorityType,
+} from '@solana/spl-token';
+import bs58 from 'bs58';
+import { Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE } from '@/config'
 import UpdataImage from '@/components/updaImage'
 import { getTxLink } from '@/utils'
@@ -17,7 +27,8 @@ import {
 const { TextArea } = Input
 
 function CreateToken() {
-  const wallet = useWallet()
+
+  const { publicKey, sendTransaction } = useWallet()
   const { t } = useTranslation()
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
@@ -54,7 +65,7 @@ function CreateToken() {
 
   const createToken = async () => {
     try {
-      if (!wallet.publicKey) return messageApi.error(t('Please connect the wallet first'))
+      if (!publicKey) return messageApi.error(t('Please connect the wallet first'))
       if (!config.name) return messageApi.error(t('Please fill in the name'))
       if (!config.symbol) return messageApi.error(t('Please fill in the short name'))
       if (!config.decimals) return messageApi.error(t('Please fill in the Decimals'))
@@ -71,8 +82,115 @@ function CreateToken() {
       // const metadata_url = await upLoadImage(config, imageFile, isOptions)
       const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
       console.log('metadata')
-    } catch (error) {
 
+
+      const lamports = await getMinimumBalanceForRentExemptMint(connection);
+      const mintKeypair = Keypair.generate();
+      console.log(mintKeypair,'mintKeypair')
+      const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, publicKey);
+
+      const createMetadataInstruction = createCreateMetadataAccountV3Instruction(
+        {
+          metadata: PublicKey.findProgramAddressSync(
+            [
+              Buffer.from("metadata"),
+              PROGRAM_ID.toBuffer(),
+              mintKeypair.publicKey.toBuffer(),
+            ],
+            PROGRAM_ID,
+          )[0],
+          mint: mintKeypair.publicKey,
+          mintAuthority: publicKey,
+          payer: publicKey,
+          updateAuthority: publicKey,
+        },
+        {
+          createMetadataAccountArgsV3: {
+            data: {
+              name: config.name,
+              symbol: config.symbol,
+              uri: '',
+              creators: null,
+              sellerFeeBasisPoints: 0,
+              uses: null,
+              collection: null,
+            },
+            isMutable: false,
+            collectionDetails: null,
+          },
+        },
+      );
+
+      const createNewTokenTransaction = new Transaction().add(
+        SystemProgram.createAccount({
+          fromPubkey: publicKey,
+          newAccountPubkey: mintKeypair.publicKey,
+          space: MINT_SIZE,
+          lamports: lamports,
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        createInitializeMintInstruction(
+          mintKeypair.publicKey,
+          Number(config.decimals),
+          publicKey,
+          publicKey, //freezeAuthority: PublicKey | null,
+          TOKEN_PROGRAM_ID),
+        createAssociatedTokenAccountInstruction(
+          publicKey,
+          tokenATA,
+          publicKey,
+          mintKeypair.publicKey,
+        ),
+        createMintToInstruction(
+          mintKeypair.publicKey,
+          tokenATA,
+          publicKey,
+          Number(config.amount) * Math.pow(10, Number(config.decimals)),
+        ),
+        createMetadataInstruction,
+      );
+      // createSetAuthorityInstruction(
+      //   mintKeypair.publicKey,
+      //   publicKey,
+      //   AuthorityType.MintTokens,
+      //   null,
+      //   [],
+      //   TOKEN_PROGRAM_ID
+      // ),
+      // createSetAuthorityInstruction(
+      //   mintKeypair.publicKey,
+      //   publicKey,
+      //   AuthorityType.FreezeAccount,
+      //   null,
+      //   [],
+      //   TOKEN_PROGRAM_ID
+      // ),
+      const result = await sendTransaction(createNewTokenTransaction, connection, { signers: [mintKeypair] });
+      console.log(result, 'result')
+      // const _signature = bs58.encode(result.signature)
+      const confirmed = await connection.confirmTransaction(
+        result,
+        "processed"
+      );
+      console.log(confirmed, 'confirmed')
+      setSignature(result);
+      setTokenAddresss(mintKeypair.publicKey.toBase58())
+      setIscreating(false)
+    } catch (error) {
+      console.log(error)
+
+      setIscreating(false)
+      setTokenAddresss('')
+      const err = (error as any)?.message;
+      if (
+        err.includes(
+          "Cannot read properties of undefined (reading 'public_keys')"
+        )
+      ) {
+        setError("It is not a valid Backpack username");
+      } else {
+        setError(err);
+      }
     }
   }
 
@@ -156,8 +274,6 @@ function CreateToken() {
             </div>
           </div>
         </div>
-
-
 
         <div className='flex items-center mb-5'>
           <div className='titlea mr-3'>添加社交链接</div>
