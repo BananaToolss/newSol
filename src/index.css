@@ -94,7 +94,7 @@ a {
   text-transform: var(--btn-text-case, uppercase);
   border-width: var(--border-btn, 1px);
   --tw-text-opacity: 1;
-  color: hsla(var(--nc) / var(--tw-text-opacity, 1));
+  color: #fff;
   margin: 0.5rem;
 
   background-image: linear-gradient(to right, var(--tw-gradient-stops));

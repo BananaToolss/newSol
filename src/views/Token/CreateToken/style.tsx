@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 export const CreatePage = styled.div`
-margin-top: 50px;
+
 
 .itemSwapper {
   display: flex;
