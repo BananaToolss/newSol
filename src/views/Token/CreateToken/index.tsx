@@ -50,6 +50,8 @@ function CreateToken() {
 
   const [isOptions, setIsOptions] = useState(false)
   const [isVanity, setIsVanity] = useState(false)
+  const [vanityAddress, setVanityAddress] = useState('')
+  const [mintKeypair, setMintKeypair] = useState(Keypair.generate())
 
   const [isRevokeFreeze, setIsRevokeFreeze] = useState(false)
   const [isRevokeMint, setIsRevokeMint] = useState(false)
@@ -62,6 +64,10 @@ function CreateToken() {
 
   const configChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value })
+  }
+  const isVanityChange = (e) => {
+    setIsVanity(e)
+    setVanityAddress('')
   }
 
   const createToken = async () => {
@@ -86,7 +92,7 @@ function CreateToken() {
 
 
       const lamports = await getMinimumBalanceForRentExemptMint(connection);
-      const mintKeypair = Keypair.generate();
+      // const mintKeypair = Keypair.generate();
       console.log(mintKeypair.publicKey.toBase58(), 'mintKeypair')
       const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, publicKey);
 
@@ -162,15 +168,6 @@ function CreateToken() {
           )
         )
       }
-      // 冻结权限
-      // createSetAuthorityInstruction(
-      //   mintKeypair.publicKey,
-      //   publicKey,
-      //   AuthorityType.FreezeAccount,
-      //   null,
-      //   [],
-      //   TOKEN_PROGRAM_ID
-      // ),
       const result = await sendTransaction(createNewTokenTransaction, connection, { signers: [mintKeypair] });
       const confirmed = await connection.confirmTransaction(
         result,
@@ -204,9 +201,15 @@ function CreateToken() {
     messageApi.success('copy success')
   }
 
+  const copyClickV = () => {
+    copy(vanityAddress)
+    messageApi.success('copy success')
+  }
+
   const callBack = (secretKey: Uint8Array) => {
-    const addres = Keypair.fromSecretKey(secretKey)
-    console.log(addres.publicKey.toBase58())
+    const _Keypair = Keypair.fromSecretKey(secretKey)
+    setMintKeypair(_Keypair)
+    setVanityAddress(_Keypair.publicKey.toBase58())
   }
 
   return (
@@ -345,9 +348,14 @@ function CreateToken() {
 
         <div className='flex items-center mb-5 options'>
           <div className='mr-3 font-semibold'>创建靓号代币</div>
-          <Switch checked={isVanity} onChange={(e) => setIsVanity(e)} />
+          <Switch checked={isVanity} onChange={isVanityChange} />
         </div>
-        <Vanity callBack={callBack} />
+        {isVanity && <Vanity callBack={callBack} />}
+        <div className='vanity'>
+          <div className='text-base'>靓号代币合约</div>
+          <div className='font-medium'>{vanityAddress}</div>
+          <BsCopy onClick={copyClickV} style={{ marginLeft: '6px' }} className='pointer' />
+        </div>
 
         <div className='flex items-center mb-5 '>
           <div className='flex flex-wrap justify-between flex-1'>

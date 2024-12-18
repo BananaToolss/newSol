@@ -5,7 +5,15 @@ export const Page = styled.div`
   padding: 50px;
   margin: 0 auto;
   font-size: 18px;
-
+  .vanity {
+    border: 1px solid #5d5b5b;
+    border-radius: 10px;
+    margin: 10px 0 30px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
   .hint {
     margin-top: 10px;
     color: #5d5b5b;
