@@ -9,6 +9,7 @@ const HeaderS = styled.div`
   }
   padding-bottom: 16px;
   border-bottom: 1px solid #e8e2e2;
+  /* text-transform: uppercase; */
 `
 
 interface PropsType {
