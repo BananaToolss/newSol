@@ -1,3 +1,4 @@
 export { default as LogoText } from './LogoText'
-export { default as updaImage } from './updaImage'
+export { default as UpdataImage } from './updaImage'
 export { default as Language } from './Language'
+export { default as Vanity } from './Vanity'

@@ -11,13 +11,12 @@ import {
   createSetAuthorityInstruction,
   AuthorityType,
 } from '@solana/spl-token';
-import bs58 from 'bs58';
 import { Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
-import UpdataImage from '@/components/updaImage'
 import { getTxLink } from '@/utils'
 import type { TOKEN_TYPE } from '@/type'
+import { Vanity, UpdataImage } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import {
   Page,
@@ -50,6 +49,7 @@ function CreateToken() {
   const [imageFile, setImageFile] = useState(null);
 
   const [isOptions, setIsOptions] = useState(false)
+  const [isVanity, setIsVanity] = useState(false)
 
   const [isRevokeFreeze, setIsRevokeFreeze] = useState(false)
   const [isRevokeMint, setIsRevokeMint] = useState(false)
@@ -281,13 +281,12 @@ function CreateToken() {
           </div>
         </div>
 
-        <div className='flex items-center mb-5'>
-          <div className='titlea mr-3'>添加社交链接</div>
+        <div className='flex items-center mb-5 options'>
+          <div className='mr-3 font-semibold'>添加社交链接</div>
           <Switch checked={isOptions} onChange={(e) => setIsOptions(e)} />
         </div>
-
         {isOptions &&
-          <div className='options'>
+          <div >
             <div className='itemSwapper'>
               <div className='item'>
                 <div className='mb-1'>官网</div>
@@ -339,8 +338,13 @@ function CreateToken() {
           </div>
         }
 
-        <div className='flex items-center mb-5 '>
+        <div className='flex items-center mb-5 options'>
+          <div className='mr-3 font-semibold'>创建靓号代币</div>
+          <Switch checked={isVanity} onChange={(e) => setIsVanity(e)} />
+        </div>
+        <Vanity />
 
+        <div className='flex items-center mb-5 '>
           <div className='flex flex-wrap justify-between flex-1'>
             <div className='authority_box'>
               <div className='authority_titlt'>

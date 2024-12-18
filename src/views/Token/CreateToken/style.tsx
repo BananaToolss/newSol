@@ -14,8 +14,8 @@ export const Page = styled.div`
     border-bottom: 1px solid #5d5b5b;
   }
   .options {
-    padding: 30px 0;
-    border-top: 1px solid #cbbfbf;
+    padding: 20px 0;
+    border-bottom: 1px solid #e6dbdb;
   }
   .btn {
     text-align: center;
