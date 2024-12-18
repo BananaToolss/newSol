@@ -16,7 +16,7 @@ import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-
 import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
 import { getTxLink } from '@/utils'
 import type { TOKEN_TYPE } from '@/type'
-import { Vanity, UpdataImage } from '@/components'
+import { Vanity, UpdataImage, Header } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { Page } from '@/styles'
 import { CreatePage } from './style'
@@ -215,8 +215,9 @@ function CreateToken() {
     <Page>
       {contextHolder}
       {contextHolder1}
-      <h1 className={Text_Style}>Solana代币创建</h1>
-      <p className='hint'>轻松定制您的Solana代币！选择独特且吸引人的数字组合使您的代币更加突出，让您的代币在众多项目中脱颖而出！</p>
+
+      <Header title='Solana代币创建'
+        hint='轻松定制您的Solana代币！选择独特且吸引人的数字组合使您的代币更加突出，让您的代币在众多项目中脱颖而出！' />
 
       <CreatePage className="my-6">
         <div className='itemSwapper'>
