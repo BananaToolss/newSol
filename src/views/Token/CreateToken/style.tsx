@@ -1,5 +1,10 @@
 import styled from "styled-components";
 
+export const Page = styled.div`
+  width: 80%;
+  padding: 50px;
+`
+
 export const CreatePage = styled.div`
 .bb1 {
   border: 1px solid red;
