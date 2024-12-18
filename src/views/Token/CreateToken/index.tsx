@@ -351,11 +351,12 @@ function CreateToken() {
           <Switch checked={isVanity} onChange={isVanityChange} />
         </div>
         {isVanity && <Vanity callBack={callBack} />}
-        <div className='vanity'>
-          <div className='text-base'>靓号代币合约</div>
-          <div className='font-medium'>{vanityAddress}</div>
-          <BsCopy onClick={copyClickV} style={{ marginLeft: '6px' }} className='pointer' />
-        </div>
+        {isVanity && vanityAddress &&
+          <div className='vanity'>
+            <div className='text-base'>靓号代币合约</div>
+            <div className='font-medium'>{vanityAddress}</div>
+            <BsCopy onClick={copyClickV} style={{ marginLeft: '6px' }} className='pointer' />
+          </div>}
 
         <div className='flex items-center mb-5 '>
           <div className='flex flex-wrap justify-between flex-1'>
