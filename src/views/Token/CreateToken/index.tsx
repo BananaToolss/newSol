@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { message, Flex, Button, Input, Switch } from 'antd';
+import { message, Flex, Button, Input, Switch, notification } from 'antd';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { BsCopy } from "react-icons/bs";
 import { useTranslation } from "react-i18next";
@@ -31,6 +31,7 @@ function CreateToken() {
   const { publicKey, sendTransaction } = useWallet()
   const { t } = useTranslation()
   const [messageApi, contextHolder] = message.useMessage();
+  const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
 
   const [config, setConfig] = useState<TOKEN_TYPE>({
@@ -86,7 +87,7 @@ function CreateToken() {
 
       const lamports = await getMinimumBalanceForRentExemptMint(connection);
       const mintKeypair = Keypair.generate();
-      console.log(mintKeypair, 'mintKeypair')
+      console.log(mintKeypair.publicKey.toBase58(), 'mintKeypair')
       const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, publicKey);
 
       const createMetadataInstruction = createCreateMetadataAccountV3Instruction(
@@ -115,7 +116,7 @@ function CreateToken() {
               uses: null,
               collection: null,
             },
-            isMutable: false,
+            isMutable: isRevokeMeta,
             collectionDetails: null,
           },
         },
@@ -179,7 +180,9 @@ function CreateToken() {
       setSignature(result);
       setTokenAddresss(mintKeypair.publicKey.toBase58())
       setIscreating(false)
-    } catch (error) {
+      api.success({ message: 'Success' })
+    } catch (error: any) {
+      api.error({ message: error.toString() })
       console.log(error)
       setIscreating(false)
       setTokenAddresss('')
@@ -205,6 +208,7 @@ function CreateToken() {
 
     <Page>
       {contextHolder}
+      {contextHolder1}
       <h1 className={Text_Style}>Solana代币创建</h1>
       <p className='hint'>轻松定制您的Solana代币！选择独特且吸引人的数字组合使您的代币更加突出，让您的代币在众多项目中脱颖而出！</p>
 
