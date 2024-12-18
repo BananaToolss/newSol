@@ -246,7 +246,7 @@ function CreateToken() {
 
         <div className='itemSwapper'>
           <div className='item'>
-            <div className='mb26'>
+            <div className='mb26 mb10'>
               <div className='mb-1 start'>{t('Supply')}</div>
               <input
                 type="number"
@@ -272,16 +272,14 @@ function CreateToken() {
 
           <div className='item'>
             <div className='mb-1 start'>Token Logo</div>
-            <div>
-              <div className='flex imgswapper'>
-                <UpdataImage setImageFile={setImageFile} />
-                <div className='imagetext'>
-                  <div>
-                    <div>支持图片格式：WEBP/PNG/GIF/JPG</div>
-                    <div>建议尺寸大小 1000x1000像素</div>
-                  </div>
-                  <div className='hit'>符合以上要求，可以在各个平台和应用中更好的展示</div>
+            <div className='flex imgswapper'>
+              <UpdataImage setImageFile={setImageFile} />
+              <div className='imagetext'>
+                <div>
+                  <div>支持图片格式：WEBP/PNG/GIF/JPG</div>
+                  <div>建议尺寸大小 1000x1000像素</div>
                 </div>
+                <div className='hit'>符合以上要求，可以在各个平台和应用中更好的展示</div>
               </div>
             </div>
           </div>

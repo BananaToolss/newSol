@@ -61,4 +61,12 @@ export const VanityPage = styled.div`
     width: 48%;
     background-color: #7179df !important;
   }
+
+  @media screen and (max-width:968px) {
+    flex-direction: column;
+
+    .left, .right {
+      width: 100%;
+    }
+  }
 `

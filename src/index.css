@@ -159,5 +159,7 @@ a {
   .page {
     width: 96%;
   }
-
+  .ant-pro-page-container-children-container {
+    padding-inline: 10px
+  }
 }
