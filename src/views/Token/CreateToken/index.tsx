@@ -7,28 +7,17 @@ import copy from 'copy-to-clipboard';
 import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE } from '@/config'
 import UpdataImage from '@/components/updaImage'
 import { getTxLink } from '@/utils'
+import type { TOKEN_TYPE } from '@/type'
+import { upLoadImage } from '@/utils/updataNFTImage'
 import {
   Page,
   CreatePage
 } from './style'
 
-interface TOKEN_TYPE {
-  name: string
-  symbol: string
-  decimals: string
-  amount: string
-  description: string
-  website: string
-  telegram: string
-  twitter: string
-  discord: string
-  tags: string
-}
-
 const { TextArea } = Input
 
 function CreateToken() {
-
+  const wallet = useWallet()
   const { t } = useTranslation()
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
@@ -63,8 +52,28 @@ function CreateToken() {
     setConfig({ ...config, [e.target.name]: e.target.value })
   }
 
-  const createToken = () => {
+  const createToken = async () => {
+    try {
+      if (!wallet.publicKey) return messageApi.error(t('Please connect the wallet first'))
+      if (!config.name) return messageApi.error(t('Please fill in the name'))
+      if (!config.symbol) return messageApi.error(t('Please fill in the short name'))
+      if (!config.decimals) return messageApi.error(t('Please fill in the Decimals'))
+      if (Number(config.decimals) > 9) return messageApi.error(t('The maximum Decimals is 9'))
+      if (!config.amount) return messageApi.error(t('Please fill in the supply quantity'))
+      if (!imageFile) return messageApi.error(t('Please upload a picture logo'))
+      if (config.description && config.description.length > 200) return messageApi.error(t('Description up to 200 words'))
 
+      console.log('createSPLToken')
+      setIscreating(true)
+      setTokenAddresss('')
+      setError('')
+
+      // const metadata_url = await upLoadImage(config, imageFile, isOptions)
+      const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
+      console.log('metadata')
+    } catch (error) {
+
+    }
   }
 
   const copyClick = () => {
@@ -141,7 +150,7 @@ function CreateToken() {
                     <div>支持图片格式：WEBP/PNG/GIF/JPG</div>
                     <div>建议尺寸大小 1000x1000像素</div>
                   </div>
-                  <div className='hit'>符号以上要求，可以在各个平台和应用中更好的展示</div>
+                  <div className='hit'>符合以上要求，可以在各个平台和应用中更好的展示</div>
                 </div>
               </div>
             </div>
