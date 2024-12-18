@@ -29,7 +29,7 @@ export const SWAP_BOT_FEE = 0.003 //市值每笔收费
 export const PUMP_SWAP_BOT_FEE = 0.002 //pump市值收费
 
 
-export const Input_Style = 'form-control block w-full px-4 py-2 text-sm font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none'
+export const Input_Style = 'form-control block w-full px-4 py-2 text-lg font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none'
 
 export const Button_Style = 'px-8 m-2 btn animate-pulse bg-gradient-to-r from-[#9945FF] to-[#14F195] hover:from-pink-500 hover:to-yellow-500 ...'
 

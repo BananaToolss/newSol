@@ -38,14 +38,6 @@ p {
   /* color: #707070; */
 }
 
-.titlea {
-  /* color: #707070; */
-  white-space: nowrap;
-  /* width: 100px; */
-  text-align: end;
-  /* border: 1px solid red; */
-}
-
 .pointer {
   cursor: pointer;
 }
