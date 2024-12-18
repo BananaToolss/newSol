@@ -82,7 +82,7 @@ function CreateToken() {
       <CreatePage className="my-6">
         <div className='itemSwapper'>
           <div className='item'>
-            <div className='mb-1'>Token名称</div>
+            <div className='mb-1 start'>Token名称</div>
             <input
               type="text"
               className={Input_Style}
@@ -93,7 +93,7 @@ function CreateToken() {
             />
           </div>
           <div className='item'>
-            <div className='mb-1'>Token符号</div>
+            <div className='mb-1 start'>Token符号</div>
             <input
               type="text"
               className={Input_Style}
@@ -106,9 +106,9 @@ function CreateToken() {
         </div>
 
         <div className='itemSwapper'>
-          <div  className='item'>
+          <div className='item'>
             <div className='mb26'>
-              <div className='mb-1'>{t('Supply')}</div>
+              <div className='mb-1 start'>{t('Supply')}</div>
               <input
                 type="number"
                 className={Input_Style}
@@ -119,7 +119,7 @@ function CreateToken() {
               />
             </div>
             <div>
-              <div className='mb-1'>Token精度</div>
+              <div className='mb-1 start'>Token精度</div>
               <input
                 type="number"
                 className={Input_Style}
@@ -132,7 +132,7 @@ function CreateToken() {
           </div>
 
           <div className='item'>
-            <div className='mb-1'>Token Logo</div>
+            <div className='mb-1 start'>Token Logo</div>
             <div>
               <div className='flex imgswapper'>
                 <UpdataImage setImageFile={setImageFile} />
@@ -151,73 +151,61 @@ function CreateToken() {
 
 
         <div className='flex items-center mb-5'>
-          <div className='titlea mr-3'>{t('Open optional content')}：</div>
+          <div className='titlea mr-3'>添加社交链接</div>
           <Switch checked={isOptions} onChange={(e) => setIsOptions(e)} />
         </div>
 
         {isOptions &&
-          <>
-            <div className='flex items-center mb-3'>
-              <div className='titlea mr-3'>{t('Website')}：</div>
-              <input
-                type="text"
-                className={Input_Style}
-                placeholder={`${t('Optional, such as')}:https://bananatools.top`}
-                value={config.website}
-                onChange={configChange}
-                name='website'
-              />
+          <div className='options'>
+            <div className='itemSwapper'>
+              <div className='item'>
+                <div className='mb-1'>官网</div>
+                <input
+                  type="text"
+                  className={Input_Style}
+                  placeholder='请输入您的官网链接'
+                  value={config.website}
+                  onChange={configChange}
+                  name='website'
+                />
+              </div>
+              <div className='item'>
+                <div className='mb-1'>X</div>
+                <input
+                  type="text"
+                  className={Input_Style}
+                  placeholder='请输入您的推特链接'
+                  value={config.twitter}
+                  onChange={configChange}
+                  name='twitter'
+                />
+              </div>
             </div>
-            <div className='flex items-center mb-3'>
-              <div className='titlea mr-3'>Telegram：</div>
-              <input
-                type="text"
-                className={Input_Style}
-                placeholder={`${t('Optional, such as')}:https://t.me/BananaTools`}
-                value={config.telegram}
-                onChange={configChange}
-                name='telegram'
-              />
+            <div className='itemSwapper'>
+              <div className='item'>
+                <div className='mb-1'>Telegram</div>
+                <input
+                  type="text"
+                  className={Input_Style}
+                  placeholder='请输入您的Telegram链接'
+                  value={config.telegram}
+                  onChange={configChange}
+                  name='telegram'
+                />
+              </div>
+              <div className='item'>
+                <div className='mb-1'>Discord</div>
+                <input
+                  type="text"
+                  className={Input_Style}
+                  placeholder='请输入您的Discord'
+                  value={config.discord}
+                  onChange={configChange}
+                  name='discord'
+                />
+              </div>
             </div>
-            <div className='flex items-center mb-3'>
-              <div className='titlea mr-3'>{t('Twitter')}：</div>
-              <input
-                type="text"
-                className={Input_Style}
-                placeholder={`${t('Optional, such as')}:https://x.com/BalanaTools`}
-                value={config.twitter}
-                onChange={configChange}
-                name='twitter'
-              />
-            </div>
-            <div className='flex items-center mb-3'>
-              <div className='titlea mr-3'>Discord：</div>
-              <input
-                type="text"
-                className={Input_Style}
-                placeholder={`${t('Optional, such as')}:https://discord`}
-                value={config.discord}
-                onChange={configChange}
-                name='discord'
-              />
-            </div>
-            <div className='flex items-center mb-5'>
-              <div className='titlea mr-3'>{t('Describe')}：</div>
-              <TextArea
-                className={Input_Style}
-                placeholder={t('Optional, up to 200 words')}
-                value={config.description}
-                onChange={configChange} name='description' />
-            </div>
-            <div className='flex items-center mb-5'>
-              <div className='titlea mr-3'>{t('Tags')}：</div>
-              <TextArea
-                className={Input_Style}
-                placeholder="Meme,NFT,DEFI"
-                value={config.tags}
-                onChange={configChange} name='tags' />
-            </div>
-          </>
+          </div>
         }
 
         <div className='flex items-center mb-5 '>
@@ -262,13 +250,15 @@ function CreateToken() {
           </div>
         </div>
 
-        <div className='buttonSwapper'>
-          <Button className={Button_Style}
-            onClick={createToken} loading={iscreating}>
-            <span>{t('Token Creator')}</span>
-          </Button>
+        <div className='btn'>
+          <div className='buttonSwapper'>
+            <Button className={Button_Style}
+              onClick={createToken} loading={iscreating}>
+              <span>{t('Token Creator')}</span>
+            </Button>
+          </div>
+          <div className='fee'>全网最低服务费: {CREATE_TOKEN_FEE} SOL</div>
         </div>
-        <div className='fee'>{t('Fee')}: {CREATE_TOKEN_FEE} SOL</div>
 
 
         <div >

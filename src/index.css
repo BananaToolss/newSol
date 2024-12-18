@@ -34,8 +34,14 @@ a {
   /* border-bottom: 1px solid #512da8; */
 }
 
-p {
-  /* color: #707070; */
+.start::before {
+  display: inline-block;
+  margin-inline-end: 4px;
+  color: #ff4d4f;
+  font-size: 14px;
+  font-family: SimSun, sans-serif;
+  line-height: 1;
+  content: "*";
 }
 
 .pointer {
@@ -89,14 +95,14 @@ p {
   --tw-text-opacity: 1;
   color: hsla(var(--nc) / var(--tw-text-opacity, 1));
   margin: 0.5rem;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
   background-image: linear-gradient(to right, var(--tw-gradient-stops));
   padding-left: 2rem;
   padding-right: 2rem;
   --tw-bg-opacity: 1;
   background-color: hsla(var(--nf) / var(--tw-bg-opacity, 1));
   --tw-border-opacity: 1;
-  border-color: hsla(var(--nf) / var(--tw-border-opacity, 1));
+  /* border-color: hsla(var(--nf) / var(--tw-border-opacity, 1)); */
   --tw-gradient-from: #ec4899 var(--tw-gradient-from-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
   --tw-gradient-to: #eab308 var(--tw-gradient-to-position);
@@ -105,10 +111,6 @@ p {
 
 .ant-upload-wrapper .ant-upload-drag {
   height: 300px;
-}
-
-.buttonSwapper .ant-btn-default:not(:disabled):not(.ant-btn-disabled):hover {
-  /* color: #fff; */
 }
 
 
@@ -148,8 +150,8 @@ p {
   align-items: center;
 }
 .fee {
-  font-size: 14px;
-  color: #262729;
+  font-size: 12px;
+  color: #959698;
 }
 
 @media screen and (max-width:968px) {

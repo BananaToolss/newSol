@@ -13,6 +13,17 @@ export const Page = styled.div`
     padding-bottom: 10px;
     border-bottom: 1px solid #5d5b5b;
   }
+  .options {
+    padding: 30px 0;
+    border-top: 1px solid #cbbfbf;
+  }
+  .btn {
+    text-align: center;
+    button  {
+      width: 30%;
+      box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+    }
+  }
 `
 
 export const CreatePage = styled.div`
