@@ -5,7 +5,7 @@ import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { PublicKey, Transaction, LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
 import { useTranslation } from "react-i18next";
 import { Metadata, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
-import { getMint } from '@solana/spl-token';
+import { getMint, createSetAuthorityInstruction, AuthorityType } from '@solana/spl-token';
 import {
   Input_Style, Button_Style,
 } from '@/config'
@@ -19,8 +19,8 @@ import { AuthorityPage } from './style'
 function Authority() {
   const { t } = useTranslation()
   const [messageApi, contextHolder] = message.useMessage();
-  const wallet = useWallet();
-  const { publicKey } = useWallet();
+
+  const { publicKey, sendTransaction } = useWallet();
   const { connection } = useConnection();
   const [isSearch, setIsSearch] = useState(false)
 
@@ -81,6 +81,7 @@ function Authority() {
       if (metadata.isMutable) {
         isMutable = true
       }
+      console.log(isFreeze, isMint, isMutable)
       setIsAuthority({ isFreeze, isMint, isMutable })
       setIsSearch(false)
     } catch (error) {
@@ -91,7 +92,40 @@ function Authority() {
   }
 
   const updateAuthority = async () => {
+    try {
+      setIsSending(true)
+      const token = new PublicKey(tokenAddr)
+      const tx = new Transaction()
+      if (options.isFreeze) {
+        const transaction = createSetAuthorityInstruction(
+          token,
+          publicKey,
+          AuthorityType.FreezeAccount,
+          null
+        )
+        tx.add(transaction)
+      }
+      if (options.isMint) {
+        const transaction = createSetAuthorityInstruction(
+          token,
+          publicKey,
+          AuthorityType.MintTokens,
+          null
+        )
+        tx.add(transaction)
+      }
 
+      const result = await sendTransaction(tx, connection);
+      const confirmed = await connection.confirmTransaction(
+        result,
+        "processed"
+      );
+      console.log(confirmed, 'confirmed')
+      setIsSending(false)
+    } catch (error) {
+      console.log(error)
+      setIsSending(false)
+    }
   }
 
 
@@ -126,7 +160,7 @@ function Authority() {
           <div className='right'>
             {isAuthority.isMutable ?
               <div className='right_t1'>未放弃</div> :
-              <div className='right_t2'>放弃</div>
+              <div className='right_t2'>已放弃</div>
             }
             <Checkbox checked={options.isMutable}
               onChange={(e) => optionsChange(e.target.checked, 'isMutable')}
@@ -142,11 +176,11 @@ function Authority() {
           <div className='right'>
             {isAuthority.isFreeze ?
               <div className='right_t1'>未放弃</div> :
-              <div className='right_t2'>放弃</div>
+              <div className='right_t2'>已放弃</div>
             }
             <Checkbox checked={options.isFreeze}
-              onChange={(e) => optionsChange(e.target.checked, 'isFreeze')} 
-              disabled={!isAuthority.isFreeze}/>
+              onChange={(e) => optionsChange(e.target.checked, 'isFreeze')}
+              disabled={!isAuthority.isFreeze} />
           </div>
         </div>
 
@@ -158,11 +192,11 @@ function Authority() {
           <div className='right'>
             {isAuthority.isMint ?
               <div className='right_t1'>未放弃</div> :
-              <div className='right_t2'>放弃</div>
+              <div className='right_t2'>已放弃</div>
             }
             <Checkbox checked={options.isMint}
-              onChange={(e) => optionsChange(e.target.checked, 'isMint')} 
-              disabled={!isAuthority.isMint}/>
+              onChange={(e) => optionsChange(e.target.checked, 'isMint')}
+              disabled={!isAuthority.isMint} />
           </div>
         </div>
 
