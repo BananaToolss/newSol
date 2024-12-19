@@ -31,7 +31,7 @@ function CreateToken() {
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
 
-  const [config, setConfig] = useState({
+  const [config, setConfig] = useState<TOKEN_TYPE>({
     name: '',
     symbol: '',
     decimals: '9',

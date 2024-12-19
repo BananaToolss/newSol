@@ -27,7 +27,7 @@ function Update() {
   const [isSearch, setIsSearch] = useState(false)
   const [isUpdate, setIsUpdate] = useState(false)
 
-  const [config, setConfig] = useState({
+  const [config, setConfig] = useState<TOKEN_TYPE>({
     name: '',
     symbol: '',
     decimals: '9',
