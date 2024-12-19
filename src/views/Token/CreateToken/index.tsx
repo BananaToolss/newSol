@@ -16,7 +16,7 @@ import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-
 import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
 import { getTxLink } from '@/utils'
 import type { TOKEN_TYPE } from '@/type'
-import { Vanity, UpdataImage, Header } from '@/components'
+import { Vanity, UpdataImage, Header, Hint } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { Page } from '@/styles'
 import { CreatePage } from './style'
@@ -407,7 +407,9 @@ function CreateToken() {
           </div>
         </div>
 
-        <div className='btn'>
+        <Hint />
+
+        <div className='btn mt-6'>
           <div className='buttonSwapper'>
             <Button className={Button_Style}
               onClick={createToken} loading={iscreating}>
