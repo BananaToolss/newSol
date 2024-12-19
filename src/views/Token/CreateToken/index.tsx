@@ -84,8 +84,8 @@ function CreateToken() {
       setTokenAddresss('')
       setError('')
 
-      const metadata_url = await upLoadImage(config, imageFile, true)
-      // const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
+      // const metadata_url = await upLoadImage(config, imageFile, true)
+      const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
       console.log('metadata')
 
 
