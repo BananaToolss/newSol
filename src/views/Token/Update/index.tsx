@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { PublicKey } from '@solana/web3.js';
-import { Metadata, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { Metadata, PROGRAM_ID, DataV2, createUpdateMetadataAccountV2Instruction } from '@metaplex-foundation/mpl-token-metadata';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useTranslation } from "react-i18next";
 import { Button, Input, message } from 'antd'
@@ -22,8 +22,9 @@ function Update() {
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection()
   const { publicKey, sendTransaction } = useWallet()
-  const [tokenAddress, setTokenAddress] = useState('AsLhTDywyQT8L4dtceWKX7knxGn4n2v2QAkQRX6ANbmX')
+  const [tokenAddress, setTokenAddress] = useState('')
   const [isSearch, setIsSearch] = useState(false)
+  const [isUpdate, setIsUpdate] = useState(false)
 
   const [config, setConfig] = useState({
     name: '',
@@ -39,7 +40,8 @@ function Update() {
     freeze_authority: '',
     mint_authority: '',
     mutable: false,
-    owner: ''
+    owner: '',
+    metadataUrl: ""
   })
   const [isOwner, setIsOwner] = useState(false)
   const [imageFile, setImageFile] = useState(null)
@@ -80,13 +82,15 @@ function Update() {
       const mint_authority = token_info.mint_authority ?? '已弃权'
       const mutable = data.mutable ?? false
       const owner = data.authorities[0].address ?? ''
+      const metadataUrl = data.content.json_uri ?? data.centent.files[0].uri
 
       setConfig({
         name, symbol, description, website, twitter,
         telegram, discord, image, decimals, supply,
         freeze_authority, mint_authority,
         mutable,
-        owner
+        owner,
+        metadataUrl
       })
 
       console.log(name, symbol, description, website, twitter,
@@ -97,6 +101,57 @@ function Update() {
       console.log(error)
       setIsSearch(false)
       messageApi.error('未查询到该代币信息')
+    }
+  }
+
+  const updateClick = async () => {
+    try {
+      const mint = new PublicKey(tokenAddress)
+      console.log(mint.toString())
+
+      const metadataPDA = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("metadata"),
+          PROGRAM_ID.toBuffer(),
+          mint.toBuffer(),
+        ],
+        PROGRAM_ID,
+      )[0]
+      const tokenMetadata = {
+        name: config.name,
+        symbol: config.symbol,
+        uri: 'url',
+        sellerFeeBasisPoints: 0,
+        creators: null,
+        collection: null,
+        uses: null
+      } as DataV2;
+
+      const updateMetadataTransaction = new Transaction().add(
+        createUpdateMetadataAccountV2Instruction(
+          {
+            metadata: metadataPDA,
+            updateAuthority: publicKey,
+          },
+          {
+            updateMetadataAccountArgsV2: {
+              data: tokenMetadata,
+              updateAuthority: publicKey,
+              primarySaleHappened: true,
+              isMutable: true,
+            },
+          }
+        )
+      );
+      const result = await sendTransaction(updateMetadataTransaction, connection);
+
+      const confirmed = await connection.confirmTransaction(
+        result,
+        "processed"
+      );
+      console.log(confirmed, 'confirmed')
+    } catch (error) {
+      console.log(error)
     }
   }
 
@@ -314,11 +369,11 @@ function Update() {
 
           <div className='btn'>
             <div className='buttonSwapper'>
-              <Button className={Button_Style} >
-                <span>{t('Token Creator')}</span>
+              <Button className={Button_Style} onClick={updateClick} loading={isUpdate}>
+                <span>确认更新</span>
               </Button>
             </div>
-            <div className='fee'>全网最低服务费: 1 SOL</div>
+            <div className='fee'>全网最低服务费: 0.05 SOL</div>
           </div>
         </CreatePage>
       </UpdatePage>
