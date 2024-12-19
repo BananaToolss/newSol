@@ -81,13 +81,7 @@ export const CreatePage = styled.div`
     padding: 20px 0;
     border-bottom: 1px solid #e6dbdb;
 }
-.btn {
-    text-align: center;
-    button  {
-      width: 30%;
-      box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
-    }
-}
+
 
 @media screen and (max-width:968px) {
    .itemSwapper {

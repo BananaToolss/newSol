@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Segmented, Switch, message } from 'antd'
+import { Button, Segmented, Switch, message, Checkbox } from 'antd'
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { PublicKey, Transaction, LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
@@ -25,15 +25,13 @@ function Authority() {
   const [isSearch, setIsSearch] = useState(false)
 
   const [tokenAddr, setTokenAddr] = useState('')
-  const [transferType, setTransferType] = useState<string | number>(t('Drop permissions'));
 
   const [isAuthority, setIsAuthority] = useState({ //判断权限
     isFreeze: false,
     isMint: false,
     isMutable: false,
   })
-  const [tokenSymbol, setTokenSymbol] = useState('')
-  const [tokenDecimals, setTokenDecimals] = useState(9)
+
   const [options, setOptions] = useState({
     isFreeze: false,
     isMint: false,
@@ -51,6 +49,7 @@ function Authority() {
   //获取权限信息
   const getTokenInfo = async () => {
     try {
+      setIsSearch(true)
       const token = new PublicKey(tokenAddr)
       const tokenMint = new PublicKey(token);
       const metadataPDA = PublicKey.findProgramAddressSync(
@@ -63,13 +62,9 @@ function Authority() {
       )[0]
       const metadataAccount = await connection.getAccountInfo(metadataPDA);
       const [metadata, _] = Metadata.deserialize(metadataAccount.data);
-
       const mintInfo = await getMint(connection, token)
-
       console.log(mintInfo, metadata)
-
       const owner = metadata.updateAuthority.toBase58()
-
       let isFreeze = false
       let isMint = false
       let isMutable = false
@@ -87,28 +82,18 @@ function Authority() {
         isMutable = true
       }
       setIsAuthority({ isFreeze, isMint, isMutable })
-      setTokenSymbol(metadata.data.symbol.split(/\u0000+/)[0])
-      setTokenDecimals(mintInfo.decimals)
+      setIsSearch(false)
     } catch (error) {
       console.log(error)
       messageApi.error('查询错误')
+      setIsSearch(false)
     }
   }
-  //放弃权限
-  const removeAuthority = async () => {
+
+  const updateAuthority = async () => {
 
   }
 
-  const [freezeAccount, setFreezeAccount] = useState('')
-  //冻结用户
-  const freezeAccountHandler = async () => {
-
-  }
-  const [mintAmount, setMintAmount] = useState('')
-  //铸造代币
-  const mintTokenHandler = async () => {
-
-  }
 
   return (
     <Page>
@@ -134,18 +119,61 @@ function Authority() {
         </div>
 
         <div className='auth_box'>
-          <div className='auth_title'>{t('Token Information Update Authority')}</div>
-          <div>{t('Revoking ownership means you will be unable to modify token metadata, which can enhance investor security.')}</div>
+          <div>
+            <div className='auth_title'>{t('Token Information Update Authority')}</div>
+            <div className='auti_title1'>{t('Revoking ownership means you will be unable to modify token metadata, which can enhance investor security.')}</div>
+          </div>
+          <div className='right'>
+            {isAuthority.isMutable ?
+              <div className='right_t1'>未放弃</div> :
+              <div className='right_t2'>放弃</div>
+            }
+            <Checkbox checked={options.isMutable}
+              onChange={(e) => optionsChange(e.target.checked, 'isMutable')}
+              disabled={!isAuthority.isMutable} />
+          </div>
         </div>
 
         <div className='auth_box'>
-          <div className='auth_title'>{t('Revoke Freeze Authority')}</div>
-          <div>{t(`Creating a liquidity pool requires revoking freeze authority. Revoking this authority means you won't be able to freeze tokens in holder wallets.`)}</div>
+          <div>
+            <div className='auth_title'>{t('Revoke Freeze Authority')}</div>
+            <div className='auti_title1'>{t(`Creating a liquidity pool requires revoking freeze authority. Revoking this authority means you won't be able to freeze tokens in holder wallets.`)}</div>
+          </div>
+          <div className='right'>
+            {isAuthority.isFreeze ?
+              <div className='right_t1'>未放弃</div> :
+              <div className='right_t2'>放弃</div>
+            }
+            <Checkbox checked={options.isFreeze}
+              onChange={(e) => optionsChange(e.target.checked, 'isFreeze')} 
+              disabled={!isAuthority.isFreeze}/>
+          </div>
         </div>
 
         <div className='auth_box'>
-          <div className='auth_title'>{t('Revoke Mint Authority')}</div>
-          <div>{t(`Revoking mint authority is necessary for investor confidence and token success. If you revoke this authority, you won't be able to mint additional token supply.`)}</div>
+          <div>
+            <div className='auth_title'>{t('Revoke Mint Authority')}</div>
+            <div className='auti_title1'>{t(`Revoking mint authority is necessary for investor confidence and token success. If you revoke this authority, you won't be able to mint additional token supply.`)}</div>
+          </div>
+          <div className='right'>
+            {isAuthority.isMint ?
+              <div className='right_t1'>未放弃</div> :
+              <div className='right_t2'>放弃</div>
+            }
+            <Checkbox checked={options.isMint}
+              onChange={(e) => optionsChange(e.target.checked, 'isMint')} 
+              disabled={!isAuthority.isMint}/>
+          </div>
+        </div>
+
+        <div className='btn mt-6'>
+          <div className='buttonSwapper'>
+            <Button className={Button_Style}
+              onClick={updateAuthority} loading={isSending}>
+              <span>放弃</span>
+            </Button>
+          </div>
+          {/* <div className='fee'>全网最低服务费: 1 SOL</div> */}
         </div>
 
 
