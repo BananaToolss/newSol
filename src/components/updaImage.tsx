@@ -1,4 +1,4 @@
-import React, { Dispatch, useState } from 'react';
+import React, { Dispatch, useEffect, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Image, Upload, message } from 'antd';
 import type { GetProp, UploadFile, UploadProps } from 'antd';
@@ -16,15 +16,20 @@ const getBase64 = (file: FileType): Promise<string> =>
 
 interface PropsType {
     setImageFile: Dispatch<any>
+    image?: string
 }
 
 const App = (props: PropsType) => {
     const { t } = useTranslation()
-    const { setImageFile } = props
+    const { setImageFile, image } = props
     const [messageApi, contextHolder] = message.useMessage();
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
     const [fileList, setFileList] = useState<UploadFile[]>([]);
+
+    useEffect(() => {
+        if (image) setPreviewImage(image)
+    }, [image])
 
     const handlePreview = async (file: UploadFile) => {
         if (!file.url && !file.preview) {
@@ -58,7 +63,10 @@ const App = (props: PropsType) => {
                 onPreview={handlePreview}
                 onChange={handleChange}
             >
-                {fileList.length >= 1 ? null : uploadButton}
+                {(fileList.length == 0 && image) ?
+                    <img src={image} alt='token_logo'/> :
+                    fileList.length >= 1 ? null : uploadButton
+                }
             </Upload>
             {previewImage && (
                 <Image
@@ -71,6 +79,8 @@ const App = (props: PropsType) => {
                     src={previewImage}
                 />
             )}
+
+
         </>
     );
 };

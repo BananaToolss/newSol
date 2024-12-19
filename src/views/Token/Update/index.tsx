@@ -61,7 +61,7 @@ function Update() {
       const image = data.content.links.image ?? ''
 
       const decimals = token_info.decimals
-      const supply = token_info.supply
+      const supply = (token_info.supply / 10 ** token_info.decimals).toString()
       const freeze_authority = token_info.freeze_authority ?? ''
       const mint_authority = token_info.mint_authority ?? ''
 
@@ -71,7 +71,9 @@ function Update() {
         freeze_authority, mint_authority
       })
 
-
+      console.log(name, symbol, description, website, twitter,
+        telegram, discord, image, decimals, supply,
+        freeze_authority, mint_authority)
 
     } catch (error) {
       console.log(error)
@@ -157,7 +159,7 @@ function Update() {
           <div className='item'>
             <div className='mb-1 start'>Token Logo</div>
             <div className='flex imgswapper'>
-              <UpdataImage setImageFile={setImageFile} />
+              <UpdataImage setImageFile={setImageFile} image={config.image} />
               <div className='imagetext'>
                 <div>
                   <div>支持图片格式：WEBP/PNG/GIF/JPG</div>
@@ -226,6 +228,30 @@ function Update() {
                 value={config.discord}
                 onChange={configChange}
                 name='discord'
+              />
+            </div>
+          </div>
+          <div className='itemSwapper'>
+            <div className='item'>
+              <div className='mb-1'>铸币权</div>
+              <input
+                type="text"
+                className={Input_Style}
+                placeholder=''
+                value={config.mint_authority}
+                onChange={configChange}
+                name='mint_authority'
+              />
+            </div>
+            <div className='item'>
+              <div className='mb-1'>冻结权</div>
+              <input
+                type="text"
+                className={Input_Style}
+                placeholder=''
+                value={config.freeze_authority}
+                onChange={configChange}
+                name='freeze_authority'
               />
             </div>
           </div>
