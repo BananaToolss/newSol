@@ -1,7 +1,10 @@
 import axios from 'axios'
+import { PublicKey, Connection } from '@solana/web3.js';
+import { Metadata, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { NetworkURL } from '@/config'
+import { fetcher } from './'
 
-export const getAsset = (token: string) => {
+export const getAsset = (connection: Connection, token: string) => {
   return new Promise(async (resolve: (value: any) => void, reject) => {
     try {
       let _data = JSON.stringify({
@@ -34,14 +37,14 @@ export const getAsset = (token: string) => {
       const name = metadata.name
       const symbol = metadata.symbol
 
-      const description = metadata.description ?? ''
-      const website = metadata.website ?? ''
-      const telegram = metadata.telegram ?? ''
-      const discord = metadata.discord ?? ''
-      const twitter = metadata.twitter ?? ''
+      let description = metadata.description ?? ''
+      let website = metadata.website ?? ''
+      let telegram = metadata.telegram ?? ''
+      let discord = metadata.discord ?? ''
+      let twitter = metadata.twitter ?? ''
 
 
-      const image = data.content.links.image ?? ''
+      let image = data.content.links.image ?? ''
 
       const decimals = token_info.decimals
       const supply = (token_info.supply / 10 ** token_info.decimals).toString()
@@ -50,6 +53,34 @@ export const getAsset = (token: string) => {
       const mutable = data.mutable ?? false
       const owner = data.authorities[0].address ?? ''
       const metadataUrl = data.content.json_uri ?? data.centent.files[0].uri
+      //另外一种请求
+      if (!image || !description) {
+        const tokenMint = new PublicKey(token);
+        const metadataPDA = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("metadata"),
+            PROGRAM_ID.toBuffer(),
+            tokenMint.toBuffer(),
+          ],
+          PROGRAM_ID,
+        )[0]
+        const metadataAccount = await connection.getAccountInfo(metadataPDA);
+        const [metadata, _] = Metadata.deserialize(metadataAccount.data);
+        let logoRes = await fetcher(metadata.data.uri);
+
+        const _description = logoRes.description ?? logoRes.extensions.description ?? ''
+        const _website = logoRes.website ?? logoRes.extensions.website ?? ''
+        const _telegram = logoRes.telegram ?? logoRes.extensions.telegram ?? ''
+        const _discord = logoRes.discord ?? logoRes.extensions.discord ?? ''
+        const _twitter = logoRes.twitter ?? logoRes.extensions.twitter ?? ''
+
+        if (!image && logoRes.image) image = logoRes.image
+        if (!description && _description) description = _description
+        if (!website && _website) website = _website
+        if (!telegram && _telegram) telegram = _telegram
+        if (!discord && _discord) discord = _discord
+        if (!twitter && _twitter) twitter = _twitter
+      }
 
 
       resolve({

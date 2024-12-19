@@ -89,7 +89,7 @@ function CreateToken() {
   const getTokenMetadata = async () => {
     try {
       setIsSearch(true)
-      const data = await getAsset(tokenAddress)
+      const data = await getAsset(connection, tokenAddress)
       console.log(data, 'data')
       const {
         name, symbol, description, website, twitter,
