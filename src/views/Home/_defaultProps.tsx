@@ -35,6 +35,11 @@ export default {
             name: '代币更新',
             icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
           },
+          {
+            path: 'revokeAuthority',
+            name: '放弃权限',
+            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+          },
         ]
       },
     ],
