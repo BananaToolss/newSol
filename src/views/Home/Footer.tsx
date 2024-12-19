@@ -1,7 +1,7 @@
 import { GithubOutlined } from '@ant-design/icons';
 import { DefaultFooter } from '@ant-design/pro-components';
 import { BsTelegram, BsTencentQq } from "react-icons/bs";
-import { TELEGRAMLINK, QQLINK } from "@/config"
+import { TELEGRAMLINK } from "@/config"
 
 const Footer = () => {
   return (
