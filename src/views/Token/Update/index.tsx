@@ -7,6 +7,7 @@ import { Button, Input, message } from 'antd'
 import { BsXCircleFill, BsCheckCircleFill } from "react-icons/bs";
 import { Header, UpdataImage } from '@/components';
 import { getAsset } from '@/utils/sol'
+import { upLoadImage } from '@/utils/updataNFTImage'
 import { Page } from '@/styles';
 import { fetcher } from '@/utils'
 import type { TOKEN_TYPE } from '@/type'
@@ -106,9 +107,16 @@ function Update() {
 
   const updateClick = async () => {
     try {
-      const mint = new PublicKey(tokenAddress)
-      console.log(mint.toString())
+      let metadata_url = ''
+      if (imageFile) {
+        metadata_url = await upLoadImage(config, imageFile, true)
+      } else {
+        metadata_url = await upLoadImage(config, config.image, false)
+      }
+      // const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
+      console.log(metadata_url)
 
+      const mint = new PublicKey(tokenAddress)
       const metadataPDA = PublicKey.findProgramAddressSync(
         [
           Buffer.from("metadata"),
@@ -120,7 +128,7 @@ function Update() {
       const tokenMetadata = {
         name: config.name,
         symbol: config.symbol,
-        uri: 'url',
+        uri: metadata_url,
         sellerFeeBasisPoints: 0,
         creators: null,
         collection: null,
