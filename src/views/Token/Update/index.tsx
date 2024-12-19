@@ -3,7 +3,7 @@ import { PublicKey } from '@solana/web3.js';
 import { Metadata, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { useTranslation } from "react-i18next";
-import { Button, Input } from 'antd'
+import { Button, Input, message } from 'antd'
 import { Header, UpdataImage } from '@/components';
 import { getAsset } from '@/utils/sol'
 import { Page } from '@/styles';
@@ -18,8 +18,10 @@ const { TextArea } = Input
 
 function Update() {
   const { t } = useTranslation()
+  const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection()
   const [tokenAddress, setTokenAddress] = useState('AsLhTDywyQT8L4dtceWKX7knxGn4n2v2QAkQRX6ANbmX')
+  const [isSearch, setIsSearch] = useState(false)
 
   const [config, setConfig] = useState({
     name: '',
@@ -43,6 +45,7 @@ function Update() {
 
   const getTokenMetadata = async () => {
     try {
+      setIsSearch(true)
       const data = await getAsset(tokenAddress)
       console.log(data, 'data')
       const token_info = data.token_info
@@ -62,8 +65,8 @@ function Update() {
 
       const decimals = token_info.decimals
       const supply = (token_info.supply / 10 ** token_info.decimals).toString()
-      const freeze_authority = token_info.freeze_authority ?? ''
-      const mint_authority = token_info.mint_authority ?? ''
+      const freeze_authority = token_info.freeze_authority ?? '已弃权'
+      const mint_authority = token_info.mint_authority ?? '已弃权'
 
       setConfig({
         name, symbol, description, website, twitter,
@@ -74,14 +77,17 @@ function Update() {
       console.log(name, symbol, description, website, twitter,
         telegram, discord, image, decimals, supply,
         freeze_authority, mint_authority)
-
+      setIsSearch(false)
     } catch (error) {
       console.log(error)
+      setIsSearch(false)
+      messageApi.error('未查询到该代币信息')
     }
   }
 
   return (
     <Page>
+      {contextHolder}
       <Header title='代币更新'
         hint='已有代币信息快捷更新，帮助您更好的展示代币相关信息，及时完成项目信息迭代' />
 
@@ -95,7 +101,7 @@ function Update() {
               />
             </div>
             <div className='buttonSwapper'>
-              <Button className={Button_Style}
+              <Button className={Button_Style} loading={isSearch}
                 onClick={getTokenMetadata} >
                 <span>搜索</span>
               </Button>
@@ -241,6 +247,7 @@ function Update() {
                 value={config.mint_authority}
                 onChange={configChange}
                 name='mint_authority'
+                disabled={config.mint_authority === '已弃权'}
               />
             </div>
             <div className='item'>
@@ -252,6 +259,7 @@ function Update() {
                 value={config.freeze_authority}
                 onChange={configChange}
                 name='freeze_authority'
+                disabled={config.freeze_authority === '已弃权'}
               />
             </div>
           </div>
