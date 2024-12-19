@@ -37,6 +37,7 @@ function Update() {
     telegram: '',
     twitter: '',
     discord: '',
+
     image: '',
     freeze_authority: '',
     mint_authority: '',
@@ -62,28 +63,14 @@ function Update() {
       setIsSearch(true)
       const data = await getAsset(tokenAddress)
       console.log(data, 'data')
-      const token_info = data.token_info
-      const metadata = data.content.metadata
-
-      const name = metadata.name
-      const symbol = metadata.symbol
-
-      const description = metadata.description ?? ''
-      const website = metadata.website ?? ''
-      const telegram = metadata.telegram ?? ''
-      const discord = metadata.discord ?? ''
-      const twitter = metadata.twitter ?? ''
-
-
-      const image = data.content.links.image ?? ''
-
-      const decimals = token_info.decimals
-      const supply = (token_info.supply / 10 ** token_info.decimals).toString()
-      const freeze_authority = token_info.freeze_authority ?? '已弃权'
-      const mint_authority = token_info.mint_authority ?? '已弃权'
-      const mutable = data.mutable ?? false
-      const owner = data.authorities[0].address ?? ''
-      const metadataUrl = data.content.json_uri ?? data.centent.files[0].uri
+      const {
+        name, symbol, description, website, twitter,
+        telegram, discord, image, decimals, supply,
+        freeze_authority, mint_authority,
+        mutable,
+        owner,
+        metadataUrl
+      } = data
 
       setConfig({
         name, symbol, description, website, twitter,
@@ -94,9 +81,6 @@ function Update() {
         metadataUrl
       })
 
-      console.log(name, symbol, description, website, twitter,
-        telegram, discord, image, decimals, supply,
-        freeze_authority, mint_authority)
       setIsSearch(false)
     } catch (error) {
       console.log(error)
@@ -108,12 +92,12 @@ function Update() {
   const updateClick = async () => {
     try {
       let metadata_url = ''
-      // if (imageFile) {
-      //   metadata_url = await upLoadImage(config, imageFile, true)
-      // } else {
-      //   metadata_url = await upLoadImage(config, config.image, false)
-      // }
-      metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
+      if (imageFile) {
+        metadata_url = await upLoadImage(config, imageFile, true)
+      } else {
+        metadata_url = await upLoadImage(config, config.image, false)
+      }
+      // metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
       console.log(metadata_url)
 
       const mint = new PublicKey(tokenAddress)
@@ -187,203 +171,205 @@ function Update() {
           </div>
         </div>
 
-        <CreatePage className="my-6">
-          <div className='itemSwapper'>
-            <div className='item authorityBox'>
-              <div>元数据修改权</div>
-              {config.mutable ?
-                <span className='box'>
-                  <BsCheckCircleFill />
-                  <span>未放弃</span>
-                </span> :
-                <span className='box1'>
-                  <BsXCircleFill />
-                  <span>已放弃</span>
-                </span>
-              }
+        {config.name &&
+          <CreatePage className="my-6">
+            <div className='itemSwapper'>
+              <div className='item authorityBox'>
+                <div>元数据修改权</div>
+                {config.mutable ?
+                  <span className='box'>
+                    <BsCheckCircleFill />
+                    <span>未放弃</span>
+                  </span> :
+                  <span className='box1'>
+                    <BsXCircleFill />
+                    <span>已放弃</span>
+                  </span>
+                }
+              </div>
+              <div className='item authorityBox'>
+                <div>代币所有权</div>
+                {isOwner ?
+                  <span className='box'>
+                    <BsCheckCircleFill />
+                    <span>有</span>
+                  </span> :
+                  <span className='box1'>
+                    <BsXCircleFill />
+                    <span>无</span>
+                  </span>
+                }
+              </div>
             </div>
-            <div className='item authorityBox'>
-              <div>代币所有权</div>
-              {isOwner ?
-                <span className='box'>
-                  <BsCheckCircleFill />
-                  <span>有</span>
-                </span> :
-                <span className='box1'>
-                  <BsXCircleFill />
-                  <span>无</span>
-                </span>
-              }
-            </div>
-          </div>
 
-          <div className='itemSwapper'>
-            <div className='item'>
-              <div className='mb-1 start'>Token名称</div>
-              <input
-                type="text"
-                className={Input_Style}
-                placeholder='请输入Token名称'
-                value={config.name}
-                onChange={configChange}
-                name='name'
-                disabled={!isOwner}
-              />
-            </div>
-            <div className='item'>
-              <div className='mb-1 start'>Token符号</div>
-              <input
-                type="text"
-                className={Input_Style}
-                placeholder='请输入Token符号'
-                value={config.symbol}
-                onChange={configChange}
-                name='symbol'
-                disabled={!isOwner}
-              />
-            </div>
-          </div>
-
-          <div className='itemSwapper'>
-            <div className='item'>
-              <div className='mb26 mb10'>
-                <div className='mb-1 start'>{t('Supply')}</div>
+            <div className='itemSwapper'>
+              <div className='item'>
+                <div className='mb-1 start'>Token名称</div>
                 <input
-                  type="number"
+                  type="text"
                   className={Input_Style}
-                  placeholder='请输入Token总数'
-                  value={config.supply}
+                  placeholder='请输入Token名称'
+                  value={config.name}
                   onChange={configChange}
-                  name='supply'
+                  name='name'
                   disabled={!isOwner}
                 />
               </div>
-              <div>
-                <div className='mb-1 start'>Token精度</div>
+              <div className='item'>
+                <div className='mb-1 start'>Token符号</div>
                 <input
-                  type="number"
+                  type="text"
                   className={Input_Style}
-                  placeholder={t('Please enter a Decimals')}
-                  value={config.decimals}
+                  placeholder='请输入Token符号'
+                  value={config.symbol}
                   onChange={configChange}
-                  name='decimals'
+                  name='symbol'
                   disabled={!isOwner}
                 />
               </div>
             </div>
 
-            <div className='item'>
-              <div className='mb-1 start'>Token Logo</div>
-              <div className='flex imgswapper'>
-                <UpdataImage setImageFile={setImageFile} image={config.image} />
-                <div className='imagetext'>
-                  <div>
-                    <div>支持图片格式：WEBP/PNG/GIF/JPG</div>
-                    <div>建议尺寸大小 1000x1000像素</div>
+            <div className='itemSwapper'>
+              <div className='item'>
+                <div className='mb26 mb10'>
+                  <div className='mb-1 start'>{t('Supply')}</div>
+                  <input
+                    type="number"
+                    className={Input_Style}
+                    placeholder='请输入Token总数'
+                    value={config.supply}
+                    onChange={configChange}
+                    name='supply'
+                    disabled={!isOwner}
+                  />
+                </div>
+                <div>
+                  <div className='mb-1 start'>Token精度</div>
+                  <input
+                    type="number"
+                    className={Input_Style}
+                    placeholder={t('Please enter a Decimals')}
+                    value={config.decimals}
+                    onChange={configChange}
+                    name='decimals'
+                    disabled={!isOwner}
+                  />
+                </div>
+              </div>
+
+              <div className='item'>
+                <div className='mb-1 start'>Token Logo</div>
+                <div className='flex imgswapper'>
+                  <UpdataImage setImageFile={setImageFile} image={config.image} />
+                  <div className='imagetext'>
+                    <div>
+                      <div>支持图片格式：WEBP/PNG/GIF/JPG</div>
+                      <div>建议尺寸大小 1000x1000像素</div>
+                    </div>
+                    <div className='hit'>符合以上要求，可以在各个平台和应用中更好的展示</div>
                   </div>
-                  <div className='hit'>符合以上要求，可以在各个平台和应用中更好的展示</div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className='itemSwapper'>
-            <div className='textarea'>
-              <div className='mb-1'>{t('Describe')}（选填）</div>
-              <TextArea
-                className={Input_Style}
-                placeholder='要更新的代币未填写此信息'
-                value={config.description}
-                onChange={configChange} name='description' disabled={!isOwner} />
+            <div className='itemSwapper'>
+              <div className='textarea'>
+                <div className='mb-1'>{t('Describe')}（选填）</div>
+                <TextArea
+                  className={Input_Style}
+                  placeholder='要更新的代币未填写此信息'
+                  value={config.description}
+                  onChange={configChange} name='description' disabled={!isOwner} />
+              </div>
             </div>
-          </div>
 
-          <div >
-            <div className='itemSwapper'>
-              <div className='item'>
-                <div className='mb-1'>官网</div>
-                <input
-                  type="text"
-                  className={Input_Style}
-                  placeholder='要更新的代币未填写此信息'
-                  value={config.website}
-                  onChange={configChange}
-                  name='website' disabled={!isOwner}
-                />
+            <div >
+              <div className='itemSwapper'>
+                <div className='item'>
+                  <div className='mb-1'>官网</div>
+                  <input
+                    type="text"
+                    className={Input_Style}
+                    placeholder='要更新的代币未填写此信息'
+                    value={config.website}
+                    onChange={configChange}
+                    name='website' disabled={!isOwner}
+                  />
+                </div>
+                <div className='item'>
+                  <div className='mb-1'>X</div>
+                  <input
+                    type="text"
+                    className={Input_Style}
+                    placeholder='要更新的代币未填写此信息'
+                    value={config.twitter}
+                    onChange={configChange}
+                    name='twitter' disabled={!isOwner}
+                  />
+                </div>
               </div>
-              <div className='item'>
-                <div className='mb-1'>X</div>
-                <input
-                  type="text"
-                  className={Input_Style}
-                  placeholder='要更新的代币未填写此信息'
-                  value={config.twitter}
-                  onChange={configChange}
-                  name='twitter' disabled={!isOwner}
-                />
+              <div className='itemSwapper'>
+                <div className='item'>
+                  <div className='mb-1'>Telegram</div>
+                  <input
+                    type="text"
+                    className={Input_Style}
+                    placeholder='要更新的代币未填写此信息'
+                    value={config.telegram}
+                    onChange={configChange}
+                    name='telegram' disabled={!isOwner}
+                  />
+                </div>
+                <div className='item'>
+                  <div className='mb-1'>Discord</div>
+                  <input
+                    type="text"
+                    className={Input_Style}
+                    placeholder='要更新的代币未填写此信息'
+                    value={config.discord}
+                    onChange={configChange}
+                    name='discord' disabled={!isOwner}
+                  />
+                </div>
+              </div>
+              <div className='itemSwapper'>
+                <div className='item'>
+                  <div className='mb-1'>铸币权</div>
+                  <input
+                    type="text"
+                    className={Input_Style}
+                    placeholder=''
+                    value={config.mint_authority}
+                    onChange={configChange}
+                    name='mint_authority'
+                    disabled={config.mint_authority === '已弃权' || !isOwner}
+                  />
+                </div>
+                <div className='item'>
+                  <div className='mb-1'>冻结权</div>
+                  <input
+                    type="text"
+                    className={Input_Style}
+                    placeholder=''
+                    value={config.freeze_authority}
+                    onChange={configChange}
+                    name='freeze_authority'
+                    disabled={config.freeze_authority === '已弃权' || !isOwner}
+                  />
+                </div>
               </div>
             </div>
-            <div className='itemSwapper'>
-              <div className='item'>
-                <div className='mb-1'>Telegram</div>
-                <input
-                  type="text"
-                  className={Input_Style}
-                  placeholder='要更新的代币未填写此信息'
-                  value={config.telegram}
-                  onChange={configChange}
-                  name='telegram' disabled={!isOwner}
-                />
-              </div>
-              <div className='item'>
-                <div className='mb-1'>Discord</div>
-                <input
-                  type="text"
-                  className={Input_Style}
-                  placeholder='要更新的代币未填写此信息'
-                  value={config.discord}
-                  onChange={configChange}
-                  name='discord' disabled={!isOwner}
-                />
-              </div>
-            </div>
-            <div className='itemSwapper'>
-              <div className='item'>
-                <div className='mb-1'>铸币权</div>
-                <input
-                  type="text"
-                  className={Input_Style}
-                  placeholder=''
-                  value={config.mint_authority}
-                  onChange={configChange}
-                  name='mint_authority'
-                  disabled={config.mint_authority === '已弃权' || !isOwner}
-                />
-              </div>
-              <div className='item'>
-                <div className='mb-1'>冻结权</div>
-                <input
-                  type="text"
-                  className={Input_Style}
-                  placeholder=''
-                  value={config.freeze_authority}
-                  onChange={configChange}
-                  name='freeze_authority'
-                  disabled={config.freeze_authority === '已弃权' || !isOwner}
-                />
-              </div>
-            </div>
-          </div>
 
-          <div className='btn'>
-            <div className='buttonSwapper'>
-              <Button className={Button_Style} onClick={updateClick} loading={isUpdate}>
-                <span>确认更新</span>
-              </Button>
+            <div className='btn'>
+              <div className='buttonSwapper'>
+                <Button className={Button_Style} onClick={updateClick} loading={isUpdate}>
+                  <span>确认更新</span>
+                </Button>
+              </div>
+              <div className='fee'>全网最低服务费: 0.05 SOL</div>
             </div>
-            <div className='fee'>全网最低服务费: 0.05 SOL</div>
-          </div>
-        </CreatePage>
+          </CreatePage>
+        }
       </UpdatePage>
 
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { message, Flex, Button, Input, Switch, notification } from 'antd';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { BsCopy } from "react-icons/bs";
@@ -15,6 +15,7 @@ import { Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
 import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
 import { getTxLink } from '@/utils'
+import { getAsset } from '@/utils/sol'
 import type { TOKEN_TYPE } from '@/type'
 import { Vanity, UpdataImage, Header, Hint } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
@@ -30,6 +31,7 @@ function CreateToken() {
   const [messageApi, contextHolder] = message.useMessage();
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
+  const [isClone, setIsClone] = useState(false)
 
   const [config, setConfig] = useState<TOKEN_TYPE>({
     name: '',
@@ -41,8 +43,24 @@ function CreateToken() {
     telegram: '',
     twitter: '',
     discord: '',
-    tags: 'Meme,NFT,DEFI'
+
+    image: '',
+    freeze_authority: '',
+    mint_authority: '',
+    mutable: false,
+    owner: '',
+    metadataUrl: ""
   })
+  const [tokenAddress, setTokenAddress] = useState('')
+  const [isSearch, setIsSearch] = useState(false)
+
+  useEffect(() => {
+    if (window.location.hash && window.location.hash === '#/token/clone') {
+      setIsClone(true)
+    } else {
+      setIsClone(false)
+    }
+  }, [window.location.hash])
 
   const [imageFile, setImageFile] = useState(null);
 
@@ -68,15 +86,49 @@ function CreateToken() {
     setVanityAddress('')
   }
 
+  const getTokenMetadata = async () => {
+    try {
+      setIsSearch(true)
+      const data = await getAsset(tokenAddress)
+      console.log(data, 'data')
+      const {
+        name, symbol, description, website, twitter,
+        telegram, discord, image, decimals, supply,
+        freeze_authority, mint_authority,
+        mutable,
+        owner,
+        metadataUrl
+      } = data
+
+      setConfig({
+        name, symbol, description,
+        website, twitter, telegram, discord,
+        decimals, supply,
+        freeze_authority, mint_authority,
+        mutable,
+        owner,
+        metadataUrl,
+        image,
+      })
+      setIsOptions(true)
+      setIsSearch(false)
+    } catch (error) {
+      console.log(error)
+      setIsSearch(false)
+      messageApi.error('未查询到该代币信息')
+    }
+  }
+
   const createToken = async () => {
     try {
+
       if (!publicKey) return messageApi.error(t('Please connect the wallet first'))
       if (!config.name) return messageApi.error(t('Please fill in the name'))
       if (!config.symbol) return messageApi.error(t('Please fill in the short name'))
       if (!config.decimals) return messageApi.error(t('Please fill in the Decimals'))
       if (Number(config.decimals) > 9) return messageApi.error(t('The maximum Decimals is 9'))
       if (!config.supply) return messageApi.error(t('Please fill in the supply quantity'))
-      if (!imageFile) return messageApi.error(t('Please upload a picture logo'))
+      if (!imageFile && !config.image) return messageApi.error(t('Please upload a picture logo'))
       if (config.description && config.description.length > 200) return messageApi.error(t('Description up to 200 words'))
 
       console.log('createSPLToken')
@@ -84,9 +136,14 @@ function CreateToken() {
       setTokenAddresss('')
       setError('')
 
-      // const metadata_url = await upLoadImage(config, imageFile, true)
-      const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
-      console.log('metadata')
+      let metadata_url = ''
+      if (imageFile) {
+        metadata_url = await upLoadImage(config, imageFile, true)
+      } else {
+        metadata_url = await upLoadImage(config, config.image, false)
+      }
+      // const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
+      console.log(metadata_url, 'metadata')
 
 
       const lamports = await getMinimumBalanceForRentExemptMint(connection);
@@ -150,7 +207,7 @@ function CreateToken() {
           mintKeypair.publicKey,
           tokenATA,
           publicKey,
-          Number(config.supply) * Math.pow(10, Number(config.decimals)),
+          Number((Number(config.supply) * Math.pow(10, Number(config.decimals))).toFixed(0)),
         ),
         createMetadataInstruction,
       );
@@ -219,6 +276,24 @@ function CreateToken() {
       <Header title='Solana代币创建'
         hint='轻松定制您的Solana代币！选择独特且吸引人的数字组合使您的代币更加突出，让您的代币在众多项目中脱颖而出！' />
 
+      {isClone &&
+        <div>
+          <div>代币合约地址</div>
+          <div className='tokenInput'>
+            <div className='input'>
+              <input type="text" className={Input_Style} placeholder='请输入要更新的代币合约地址'
+                value={tokenAddress} onChange={(e) => setTokenAddress(e.target.value)}
+              />
+            </div>
+            <div className='buttonSwapper'>
+              <Button className={Button_Style} loading={isSearch}
+                onClick={getTokenMetadata} >
+                <span>搜索</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      }
       <CreatePage className="my-6">
         <div className='itemSwapper'>
           <div className='item'>
@@ -274,7 +349,7 @@ function CreateToken() {
           <div className='item'>
             <div className='mb-1 start'>Token Logo</div>
             <div className='flex imgswapper'>
-              <UpdataImage setImageFile={setImageFile} />
+              <UpdataImage setImageFile={setImageFile} image={config.image} />
               <div className='imagetext'>
                 <div>
                   <div>支持图片格式：WEBP/PNG/GIF/JPG</div>

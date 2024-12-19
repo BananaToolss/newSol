@@ -26,6 +26,11 @@ export default {
             icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
           },
           {
+            path: 'clone',
+            name: '克隆代币',
+            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+          },
+          {
             path: 'update',
             name: '代币更新',
             icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,

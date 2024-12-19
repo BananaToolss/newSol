@@ -13,6 +13,7 @@ const Routers = () => {
       children: [
         { index: true, element: <Navigate to='create' /> },
         { path: "create", element: <CreateToken /> },
+        { path: "clone", element: <CreateToken /> },
         { path: "update", element: <Update /> },
       ]
     },

@@ -8,7 +8,7 @@ export interface TOKEN_TYPE {
   telegram: string
   twitter: string
   discord: string
-  tags?: string
+
   freeze_authority?: string
   mint_authority?: string
   mutable?: boolean
