@@ -164,6 +164,7 @@ function Update() {
                 value={config.name}
                 onChange={configChange}
                 name='name'
+                disabled={!isOwner}
               />
             </div>
             <div className='item'>
@@ -175,6 +176,7 @@ function Update() {
                 value={config.symbol}
                 onChange={configChange}
                 name='symbol'
+                disabled={!isOwner}
               />
             </div>
           </div>
@@ -190,6 +192,7 @@ function Update() {
                   value={config.supply}
                   onChange={configChange}
                   name='supply'
+                  disabled={!isOwner}
                 />
               </div>
               <div>
@@ -201,6 +204,7 @@ function Update() {
                   value={config.decimals}
                   onChange={configChange}
                   name='decimals'
+                  disabled={!isOwner}
                 />
               </div>
             </div>
@@ -225,9 +229,9 @@ function Update() {
               <div className='mb-1'>{t('Describe')}（选填）</div>
               <TextArea
                 className={Input_Style}
-                placeholder='请输入Token描述'
+                placeholder='要更新的代币未填写此信息'
                 value={config.description}
-                onChange={configChange} name='description' />
+                onChange={configChange} name='description' disabled={!isOwner} />
             </div>
           </div>
 
@@ -238,10 +242,10 @@ function Update() {
                 <input
                   type="text"
                   className={Input_Style}
-                  placeholder='请输入您的官网链接'
+                  placeholder='要更新的代币未填写此信息'
                   value={config.website}
                   onChange={configChange}
-                  name='website'
+                  name='website' disabled={!isOwner}
                 />
               </div>
               <div className='item'>
@@ -249,10 +253,10 @@ function Update() {
                 <input
                   type="text"
                   className={Input_Style}
-                  placeholder='请输入您的推特链接'
+                  placeholder='要更新的代币未填写此信息'
                   value={config.twitter}
                   onChange={configChange}
-                  name='twitter'
+                  name='twitter' disabled={!isOwner}
                 />
               </div>
             </div>
@@ -262,10 +266,10 @@ function Update() {
                 <input
                   type="text"
                   className={Input_Style}
-                  placeholder='请输入您的Telegram链接'
+                  placeholder='要更新的代币未填写此信息'
                   value={config.telegram}
                   onChange={configChange}
-                  name='telegram'
+                  name='telegram' disabled={!isOwner}
                 />
               </div>
               <div className='item'>
@@ -273,10 +277,10 @@ function Update() {
                 <input
                   type="text"
                   className={Input_Style}
-                  placeholder='请输入您的Discord'
+                  placeholder='要更新的代币未填写此信息'
                   value={config.discord}
                   onChange={configChange}
-                  name='discord'
+                  name='discord' disabled={!isOwner}
                 />
               </div>
             </div>
@@ -290,7 +294,7 @@ function Update() {
                   value={config.mint_authority}
                   onChange={configChange}
                   name='mint_authority'
-                  disabled={config.mint_authority === '已弃权'}
+                  disabled={config.mint_authority === '已弃权' || !isOwner}
                 />
               </div>
               <div className='item'>
@@ -302,7 +306,7 @@ function Update() {
                   value={config.freeze_authority}
                   onChange={configChange}
                   name='freeze_authority'
-                  disabled={config.freeze_authority === '已弃权'}
+                  disabled={config.freeze_authority === '已弃权' || !isOwner}
                 />
               </div>
             </div>
