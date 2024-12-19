@@ -108,12 +108,12 @@ function Update() {
   const updateClick = async () => {
     try {
       let metadata_url = ''
-      if (imageFile) {
-        metadata_url = await upLoadImage(config, imageFile, true)
-      } else {
-        metadata_url = await upLoadImage(config, config.image, false)
-      }
-      // const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
+      // if (imageFile) {
+      //   metadata_url = await upLoadImage(config, imageFile, true)
+      // } else {
+      //   metadata_url = await upLoadImage(config, config.image, false)
+      // }
+      metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
       console.log(metadata_url)
 
       const mint = new PublicKey(tokenAddress)
