@@ -97,9 +97,13 @@ function BrunToken() {
       <Header title={t('Burning Tokens')} hint='便捷的永久移除流通中的代币，以提升代币的稀缺性或作为项目承诺的一部分，从而增强您的项目经济模型。' />
 
       <BurnPage>
-        <SelectToken callBack={backClick} />
-        <div className='mt-5'>
-          <Input className={Input_Style} placeholder={t('Please enter the quantity to be destroyed')}
+        <div >
+          <div className='title'>请选择代币</div>
+          <SelectToken callBack={backClick} />
+        </div>
+        <div className='mt-5 '>
+          <div className='title'>燃烧数量</div>
+          <Input className={Input_Style} placeholder={t('请输入需要燃烧的数量')}
             value={burnAmount} onChange={burnAmountChange} />
         </div>
 
