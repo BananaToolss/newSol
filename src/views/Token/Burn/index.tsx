@@ -121,9 +121,7 @@ function BrunToken() {
           </div>
         </div>
 
-        <div className="my-2">
-          <Result signature={signature} error={error} />
-        </div>
+        <Result signature={signature} error={error} />
       </BurnPage>
     </Page>
   )
