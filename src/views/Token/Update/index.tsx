@@ -91,6 +91,7 @@ function Update() {
 
   const updateClick = async () => {
     try {
+      setIsUpdate(true)
       let metadata_url = ''
       if (imageFile) {
         metadata_url = await upLoadImage(config, imageFile, true)
@@ -145,8 +146,12 @@ function Update() {
         "processed"
       );
       console.log(confirmed, 'confirmed')
+      setIsUpdate(false)
+      messageApi.success('更新成功')
     } catch (error) {
       console.log(error)
+      setIsUpdate(false)
+      messageApi.error('更新失败')
     }
   }
 
