@@ -40,7 +40,6 @@ function Authority() {
   })
 
   const [isSending, setIsSending] = useState<boolean>(false);
-  const [success, setSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [signature, setSignature] = useState<string>("");
 
@@ -148,6 +147,7 @@ function Authority() {
   return (
     <Page>
       {contextHolder}
+      {contextHolder1}
       <Header title={t('Permission control')} />
 
       <AuthorityPage>
@@ -173,15 +173,17 @@ function Authority() {
             <div className='auth_title'>{t('Token Information Update Authority')}</div>
             <div className='auti_title1'>{t('Revoking ownership means you will be unable to modify token metadata, which can enhance investor security.')}</div>
           </div>
-          <div className='right'>
-            {isAuthority.isMutable ?
-              <div className='right_t1'>未放弃</div> :
-              <div className='right_t2'>已放弃</div>
-            }
-            <Checkbox checked={options.isMutable}
-              onChange={(e) => optionsChange(e.target.checked, 'isMutable')}
-              disabled={!isAuthority.isMutable} />
-          </div>
+          {tokenAddr &&
+            <div className='right'>
+              {isAuthority.isMutable ?
+                <div className='right_t1'>未放弃</div> :
+                <div className='right_t2'>已放弃</div>
+              }
+              <Checkbox checked={options.isMutable}
+                onChange={(e) => optionsChange(e.target.checked, 'isMutable')}
+                disabled={!isAuthority.isMutable} />
+            </div>
+          }
         </div>
 
         <div className='auth_box'>
@@ -189,15 +191,17 @@ function Authority() {
             <div className='auth_title'>{t('Revoke Freeze Authority')}</div>
             <div className='auti_title1'>{t(`Creating a liquidity pool requires revoking freeze authority. Revoking this authority means you won't be able to freeze tokens in holder wallets.`)}</div>
           </div>
-          <div className='right'>
-            {isAuthority.isFreeze ?
-              <div className='right_t1'>未放弃</div> :
-              <div className='right_t2'>已放弃</div>
-            }
-            <Checkbox checked={options.isFreeze}
-              onChange={(e) => optionsChange(e.target.checked, 'isFreeze')}
-              disabled={!isAuthority.isFreeze} />
-          </div>
+          {tokenAddr &&
+            <div className='right'>
+              {isAuthority.isFreeze ?
+                <div className='right_t1'>未放弃</div> :
+                <div className='right_t2'>已放弃</div>
+              }
+              <Checkbox checked={options.isFreeze}
+                onChange={(e) => optionsChange(e.target.checked, 'isFreeze')}
+                disabled={!isAuthority.isFreeze} />
+            </div>
+          }
         </div>
 
         <div className='auth_box'>
@@ -205,15 +209,17 @@ function Authority() {
             <div className='auth_title'>{t('Revoke Mint Authority')}</div>
             <div className='auti_title1'>{t(`Revoking mint authority is necessary for investor confidence and token success. If you revoke this authority, you won't be able to mint additional token supply.`)}</div>
           </div>
-          <div className='right'>
-            {isAuthority.isMint ?
-              <div className='right_t1'>未放弃</div> :
-              <div className='right_t2'>已放弃</div>
-            }
-            <Checkbox checked={options.isMint}
-              onChange={(e) => optionsChange(e.target.checked, 'isMint')}
-              disabled={!isAuthority.isMint} />
-          </div>
+          {tokenAddr &&
+            <div className='right'>
+              {isAuthority.isMint ?
+                <div className='right_t1'>未放弃</div> :
+                <div className='right_t2'>已放弃</div>
+              }
+              <Checkbox checked={options.isMint}
+                onChange={(e) => optionsChange(e.target.checked, 'isMint')}
+                disabled={!isAuthority.isMint} />
+            </div>
+          }
         </div>
 
         <div className='btn mt-6'>
