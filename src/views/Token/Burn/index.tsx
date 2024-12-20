@@ -12,7 +12,7 @@ import type { TokenDeta_Type } from '@/components/Select'
 import { Input_Style, Button_Style, PROJECT_ADDRESS, BURN_FEE } from '@/config'
 import { getTxLink, getLink } from '@/utils'
 import { Page } from '@/styles';
-import { Header } from '@/components'
+import { Header, SelectToken } from '@/components'
 
 function BrunToken() {
   const { t } = useTranslation()
@@ -104,10 +104,17 @@ function BrunToken() {
     }
   }
 
+  const callBack = async () => {
+
+  }
+
   return (
     <Page>
       {contextHolder}
       <Header title={t('Burning Tokens')} hint='便捷的永久移除流通中的代币，以提升代币的稀缺性或作为项目承诺的一部分，从而增强您的项目经济模型。' />
+
+
+      <SelectToken callBack={callBack} />
 
       <div className='mt-10 mb-8'>
         <Select callBack={backClick} />
