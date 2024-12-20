@@ -49,6 +49,9 @@ export const Page = styled.div`
      padding: 0 16px;
      margin-top: 4px;
    }
+   .cardActive {
+    border: 2px solid #bf39f1;
+   }
 
   @media screen and (max-width:968px) {
     width: 100%;

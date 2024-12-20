@@ -17,7 +17,7 @@ import { getAsset } from '@/utils/sol'
 import { getSPLBalance } from '@/utils/util'
 import { getAllToken } from '@/utils/newSol'
 import { SOL, USDC, USDT } from './Token'
-import type { Token_Type } from './Token'
+import type { Token_Type } from '@/type'
 import { TOKEN_BOX, SelectTokenPage, AllTokenItem } from './style'
 
 interface PropsType {

@@ -16,3 +16,14 @@ export interface TOKEN_TYPE {
   metadataUrl?: string
   image?: string
 }
+
+
+export interface Token_Type {
+  name: string
+  symbol: string
+  address: string
+  decimals: number
+  image: string
+  balance: string
+  isSelect?: boolean
+}

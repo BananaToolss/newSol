@@ -1,18 +1,10 @@
 import { getImage, IsAddress, addressHandler, fetcher } from '@/utils'
+import type { Token_Type } from '@/type'
 
 export const SOL_TOKEN = "So11111111111111111111111111111111111111112";
 export const USDC_TOKEN = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
 export const USDT_TOKEN = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
 
-
-export interface Token_Type {
-  name: string
-  symbol: string
-  address: string
-  decimals: number
-  image: string
-  balance: string
-}
 
 export const SOL: Token_Type = {
   address: SOL_TOKEN,
