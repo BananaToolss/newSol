@@ -4,6 +4,7 @@ import { isMainnet } from '@/config'
 
 const KEY = 'dCV9zeef_E-v4OVl'
 const base = 'https://api.shyft.to'
+const network = isMainnet ? 'mainnet-beta' : 'devnet'
 
 const fetcher = (args: any) => fetch(args).then((res) => res.json())
 
@@ -18,9 +19,10 @@ export const getAllToken = (account: string) => {
         redirect: 'follow'
       };
       const data = await fetch(
-        `${base}/sol/v1/wallet/all_tokens?network=mainnet-beta&wallet=${account}`
+        `${base}/sol/v1/wallet/all_tokens?network=${network}&wallet=${account}`
         , requestOptions)
         .then(response => response.json())
+      console.log(data, 'data')
       resolve(data.result)
     } catch (error) {
       reject(error)

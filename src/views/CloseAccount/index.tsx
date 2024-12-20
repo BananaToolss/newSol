@@ -63,13 +63,13 @@ function CloseAccount() {
       const myNFTEmptyAccounts: any = []
 
       const _myNFTEmptyAccounts = splAccounts.value.map((m) => {
-          const tokenAccountaddress = m.pubkey.toBase58();
-          const mintAdddress = m.account?.data?.parsed?.info?.mint;
-          const _tokenAccount = tokenArr.find((token: any) => token.adress == tokenAccountaddress);
-          if (_tokenAccount == undefined) {
-            myNFTEmptyAccounts.push({ tokenAccountaddress, mintAdddress });
-          }
-        });
+        const tokenAccountaddress = m.pubkey.toBase58();
+        const mintAdddress = m.account?.data?.parsed?.info?.mint;
+        const _tokenAccount = tokenArr.find((token: any) => token.adress == tokenAccountaddress);
+        if (_tokenAccount == undefined) {
+          myNFTEmptyAccounts.push({ tokenAccountaddress, mintAdddress });
+        }
+      });
 
       console.log(myNFTEmptyAccounts)
 
@@ -101,7 +101,7 @@ function CloseAccount() {
         {allTokenArr.map((item, index) => (
           <Card className={item.isSelect ? 'cardActive' : ''} key={index} onClick={() => cardClick(index)}>
             <div className='header'>
-              <img src={item.image} />
+              <img src={item.image ? item.image : getImage('banana.png')} />
               {item.isSelect &&
                 <div className='active'>已选择</div>
               }
