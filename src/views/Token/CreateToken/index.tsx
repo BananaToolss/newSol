@@ -281,7 +281,7 @@ function CreateToken() {
           <div>代币合约地址</div>
           <div className='tokenInput'>
             <div className='input'>
-              <input type="text" className={Input_Style} placeholder='请输入要更新的代币合约地址'
+              <Input type="text" className={Input_Style} placeholder='请输入要更新的代币合约地址'
                 value={tokenAddress} onChange={(e) => setTokenAddress(e.target.value)}
               />
             </div>
@@ -298,7 +298,7 @@ function CreateToken() {
         <div className='itemSwapper'>
           <div className='item'>
             <div className='mb-1 start'>Token名称</div>
-            <input
+            <Input
               type="text"
               className={Input_Style}
               placeholder='请输入Token名称'
@@ -309,7 +309,7 @@ function CreateToken() {
           </div>
           <div className='item'>
             <div className='mb-1 start'>Token符号</div>
-            <input
+            <Input
               type="text"
               className={Input_Style}
               placeholder='请输入Token符号'
@@ -324,7 +324,7 @@ function CreateToken() {
           <div className='item'>
             <div className='mb26 mb10'>
               <div className='mb-1 start'>{t('Supply')}</div>
-              <input
+              <Input
                 type="number"
                 className={Input_Style}
                 placeholder='请输入Token总数'
@@ -335,7 +335,7 @@ function CreateToken() {
             </div>
             <div>
               <div className='mb-1 start'>Token精度</div>
-              <input
+              <Input
                 type="number"
                 className={Input_Style}
                 placeholder={t('Please enter a Decimals')}
@@ -381,7 +381,7 @@ function CreateToken() {
             <div className='itemSwapper'>
               <div className='item'>
                 <div className='mb-1'>官网</div>
-                <input
+                <Input
                   type="text"
                   className={Input_Style}
                   placeholder='请输入您的官网链接'
@@ -392,7 +392,7 @@ function CreateToken() {
               </div>
               <div className='item'>
                 <div className='mb-1'>X</div>
-                <input
+                <Input
                   type="text"
                   className={Input_Style}
                   placeholder='请输入您的推特链接'
@@ -405,7 +405,7 @@ function CreateToken() {
             <div className='itemSwapper'>
               <div className='item'>
                 <div className='mb-1'>Telegram</div>
-                <input
+                <Input
                   type="text"
                   className={Input_Style}
                   placeholder='请输入您的Telegram链接'
@@ -416,7 +416,7 @@ function CreateToken() {
               </div>
               <div className='item'>
                 <div className='mb-1'>Discord</div>
-                <input
+                <Input
                   type="text"
                   className={Input_Style}
                   placeholder='请输入您的Discord'
