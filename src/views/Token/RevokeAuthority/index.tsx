@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Segmented, Switch, message, Checkbox } from 'antd'
+import { Button, Segmented, notification, message, Checkbox } from 'antd'
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { PublicKey, Transaction, LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
@@ -10,6 +10,7 @@ import {
   Input_Style, Button_Style,
 } from '@/config'
 import { Page } from '@/styles';
+import { Result } from '@/components'
 import { IsAddress, getTxLink, numAdd } from '@/utils'
 import { Header } from '@/components'
 import { AuthorityPage } from './style'
@@ -19,7 +20,7 @@ import { AuthorityPage } from './style'
 function Authority() {
   const { t } = useTranslation()
   const [messageApi, contextHolder] = message.useMessage();
-
+  const [api, contextHolder1] = notification.useNotification();
   const { publicKey, sendTransaction } = useWallet();
   const { connection } = useConnection();
   const [isSearch, setIsSearch] = useState(false)
@@ -94,6 +95,8 @@ function Authority() {
   const updateAuthority = async () => {
     try {
       setIsSending(true)
+      setSignature('')
+      setError('')
       const token = new PublicKey(tokenAddr)
       const tx = new Transaction()
       if (options.isFreeze) {
@@ -122,9 +125,22 @@ function Authority() {
       );
       console.log(confirmed, 'confirmed')
       setIsSending(false)
+      setSignature(result)
+      api.success({ message: "success" })
     } catch (error) {
       console.log(error)
       setIsSending(false)
+      api.error({ message: error.toString() })
+      const err = (error as any)?.message;
+      if (
+        err.includes(
+          "Cannot read properties of undefined (reading 'public_keys')"
+        )
+      ) {
+        setError("It is not a valid Backpack username");
+      } else {
+        setError(err);
+      }
     }
   }
 
@@ -207,26 +223,12 @@ function Authority() {
               <span>放弃</span>
             </Button>
           </div>
-          {/* <div className='fee'>全网最低服务费: 1 SOL</div> */}
+          <div className='fee'>全网最低服务费: 1 SOL</div>
         </div>
 
 
-        {success && (
-          <div className="font-semibold text-xl mt-4">
-            ✅ {t('Setup successful !')}
-            <a
-              target="_blank"
-              rel="noreferrer"
-              href={getTxLink(signature)}
-            >
-              <strong className="underline">{t('Click to view')}</strong>
-            </a>
-          </div>
-        )}
+        <Result signature={signature} error={error} />
 
-        {error != "" && (
-          <div className="mt-4 font-semibold text-xl">❌ {error}</div>
-        )}
       </AuthorityPage>
     </Page>
   )

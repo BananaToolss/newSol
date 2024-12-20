@@ -3,9 +3,9 @@ import { PublicKey, Transaction } from '@solana/web3.js';
 import { Metadata, PROGRAM_ID, DataV2, createUpdateMetadataAccountV2Instruction } from '@metaplex-foundation/mpl-token-metadata';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useTranslation } from "react-i18next";
-import { Button, Input, message } from 'antd'
+import { Button, Input, message, notification } from 'antd'
 import { BsXCircleFill, BsCheckCircleFill } from "react-icons/bs";
-import { Header, UpdataImage } from '@/components';
+import { Header, UpdataImage, Result } from '@/components';
 import { getAsset } from '@/utils/sol'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { Page } from '@/styles';
@@ -21,6 +21,7 @@ const { TextArea } = Input
 function Update() {
   const { t } = useTranslation()
   const [messageApi, contextHolder] = message.useMessage();
+  const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection()
   const { publicKey, sendTransaction } = useWallet()
   const [tokenAddress, setTokenAddress] = useState('')
@@ -47,6 +48,8 @@ function Update() {
   })
   const [isOwner, setIsOwner] = useState(false)
   const [imageFile, setImageFile] = useState(null)
+  const [signature, setSignature] = useState("");
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (config.owner && publicKey) {
@@ -92,6 +95,8 @@ function Update() {
   const updateClick = async () => {
     try {
       setIsUpdate(true)
+      setSignature('')
+      setError('')
       let metadata_url = ''
       if (imageFile) {
         metadata_url = await upLoadImage(config, imageFile, true)
@@ -147,17 +152,28 @@ function Update() {
       );
       console.log(confirmed, 'confirmed')
       setIsUpdate(false)
-      messageApi.success('更新成功')
+      api.success({ message: '更新成功' })
     } catch (error) {
       console.log(error)
       setIsUpdate(false)
-      messageApi.error('更新失败')
+      api.error({ message: error.toString() })
+      const err = (error as any)?.message;
+      if (
+        err.includes(
+          "Cannot read properties of undefined (reading 'public_keys')"
+        )
+      ) {
+        setError("It is not a valid Backpack username");
+      } else {
+        setError(err);
+      }
     }
   }
 
   return (
     <Page>
       {contextHolder}
+      {contextHolder1}
       <Header title='代币更新'
         hint='已有代币信息快捷更新，帮助您更好的展示代币相关信息，及时完成项目信息迭代' />
 
@@ -376,6 +392,8 @@ function Update() {
               </div>
               <div className='fee'>全网最低服务费: 0.05 SOL</div>
             </div>
+
+            <Result signature={signature} error={error} />
           </CreatePage>
         }
       </UpdatePage>

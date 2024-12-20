@@ -17,7 +17,7 @@ import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FE
 import { getTxLink, addPriorityFees } from '@/utils'
 import { getAsset } from '@/utils/sol'
 import type { TOKEN_TYPE } from '@/type'
-import { Vanity, UpdataImage, Header, Hint } from '@/components'
+import { Vanity, UpdataImage, Header, Hint, Result } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { Page } from '@/styles'
 import { CreatePage } from './style'
@@ -499,22 +499,7 @@ function CreateToken() {
           <div className='fee'>全网最低服务费: {CREATE_TOKEN_FEE} SOL</div>
         </div>
 
-
-        <div >
-          {tokenAddresss !== "" &&
-            <div className="mt-5 text-start">
-              ✅ {t('Created successfully!')}
-              <a target="_blank" href={getTxLink(signature)} rel="noreferrer">
-                <strong className="underline">{t('Click to view')}</strong>
-              </a>
-              <div className='flex'>
-                <div className={Text_Style1}>{tokenAddresss} </div>
-                <BsCopy onClick={copyClick} style={{ marginLeft: '6px' }} className='pointer' />
-              </div>
-            </div>
-          }
-          {error != '' && <div className="mt-2">❌ Ohoh.. {error}</div>}
-        </div>
+        <Result tokenAddress={tokenAddresss} signature={signature} error={error} />
       </CreatePage>
     </Page>
 

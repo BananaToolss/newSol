@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Checkbox, Input, message } from 'antd'
+import { Button, notification, Input, message } from 'antd'
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useTranslation } from "react-i18next";
@@ -11,20 +11,22 @@ import type { Token_Type } from '@/components/SelectToken/Token'
 import { Input_Style, Button_Style, PROJECT_ADDRESS, BURN_FEE } from '@/config'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { Page } from '@/styles';
-import { Header, SelectToken } from '@/components'
+import { Header, SelectToken, Result } from '@/components'
 import { BurnPage } from './style'
 
 function BrunToken() {
   const { t } = useTranslation()
+  const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
   const [token, setToken] = useState<Token_Type>(null)
   const [burnAmount, setBurnAmount] = useState('')
 
-  const [success, setSuccess] = useState<boolean>(false);
+
   const [isBurning, setIsBurning] = useState<boolean>(false);
   const [signature, setSignature] = useState("");
+  const [error, setError] = useState('');
 
   const burnAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBurnAmount(e.target.value)
@@ -48,7 +50,8 @@ function BrunToken() {
   const burnClick = async () => {
     try {
       setIsBurning(true);
-      setSuccess(false);
+      setSignature('')
+      setError('')
 
       let Tx = new Transaction();
       const mint = new PublicKey(token.address);
@@ -75,14 +78,22 @@ function BrunToken() {
       );
       setSignature(signature)
       console.log("confirmation", signature);
-
       setIsBurning(false);
-      setSuccess(true);
       messageApi.success('burn success')
     } catch (error) {
       console.log(error)
       setIsBurning(false);
-      messageApi.error('error')
+      api.error({ message: error.toString() })
+      const err = (error as any)?.message;
+      if (
+        err.includes(
+          "Cannot read properties of undefined (reading 'public_keys')"
+        )
+      ) {
+        setError("It is not a valid Backpack username");
+      } else {
+        setError(err);
+      }
     }
   }
 
@@ -90,6 +101,7 @@ function BrunToken() {
   return (
     <Page>
       {contextHolder}
+      {contextHolder1}
       <Header title={t('Burning Tokens')} hint='便捷的永久移除流通中的代币，以提升代币的稀缺性或作为项目承诺的一部分，从而增强您的项目经济模型。' />
 
       <BurnPage>
@@ -110,18 +122,7 @@ function BrunToken() {
         </div>
 
         <div className="my-2">
-          {success ? (
-            <>
-              <div className="text-[#00FF00]">
-                Successfully!
-              </div>
-              <a target="_blank" href={getTxLink(signature)} rel="noreferrer">
-                <strong className="underline">{t('Click to view')}</strong>
-              </a>
-            </>
-          ) : (
-            <div className="h-[27px]"></div>
-          )}
+          <Result signature={signature} error={error} />
         </div>
       </BurnPage>
     </Page>
