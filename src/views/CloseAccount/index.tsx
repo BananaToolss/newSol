@@ -9,7 +9,7 @@ import {
 import { LoadingOutlined } from '@ant-design/icons'
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { getImage, addressHandler } from '@/utils';
-import { getTokenAccountsByOwner } from '@/utils/sol'
+import { Header } from '@/components';
 import { getAllToken } from '@/utils/newSol'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
@@ -58,7 +58,6 @@ function CloseAccount() {
           },
           "processed"
         );
-      console.log(splAccounts, 'splAccounts')
 
       const myNFTEmptyAccounts: any = []
 
@@ -71,7 +70,7 @@ function CloseAccount() {
         }
       });
 
-      console.log(myNFTEmptyAccounts)
+      console.log(myNFTEmptyAccounts,'myNFTEmptyAccounts')
 
 
       setAllTokenArr(tokenArr)
@@ -90,6 +89,8 @@ function CloseAccount() {
 
   return (
     <Page>
+      <Header title='关闭账户-回收Solana'
+      hint='关闭Solana的闲置的Token账户，回收账户租金（每个账户可收取约0.00203 SOL）。'/>
       {
         isSearch &&
         <Flex align="center" gap="middle" className='mt-4 mb-4 ml-4'>

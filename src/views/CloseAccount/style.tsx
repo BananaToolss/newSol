@@ -23,6 +23,7 @@ export const Card = styled.div`
     justify-content: center;
     position: relative;
     padding: 20px;
+    height: 100%;
     img {
       width: 80%;
       border-radius: 50%;
