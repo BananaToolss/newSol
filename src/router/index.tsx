@@ -3,6 +3,9 @@ import Home from '@/views/Home'
 import CreateToken from '@/views/Token/CreateToken'
 import Update from '@/views/Token/Update'
 import RevokeAuthority from '@/views/Token/RevokeAuthority'
+import BurnToken from '@/views/Token/Burn'
+import FreezeAccount from '@/views/Token/FreezeAccount'
+import MintToken from '@/views/Token/MintToken'
 
 const Routers = () => {
   const router = useRoutes([
@@ -16,6 +19,10 @@ const Routers = () => {
         { path: "clone", element: <CreateToken /> },
         { path: "update", element: <Update /> },
         { path: "revokeAuthority", element: <RevokeAuthority /> },
+        { path: "burn", element: <BurnToken /> },
+        { path: "freezeAccount", element: <FreezeAccount /> },
+        { path: "mint", element: <MintToken /> },
+
       ]
     },
   ])
