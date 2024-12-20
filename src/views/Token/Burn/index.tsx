@@ -7,8 +7,7 @@ import {
   burnChecked, createBurnCheckedInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
-import { Select } from '@/components'
-import type { TokenDeta_Type } from '@/components/Select'
+import type { Token_Type } from '@/components/SelectToken/Token'
 import { Input_Style, Button_Style, PROJECT_ADDRESS, BURN_FEE } from '@/config'
 import { getTxLink, getLink } from '@/utils'
 import { Page } from '@/styles';
@@ -20,9 +19,9 @@ function BrunToken() {
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
   const wallet = useWallet();
-  const [token, setToken] = useState<TokenDeta_Type>(null)
+  const [token, setToken] = useState<Token_Type>(null)
   const [burnAmount, setBurnAmount] = useState('')
-  const [isBurnAll, setIsBurnAll] = useState(false)
+
   const [success, setSuccess] = useState<boolean>(false);
   const [isBurning, setIsBurning] = useState<boolean>(false);
   const [signature, setSignature] = useState("");
@@ -30,7 +29,7 @@ function BrunToken() {
   const burnAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBurnAmount(e.target.value)
   }
-  const backClick = (_token: TokenDeta_Type) => {
+  const backClick = (_token: Token_Type) => {
     setToken(_token)
   }
 
@@ -52,13 +51,10 @@ function BrunToken() {
       setSuccess(false);
 
       let Tx = new Transaction();
-
       const mint = new PublicKey(token.address);
       const publickey = wallet.publicKey;
       let account = await getAt(mint, wallet.publicKey);
-
       let _burnAmount = Number(burnAmount) * 10 ** token.decimals
-      if (isBurnAll) _burnAmount = Number(token.amount)
 
       const burnInstruction = createBurnCheckedInstruction(
         account,
@@ -68,25 +64,14 @@ function BrunToken() {
         token.decimals,
       );
 
-      // const closeInstruction = createCloseAccountInstruction(
-      //   account,
-      //   publickey,
-      //   publickey,
-      //   [],
-      //   TOKEN_PROGRAM_ID
-      // );
-      // if (isBurnAll) {
-      //   Tx.add(burnInstruction, closeInstruction);
-      // } else {
-      //   Tx.add(burnInstruction);
-      // }
+      Tx.add(burnInstruction)
 
-      const fee = SystemProgram.transfer({
-        fromPubkey: publickey,
-        toPubkey: new PublicKey(PROJECT_ADDRESS),
-        lamports: BURN_FEE * LAMPORTS_PER_SOL,
-      })
-      Tx = Tx.add(fee)
+      // const fee = SystemProgram.transfer({
+      //   fromPubkey: publickey,
+      //   toPubkey: new PublicKey(PROJECT_ADDRESS),
+      //   lamports: BURN_FEE * LAMPORTS_PER_SOL,
+      // })
+      // Tx = Tx.add(fee)
       const signature = await wallet.sendTransaction(Tx, connection);
       const confirmed = await connection.confirmTransaction(
         signature,
@@ -105,9 +90,6 @@ function BrunToken() {
     }
   }
 
-  const callBack = async () => {
-
-  }
 
   return (
     <Page>
@@ -115,7 +97,7 @@ function BrunToken() {
       <Header title={t('Burning Tokens')} hint='便捷的永久移除流通中的代币，以提升代币的稀缺性或作为项目承诺的一部分，从而增强您的项目经济模型。' />
 
       <BurnPage>
-        <SelectToken callBack={callBack} />
+        <SelectToken callBack={backClick} />
         <div className='mt-5'>
           <Input className={Input_Style} placeholder={t('Please enter the quantity to be destroyed')}
             value={burnAmount} onChange={burnAmountChange} />
@@ -123,7 +105,7 @@ function BrunToken() {
 
         <div className='btn'>
           <div className='buttonSwapper mt-4'>
-            <Button className={Button_Style} onClick={burnClick} loading={isBurning}>{t('Destroy')}</Button>
+            <Button className={Button_Style} onClick={burnClick} loading={isBurning}>确认燃烧</Button>
           </div>
         </div>
 

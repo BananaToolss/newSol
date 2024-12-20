@@ -22,7 +22,7 @@ import { TOKEN_BOX, SelectTokenPage, AllTokenItem } from './style'
 
 interface PropsType {
 
-  callBack: (value: string, symbol: string) => void
+  callBack: (token: Token_Type) => void
 }
 
 const App = (props: PropsType) => {
@@ -49,6 +49,7 @@ const App = (props: PropsType) => {
       setNotFound(false)
     }
   }, [tokenAddress])
+
   const tokenAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTokenAddress(e.target.value)
     setNewToken(null)
@@ -115,12 +116,14 @@ const App = (props: PropsType) => {
 
   const maintokenItemClick = async (_token: Token_Type) => {
     setToken(_token)
-    setIsModalOpen(false);
+    setIsModalOpen(false)
+    callBack(_token)
   }
 
   const tokenItemClick = async (_token: Token_Type) => {
     setToken(_token)
-    setIsModalOpen(false);
+    setIsModalOpen(false)
+    callBack(_token)
   }
 
   return (
@@ -185,8 +188,8 @@ const App = (props: PropsType) => {
             </TOKEN_BOX>
           </>
         }
-        {allTokenArr.map((item) => (
-          <AllTokenItem onClick={() => tokenItemClick(item)}>
+        {allTokenArr.map((item, index) => (
+          <AllTokenItem onClick={() => tokenItemClick(item)} key={index}>
             <div className='allleft'>
               <img src={item.image} width={26} height={26} />
               <div className='ml-2'>
