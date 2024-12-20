@@ -13,6 +13,8 @@ import {
 } from "@solana/web3.js";
 import { Button_Style, Input_Style } from '@/config'
 import { getImage, IsAddress, addressHandler, fetcher } from '@/utils'
+import { getAsset } from '@/utils/sol'
+import { getSPLBalance } from '@/utils/util'
 import { getAllToken } from '@/utils/newSol'
 import { SOL, USDC, USDT } from './Token'
 import type { Token_Type } from './Token'
@@ -38,7 +40,6 @@ const App = (props: PropsType) => {
   const [token, setToken] = useState<Token_Type>(null) //展示的代币
   const [newToken, setNewToken] = useState<Token_Type>() //单个代币
   const [allTokenArr, setAllTokenArr] = useState<Token_Type[]>([])
-  const [isFind, setIsFind] = useState(false)
   const [notFound, setNotFound] = useState(false)
 
 
@@ -60,7 +61,7 @@ const App = (props: PropsType) => {
       getAccountAllToken()
     }
   }
-
+  //获取账户全部代币
   const getAccountAllToken = async () => {
     try {
       setIsSearch(true)
@@ -89,16 +90,27 @@ const App = (props: PropsType) => {
   const handleCancel = () => {
     setIsModalOpen(false);
   };
-
+  //获取输入代币信息
   const getQuoteInfo = async () => {
     try {
-      setIsFind(true)
+      setIsSearch(true)
       setNotFound(false)
 
-      setIsFind(false)
+      const { name, symbol, image, decimals } = await getAsset(connection, tokenAddress)
+      let balance = 0
+      if (publicKey) {
+        balance = await getSPLBalance(connection, new PublicKey(tokenAddress), publicKey)
+      }
+      setNewToken({
+        address: tokenAddress,
+        name, symbol, image, decimals,
+        balance: balance.toString()
+      })
+
+      setIsSearch(false)
     } catch (error) {
       console.log(error, 'getTokenInfo')
-      setIsFind(false)
+      setIsSearch(false)
       setNotFound(true)
     }
   }
@@ -136,7 +148,6 @@ const App = (props: PropsType) => {
             <input className={Input_Style} placeholder='请选择或输入代币地址'
               value={tokenAddress} onChange={tokenAddressChange} />
             {(tokenAddress && !IsAddress(tokenAddress)) && <div className='text-red-400'>{t('This is not the sol token address')}</div>}
-            {(isFind && !newToken) && <div className='font-bold mt-5 text-center text-lg'>{t('Querying')}...</div>}
             {notFound && <div className='font-bold mt-5 text-center text-lg'>{t('Token not found')}</div>}
           </>
         }

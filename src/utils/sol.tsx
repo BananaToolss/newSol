@@ -29,6 +29,7 @@ export const getAsset = (connection: Connection, token: string) => {
         data: _data
       };
       const response = await axios.request(config1)
+
       const data = response.data.result
 
       const token_info = data.token_info
@@ -65,21 +66,30 @@ export const getAsset = (connection: Connection, token: string) => {
           PROGRAM_ID,
         )[0]
         const metadataAccount = await connection.getAccountInfo(metadataPDA);
+
         const [metadata, _] = Metadata.deserialize(metadataAccount.data);
-        let logoRes = await fetcher(metadata.data.uri);
 
-        const _description = logoRes.description ?? logoRes.extensions.description ?? ''
-        const _website = logoRes.website ?? logoRes.extensions.website ?? ''
-        const _telegram = logoRes.telegram ?? logoRes.extensions.telegram ?? ''
-        const _discord = logoRes.discord ?? logoRes.extensions.discord ?? ''
-        const _twitter = logoRes.twitter ?? logoRes.extensions.twitter ?? ''
+        if (metadata.data.uri) {
+          try {
+            let logoRes = await fetcher(metadata.data.uri);
 
-        if (!image && logoRes.image) image = logoRes.image
-        if (!description && _description) description = _description
-        if (!website && _website) website = _website
-        if (!telegram && _telegram) telegram = _telegram
-        if (!discord && _discord) discord = _discord
-        if (!twitter && _twitter) twitter = _twitter
+            const _description = logoRes.description ?? logoRes.extensions.description ?? ''
+            const _website = logoRes.website ?? logoRes.extensions.website ?? ''
+            const _telegram = logoRes.telegram ?? logoRes.extensions.telegram ?? ''
+            const _discord = logoRes.discord ?? logoRes.extensions.discord ?? ''
+            const _twitter = logoRes.twitter ?? logoRes.extensions.twitter ?? ''
+
+            if (!image && logoRes.image) image = logoRes.image
+            if (!description && _description) description = _description
+            if (!website && _website) website = _website
+            if (!telegram && _telegram) telegram = _telegram
+            if (!discord && _discord) discord = _discord
+            if (!twitter && _twitter) twitter = _twitter
+          } catch (error) {
+
+          }
+        }
+
       }
 
 
