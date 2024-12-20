@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Input } from 'antd';
 import { useTranslation } from "react-i18next";
-import styled from 'styled-components';
+import { BsPlus } from "react-icons/bs";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   Keypair,
@@ -10,47 +10,11 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-
-
 import { Button_Style, Input_Style } from '@/config'
 import { getImage, IsAddress, addressHandler, fetcher } from '@/utils'
-import { SOL_TOKEN, USDC_TOKEN, USDT_TOKEN } from '@/config/Token'
-
-const TOKEN_BOX = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 4px 20px;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  margin-top: 20px;
-  margin-right: 10px;
-  height: 40px;
-  cursor: pointer;
-`
-
-interface Token_Type {
-  mint: string
-  uri: string
-  symbol: string
-}
-
-const SOL: Token_Type = {
-  mint: SOL_TOKEN,
-  uri: getImage('sol.png'),
-  symbol: 'SOL'
-}
-
-const USDC: Token_Type = {
-  mint: USDC_TOKEN,
-  uri: getImage('usdc.png'),
-  symbol: 'USDC'
-}
-
-const USDT: Token_Type = {
-  mint: USDT_TOKEN,
-  uri: getImage('usdt.svg'),
-  symbol: 'USDT'
-}
+import { SOL, USDC, USDT } from './Token'
+import type { Token_Type } from './Token'
+import { TOKEN_BOX, SelectTokenPage } from './style'
 
 interface PropsType {
   isUSDC?: boolean
@@ -63,7 +27,7 @@ const App = (props: PropsType) => {
   const { isUSDC, isBase, isPump, callBack } = props
   const { connection } = useConnection();
   const { t } = useTranslation()
-  const [token, setToken] = useState<Token_Type>(SOL)
+  const [token, setToken] = useState<Token_Type>(null)
   const [value, setValue] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newToken, setNewToken] = useState<Token_Type>()
@@ -112,24 +76,31 @@ const App = (props: PropsType) => {
   }
 
   return (
-    <>
-      <div className='swap_w' onClick={showModal}>
-        <div className='swap_box flex items-center'>
-          <div >
-            <img src={token.uri} width={40} height={40} />
+    <SelectTokenPage>
+      {token ?
+        <div className='flex-1 flex items-center justify-between' onClick={showModal}>
+          <div className='flex items-center'>
+            <div>
+              <img src={token.uri} width={40} height={40} />
+            </div>
+            <div className='ml-3 flex items-center'>
+              <div>{token.symbol}</div>
+              <div className='ml-3 address'>{addressHandler(token.mint)}</div>
+            </div>
           </div>
-          <div className='ml-2'>
-            <div>{token.symbol}</div>
-            <div>{addressHandler(token.mint)}</div>
-          </div>
+          <div>180.00</div>
+        </div> :
+        <div className='addtoken' onClick={showModal}>
+          <BsPlus />
+          <div>点击选择代币</div>
         </div>
-      </div>
+      }
 
       <Modal open={isModalOpen} footer={null} onCancel={handleCancel} width={600}>
         {!isBase &&
           <>
-            <p className='font-bold mt-5 text-center text-lg mb-2'>{t('Choose Token')}</p>
-            <input className={Input_Style} placeholder={t('Please enter the token contract address')}
+            <p className='font-bold mt-5 text-lg mb-2'>{t('Choose Token')}</p>
+            <input className={Input_Style} placeholder='请选择或输入代币地址'
               value={value} onChange={valueChange} />
             {(value && !IsAddress(value)) && <div className='text-red-400'>{t('This is not the sol token address')}</div>}
             {(isFind && !newToken) && <div className='font-bold mt-5 text-center text-lg'>{t('Querying')}...</div>}
@@ -143,18 +114,14 @@ const App = (props: PropsType) => {
             <img src={getImage('sol.png')} width={26} height={26} />
             <div className='ml-1'>SOL</div>
           </TOKEN_BOX>
-          {!isPump &&
-            <>
-              <TOKEN_BOX onClick={() => tokenItemClick(USDC)}>
-                <img src={getImage('usdc.png')} width={26} height={26} />
-                <div className='ml-1'>USDC</div>
-              </TOKEN_BOX>
-              <TOKEN_BOX onClick={() => tokenItemClick(USDT)}>
-                <img src={getImage('usdt.svg')} width={26} height={26} />
-                <div className='ml-1'>USDT</div>
-              </TOKEN_BOX>
-            </>
-          }
+          <TOKEN_BOX onClick={() => tokenItemClick(USDC)}>
+            <img src={getImage('usdc.png')} width={26} height={26} />
+            <div className='ml-1'>USDC</div>
+          </TOKEN_BOX>
+          <TOKEN_BOX onClick={() => tokenItemClick(USDT)}>
+            <img src={getImage('usdt.svg')} width={26} height={26} />
+            <div className='ml-1'>USDT</div>
+          </TOKEN_BOX>
         </div>
 
         {newToken &&
@@ -167,7 +134,7 @@ const App = (props: PropsType) => {
           </>
         }
       </Modal >
-    </>
+    </SelectTokenPage>
   );
 };
 
