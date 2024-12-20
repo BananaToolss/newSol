@@ -79,7 +79,7 @@ function BrunToken() {
       setSignature(signature)
       console.log("confirmation", signature);
       setIsBurning(false);
-      messageApi.success('burn success')
+      api.success({ message: 'burn success' })
     } catch (error) {
       console.log(error)
       setIsBurning(false);

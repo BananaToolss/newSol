@@ -256,11 +256,6 @@ function CreateToken() {
     }
   }
 
-  const copyClick = () => {
-    copy(tokenAddresss)
-    messageApi.success('copy success')
-  }
-
   const copyClickV = () => {
     copy(vanityAddress)
     messageApi.success('copy success')
@@ -278,8 +273,12 @@ function CreateToken() {
       {contextHolder}
       {contextHolder1}
 
-      <Header title='Solana代币创建'
-        hint='轻松定制您的Solana代币！选择独特且吸引人的数字组合使您的代币更加突出，让您的代币在众多项目中脱颖而出！' />
+      {isClone ?
+        <Header title='代币克隆'
+          hint='无需编程，轻松克隆现有的Solana代币：只需输入已有代币的合约地址，即可快速部署一个新的独立代币到Solana区块链上' /> :
+        <Header title='Solana代币创建'
+          hint='轻松定制您的Solana代币！选择独特且吸引人的数字组合使您的代币更加突出，让您的代币在众多项目中脱颖而出！' />
+      }
 
       {isClone &&
         <div>
