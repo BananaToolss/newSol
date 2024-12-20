@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Checkbox, message } from 'antd'
+import { Button, Checkbox, Input, message } from 'antd'
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useTranslation } from "react-i18next";
@@ -13,6 +13,7 @@ import { Input_Style, Button_Style, PROJECT_ADDRESS, BURN_FEE } from '@/config'
 import { getTxLink, getLink } from '@/utils'
 import { Page } from '@/styles';
 import { Header, SelectToken } from '@/components'
+import { BurnPage } from './style'
 
 function BrunToken() {
   const { t } = useTranslation()
@@ -113,48 +114,34 @@ function BrunToken() {
       {contextHolder}
       <Header title={t('Burning Tokens')} hint='便捷的永久移除流通中的代币，以提升代币的稀缺性或作为项目承诺的一部分，从而增强您的项目经济模型。' />
 
+      <BurnPage>
+        <SelectToken callBack={callBack} />
+        <div className='mt-5'>
+          <Input className={Input_Style} placeholder={t('Please enter the quantity to be destroyed')}
+            value={burnAmount} onChange={burnAmountChange} />
+        </div>
 
-      <SelectToken callBack={callBack} />
-
-      <div className='mt-10 mb-8'>
-        <Select callBack={backClick} />
-      </div>
-
-      {token &&
-        <div className='flex justify-center mb-3 cursor-pointer'>
-          <div>{token.symbol}</div>
-          <div className='ml-3'>{t('Balance')}: {(token.amount / BigInt(10 ** token.decimals)).toString()}</div>
-          <div className='ml-3 text-emerald-500 font-bold'>
-            <a href={getLink(`token/${token.address}`)} target='_blank'>{t('Browser view')}</a>
+        <div className='btn'>
+          <div className='buttonSwapper mt-4'>
+            <Button className={Button_Style} onClick={burnClick} loading={isBurning}>{t('Destroy')}</Button>
           </div>
         </div>
-      }
 
-      <div className='buttonSwapper'>
-        <input className={Input_Style} placeholder={t('Please enter the quantity to be destroyed')}
-          value={burnAmount} onChange={burnAmountChange} />
-        <div className='flex items-center justify-center'>
-          <Checkbox checked={isBurnAll} onChange={(e) => setIsBurnAll(e.target.checked)} />
-          <div className='ml-2'>{t('Destroy all and close accounts')}</div>
-          <Button className={Button_Style} onClick={burnClick} loading={isBurning}>{t('Destroy')}</Button>
+        <div className="my-2">
+          {success ? (
+            <>
+              <div className="text-[#00FF00]">
+                Successfully!
+              </div>
+              <a target="_blank" href={getTxLink(signature)} rel="noreferrer">
+                <strong className="underline">{t('Click to view')}</strong>
+              </a>
+            </>
+          ) : (
+            <div className="h-[27px]"></div>
+          )}
         </div>
-      </div>
-
-
-      <div className="my-2">
-        {success ? (
-          <>
-            <div className="text-[#00FF00]">
-              Successfully!
-            </div>
-            <a target="_blank" href={getTxLink(signature)} rel="noreferrer">
-              <strong className="underline">{t('Click to view')}</strong>
-            </a>
-          </>
-        ) : (
-          <div className="h-[27px]"></div>
-        )}
-      </div>
+      </BurnPage>
     </Page>
   )
 }

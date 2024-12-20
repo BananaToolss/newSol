@@ -4,7 +4,7 @@ export const SelectTokenPage = styled.div`
   border: 1px solid #d9d9d9;
   display: flex;
   padding: 10px;
-  width: 400px;
+  width: 100%;
   border-radius: 10px;
 
   .address {

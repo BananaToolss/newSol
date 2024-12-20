@@ -21,14 +21,12 @@ import type { Token_Type } from './Token'
 import { TOKEN_BOX, SelectTokenPage, AllTokenItem } from './style'
 
 interface PropsType {
-  isUSDC?: boolean
-  isBase?: boolean
-  isPump?: boolean
+
   callBack: (value: string, symbol: string) => void
 }
 
 const App = (props: PropsType) => {
-  const { isUSDC, isBase, isPump, callBack } = props
+  const { callBack } = props
   const { connection } = useConnection()
   const { publicKey } = useWallet()
   const { t } = useTranslation()
@@ -114,10 +112,15 @@ const App = (props: PropsType) => {
       setNotFound(true)
     }
   }
+
+  const maintokenItemClick = async (_token: Token_Type) => {
+    setToken(_token)
+    setIsModalOpen(false);
+  }
+
   const tokenItemClick = async (_token: Token_Type) => {
     setToken(_token)
     setIsModalOpen(false);
-    callBack(_token.address, _token.symbol)
   }
 
   return (
@@ -142,27 +145,25 @@ const App = (props: PropsType) => {
       }
 
       <Modal open={isModalOpen} footer={null} onCancel={handleCancel} width={600}>
-        {!isBase &&
-          <>
-            <p className='font-bold mt-5 text-lg mb-2'>{t('Choose Token')}</p>
-            <input className={Input_Style} placeholder='请选择或输入代币地址'
-              value={tokenAddress} onChange={tokenAddressChange} />
-            {(tokenAddress && !IsAddress(tokenAddress)) && <div className='text-red-400'>{t('This is not the sol token address')}</div>}
-            {notFound && <div className='font-bold mt-5 text-center text-lg'>{t('Token not found')}</div>}
-          </>
-        }
+        <div>
+          <p className='font-bold mt-5 text-lg mb-2'>{t('Choose Token')}</p>
+          <input className={Input_Style} placeholder='请选择或输入代币地址'
+            value={tokenAddress} onChange={tokenAddressChange} />
+          {(tokenAddress && !IsAddress(tokenAddress)) && <div className='text-red-400'>{t('This is not the sol token address')}</div>}
+          {notFound && <div className='font-bold mt-5 text-center text-lg'>{t('Token not found')}</div>}
+        </div>
 
 
         <div className='flex mb-3'>
-          <TOKEN_BOX onClick={() => tokenItemClick(SOL)}>
+          <TOKEN_BOX onClick={() => maintokenItemClick(SOL)}>
             <img src={getImage('sol.png')} width={26} height={26} />
             <div className='ml-1'>SOL</div>
           </TOKEN_BOX>
-          <TOKEN_BOX onClick={() => tokenItemClick(USDC)}>
+          <TOKEN_BOX onClick={() => maintokenItemClick(USDC)}>
             <img src={getImage('usdc.png')} width={26} height={26} />
             <div className='ml-1'>USDC</div>
           </TOKEN_BOX>
-          <TOKEN_BOX onClick={() => tokenItemClick(USDT)}>
+          <TOKEN_BOX onClick={() => maintokenItemClick(USDT)}>
             <img src={getImage('usdt.svg')} width={26} height={26} />
             <div className='ml-1'>USDT</div>
           </TOKEN_BOX>
