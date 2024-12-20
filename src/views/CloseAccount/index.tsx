@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import { Button, Modal, Input, Flex, Spin } from 'antd';
 import { useTranslation } from "react-i18next";
 import { BsPlus } from "react-icons/bs";
+import {
+  Keypair, PublicKey, SystemProgram, Transaction, Commitment,
+  ComputeBudgetProgram, TransactionMessage, VersionedTransaction
+} from '@solana/web3.js';
 import { LoadingOutlined } from '@ant-design/icons'
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { getImage, addressHandler } from '@/utils';
@@ -16,7 +20,7 @@ import {
 
 function CloseAccount() {
   const { publicKey, sendTransaction } = useWallet();
-
+  const { connection } = useConnection();
   const [allTokenArr, setAllTokenArr] = useState<Token_Type[]>([])
   const [isSearch, setIsSearch] = useState(false)
 
@@ -42,12 +46,46 @@ function CloseAccount() {
         tokenArr.push(token)
       })
       console.log(tokenArr)
+
+
+      const splAccounts =
+        await connection.getParsedTokenAccountsByOwner(
+          publicKey,
+          {
+            programId: new PublicKey(
+              "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+            ),
+          },
+          "processed"
+        );
+      console.log(splAccounts, 'splAccounts')
+
+      const myNFTEmptyAccounts: any = []
+
+      const _myNFTEmptyAccounts = splAccounts.value.map((m) => {
+          const tokenAccountaddress = m.pubkey.toBase58();
+          const mintAdddress = m.account?.data?.parsed?.info?.mint;
+          const _tokenAccount = tokenArr.find((token: any) => token.adress == tokenAccountaddress);
+          if (_tokenAccount == undefined) {
+            myNFTEmptyAccounts.push({ tokenAccountaddress, mintAdddress });
+          }
+        });
+
+      console.log(myNFTEmptyAccounts)
+
+
       setAllTokenArr(tokenArr)
       setIsSearch(false)
     } catch (error) {
       console.log(error)
       setIsSearch(false)
     }
+  }
+
+  const cardClick = (index: number) => {
+    const obj = [...allTokenArr]
+    obj[index].isSelect = !allTokenArr[index].isSelect
+    setAllTokenArr(obj)
   }
 
   return (
@@ -61,7 +99,7 @@ function CloseAccount() {
 
       <CardSwapper>
         {allTokenArr.map((item, index) => (
-          <Card className={item.isSelect ? 'cardActive' : ''} key={index}>
+          <Card className={item.isSelect ? 'cardActive' : ''} key={index} onClick={() => cardClick(index)}>
             <div className='header'>
               <img src={item.image} />
               {item.isSelect &&
