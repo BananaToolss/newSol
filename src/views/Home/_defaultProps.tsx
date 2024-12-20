@@ -44,17 +44,22 @@ export default {
             path: 'burn',
             name: '燃烧代币',
             icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
-          },   {
+          }, {
             path: 'freezeAccount',
             name: '冻结账户',
             icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
-          },   {
+          }, {
             path: 'mint',
             name: '代币蒸发',
             icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
           },
         ]
       },
+      {
+        path: 'closeAccount',
+        name: '租金回收',
+        icon: <BsHouseFill color={COLOR} />,
+      }
     ],
   },
   location: {

@@ -7,9 +7,18 @@ import BurnToken from '@/views/Token/Burn'
 import FreezeAccount from '@/views/Token/FreezeAccount'
 import MintToken from '@/views/Token/MintToken'
 
+import CloseAccount from '@/views/CloseAccount'
+
 const Routers = () => {
   const router = useRoutes([
-    { path: '/', element: <Home />, },
+    {
+      path: '/', element: <Home />,
+      children: [
+        { path: '/', element: <Home /> },
+        { path: "closeAccount", element: <CloseAccount /> },
+
+      ]
+    },
     {
       path: '/token',
       element: <Home />,
