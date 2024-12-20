@@ -96,3 +96,37 @@ export const getAsset = (connection: Connection, token: string) => {
     }
   })
 }
+
+export const getTokenAccountsByOwner = async (token: string) => {
+  try {
+    let _data = JSON.stringify({
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getTokenAccountsByOwner",
+      "params": [
+        token,
+        {
+          "programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "encoding": "jsonParsed"
+        }
+      ]
+    });
+
+    let config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: NetworkURL,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: _data
+    };
+
+    const response = await axios.request(config)
+    console.log(response)
+  } catch (error) {
+    console.log(error)
+  }
+}
