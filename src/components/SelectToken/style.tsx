@@ -33,3 +33,27 @@ export const TOKEN_BOX = styled.div`
   height: 40px;
   cursor: pointer;
 `
+export const AllTokenItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+
+  border-radius: 10px;
+  cursor: pointer;
+  
+  img {
+    border-radius: 50%;
+  }
+  .allleft {
+    display: flex;
+    align-items: center;
+  }
+  .tokename {
+    font-size: 12px;
+    color: #888a8d;
+  }
+  &:hover {
+    background-color: #f5f5f5;
+  }
+`

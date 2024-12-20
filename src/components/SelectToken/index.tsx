@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Input } from 'antd';
+import { Button, Modal, Input, Flex, Spin } from 'antd';
 import { useTranslation } from "react-i18next";
 import { BsPlus } from "react-icons/bs";
+import { LoadingOutlined } from '@ant-design/icons'
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   Keypair,
@@ -12,9 +13,10 @@ import {
 } from "@solana/web3.js";
 import { Button_Style, Input_Style } from '@/config'
 import { getImage, IsAddress, addressHandler, fetcher } from '@/utils'
+import { getAllToken } from '@/utils/newSol'
 import { SOL, USDC, USDT } from './Token'
 import type { Token_Type } from './Token'
-import { TOKEN_BOX, SelectTokenPage } from './style'
+import { TOKEN_BOX, SelectTokenPage, AllTokenItem } from './style'
 
 interface PropsType {
   isUSDC?: boolean
@@ -25,34 +27,65 @@ interface PropsType {
 
 const App = (props: PropsType) => {
   const { isUSDC, isBase, isPump, callBack } = props
-  const { connection } = useConnection();
+  const { connection } = useConnection()
+  const { publicKey } = useWallet()
   const { t } = useTranslation()
-  const [token, setToken] = useState<Token_Type>(null)
-  const [value, setValue] = useState('')
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newToken, setNewToken] = useState<Token_Type>()
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tokenAddress, setTokenAddress] = useState('')
+  const [isSearch, setIsSearch] = useState(false)
+
+  const [token, setToken] = useState<Token_Type>(null) //展示的代币
+  const [newToken, setNewToken] = useState<Token_Type>() //单个代币
+  const [allTokenArr, setAllTokenArr] = useState<Token_Type[]>([])
   const [isFind, setIsFind] = useState(false)
   const [notFound, setNotFound] = useState(false)
 
+
   useEffect(() => {
-    if (isUSDC) setToken(USDC)
-  }, [isUSDC])
-  useEffect(() => {
-    if (IsAddress(value)) {
+    if (IsAddress(tokenAddress)) {
       getQuoteInfo()
     } else {
       setNewToken(null)
       setNotFound(false)
     }
-  }, [value])
-  const valueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(e.target.value)
+  }, [tokenAddress])
+  const tokenAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTokenAddress(e.target.value)
     setNewToken(null)
   }
   const showModal = () => {
-    setIsModalOpen(true);
-  };
+    setIsModalOpen(true)
+    if (publicKey) {
+      getAccountAllToken()
+    }
+  }
+
+  const getAccountAllToken = async () => {
+    try {
+      setIsSearch(true)
+      const data = await getAllToken(publicKey.toBase58())
+      const tokenArr: Token_Type[] = []
+      data.forEach((item) => {
+        const token = {
+          address: item.address,
+          name: item.info.name,
+          symbol: item.info.symbol,
+          decimals: item.info.decimals,
+          image: item.info.image,
+          balance: item.balance
+        }
+        tokenArr.push(token)
+      })
+      console.log(tokenArr)
+      setAllTokenArr(tokenArr)
+      setIsSearch(false)
+    } catch (error) {
+      console.log(error)
+      setIsSearch(false)
+    }
+  }
+
   const handleCancel = () => {
     setIsModalOpen(false);
   };
@@ -72,7 +105,7 @@ const App = (props: PropsType) => {
   const tokenItemClick = async (_token: Token_Type) => {
     setToken(_token)
     setIsModalOpen(false);
-    callBack(_token.mint, _token.symbol)
+    callBack(_token.address, _token.symbol)
   }
 
   return (
@@ -81,14 +114,14 @@ const App = (props: PropsType) => {
         <div className='flex-1 flex items-center justify-between' onClick={showModal}>
           <div className='flex items-center'>
             <div>
-              <img src={token.uri} width={40} height={40} />
+              <img src={token.image} width={40} height={40} />
             </div>
             <div className='ml-3 flex items-center'>
               <div>{token.symbol}</div>
-              <div className='ml-3 address'>{addressHandler(token.mint)}</div>
+              <div className='ml-3 address'>{addressHandler(token.address)}</div>
             </div>
           </div>
-          <div>180.00</div>
+          <div>{token.balance}</div>
         </div> :
         <div className='addtoken' onClick={showModal}>
           <BsPlus />
@@ -101,15 +134,15 @@ const App = (props: PropsType) => {
           <>
             <p className='font-bold mt-5 text-lg mb-2'>{t('Choose Token')}</p>
             <input className={Input_Style} placeholder='请选择或输入代币地址'
-              value={value} onChange={valueChange} />
-            {(value && !IsAddress(value)) && <div className='text-red-400'>{t('This is not the sol token address')}</div>}
+              value={tokenAddress} onChange={tokenAddressChange} />
+            {(tokenAddress && !IsAddress(tokenAddress)) && <div className='text-red-400'>{t('This is not the sol token address')}</div>}
             {(isFind && !newToken) && <div className='font-bold mt-5 text-center text-lg'>{t('Querying')}...</div>}
             {notFound && <div className='font-bold mt-5 text-center text-lg'>{t('Token not found')}</div>}
           </>
         }
 
 
-        <div className='flex'>
+        <div className='flex mb-3'>
           <TOKEN_BOX onClick={() => tokenItemClick(SOL)}>
             <img src={getImage('sol.png')} width={26} height={26} />
             <div className='ml-1'>SOL</div>
@@ -124,14 +157,35 @@ const App = (props: PropsType) => {
           </TOKEN_BOX>
         </div>
 
+        {
+          isSearch &&
+          <Flex align="center" gap="middle" className='mt-4 mb-4 ml-4'>
+            <Spin indicator={<LoadingOutlined spin />} size="large" />
+          </Flex>
+        }
+
         {newToken &&
           <>
             <TOKEN_BOX onClick={() => tokenItemClick(newToken)}>
-              <img src={newToken.uri} width={26} height={26} />
+              <img src={newToken.image} width={26} height={26} />
               <div className='ml-1'>{newToken.symbol}</div>
-              <div className='ml-1'>{newToken.mint}</div>
+              <div className='ml-1'>{newToken.address}</div>
             </TOKEN_BOX>
           </>
+        }
+        {allTokenArr.map((item) => (
+          <AllTokenItem onClick={() => tokenItemClick(item)}>
+            <div className='allleft'>
+              <img src={item.image} width={26} height={26} />
+              <div className='ml-2'>
+                <div className='ml-1'>{item.symbol}</div>
+                <div className='ml-1 tokename'>{item.name}</div>
+              </div>
+              <div className='ml-3'>{addressHandler(item.address)}</div>
+            </div>
+            <div className='ml-1'>{item.balance}</div>
+          </AllTokenItem>
+        ))
         }
       </Modal >
     </SelectTokenPage>

@@ -6,25 +6,37 @@ export const USDT_TOKEN = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
 
 
 export interface Token_Type {
-  mint: string
-  uri: string
+  name: string
   symbol: string
+  address: string
+  decimals: number
+  image: string
+  balance: string
 }
 
 export const SOL: Token_Type = {
-  mint: SOL_TOKEN,
-  uri: getImage('sol.png'),
-  symbol: 'SOL'
+  address: SOL_TOKEN,
+  name: 'SOL',
+  symbol: 'SOL',
+  decimals: 9,
+  image: getImage('sol.png'),
+  balance: ''
 }
 
 export const USDC: Token_Type = {
-  mint: USDC_TOKEN,
-  uri: getImage('usdc.png'),
-  symbol: 'USDC'
+  address: USDC_TOKEN,
+  name: 'USDC',
+  symbol: 'USDC',
+  decimals: 9,
+  image: getImage('usdc.png'),
+  balance: ''
 }
 
 export const USDT: Token_Type = {
-  mint: USDT_TOKEN,
-  uri: getImage('usdt.svg'),
-  symbol: 'USDT'
+  address: USDT_TOKEN,
+  name: 'USDT',
+  symbol: 'USDT',
+  decimals: 9,
+  image: getImage('usdt.png'),
+  balance: ''
 }
