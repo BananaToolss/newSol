@@ -14,7 +14,7 @@ import {
 import { Keypair, PublicKey, SystemProgram, Transaction, Commitment, ComputeBudgetProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
-import { getTxLink } from '@/utils'
+import { getTxLink, addPriorityFees } from '@/utils'
 import { getAsset } from '@/utils/sol'
 import type { TOKEN_TYPE } from '@/type'
 import { Vanity, UpdataImage, Header, Hint } from '@/components'
@@ -137,13 +137,13 @@ function CreateToken() {
       setTokenAddresss('')
       setError('')
 
-      // let metadata_url = ''
-      // if (imageFile) {
-      //   metadata_url = await upLoadImage(config, imageFile, true)
-      // } else {
-      //   metadata_url = await upLoadImage(config, config.image, false)
-      // }
-      const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
+      let metadata_url = ''
+      if (imageFile) {
+        metadata_url = await upLoadImage(config, imageFile, true)
+      } else {
+        metadata_url = await upLoadImage(config, config.image, false)
+      }
+      // const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
       console.log(metadata_url, 'metadata')
 
 
@@ -226,30 +226,8 @@ function CreateToken() {
       }
 
       //增加费用，减少失败
-      const priorityFees = {
-        unitLimit: 500000,
-        unitPrice: 250000,
-      }
-      if (priorityFees) {
-        const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
-          units: priorityFees.unitLimit,
-        });
+      const versionedTx = await addPriorityFees(connection, createNewTokenTransaction, publicKey);
 
-        const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports: priorityFees.unitPrice,
-        });
-        createNewTokenTransaction.add(modifyComputeUnits);
-        createNewTokenTransaction.add(addPriorityFee);
-      }
-      const blockHash = (await connection.getLatestBlockhash(DEFAULT_COMMITMENT))
-        .blockhash;
-      let messageV0 = new TransactionMessage({
-        payerKey: publicKey,
-        recentBlockhash: blockHash,
-        instructions: createNewTokenTransaction.instructions,
-      }).compileToV0Message();
-
-      let versionedTx = new VersionedTransaction(messageV0);
       const result = await sendTransaction(versionedTx, connection, { signers: [mintKeypair] });
       const confirmed = await connection.confirmTransaction(
         result,

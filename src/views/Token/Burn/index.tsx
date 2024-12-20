@@ -9,7 +9,7 @@ import {
 } from "@solana/spl-token";
 import type { Token_Type } from '@/components/SelectToken/Token'
 import { Input_Style, Button_Style, PROJECT_ADDRESS, BURN_FEE } from '@/config'
-import { getTxLink, getLink } from '@/utils'
+import { getTxLink, addPriorityFees } from '@/utils'
 import { Page } from '@/styles';
 import { Header, SelectToken } from '@/components'
 import { BurnPage } from './style'
@@ -18,7 +18,7 @@ function BrunToken() {
   const { t } = useTranslation()
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
-  const wallet = useWallet();
+  const { publicKey, sendTransaction } = useWallet();
   const [token, setToken] = useState<Token_Type>(null)
   const [burnAmount, setBurnAmount] = useState('')
 
@@ -52,27 +52,23 @@ function BrunToken() {
 
       let Tx = new Transaction();
       const mint = new PublicKey(token.address);
-      const publickey = wallet.publicKey;
-      let account = await getAt(mint, wallet.publicKey);
+      let account = await getAt(mint, publicKey);
       let _burnAmount = Number(burnAmount) * 10 ** token.decimals
 
       const burnInstruction = createBurnCheckedInstruction(
         account,
         mint,
-        publickey,
+        publicKey,
         _burnAmount,
         token.decimals,
       );
 
       Tx.add(burnInstruction)
 
-      // const fee = SystemProgram.transfer({
-      //   fromPubkey: publickey,
-      //   toPubkey: new PublicKey(PROJECT_ADDRESS),
-      //   lamports: BURN_FEE * LAMPORTS_PER_SOL,
-      // })
-      // Tx = Tx.add(fee)
-      const signature = await wallet.sendTransaction(Tx, connection);
+      //增加费用，减少失败
+      const versionedTx = await addPriorityFees(connection, Tx, publicKey)
+
+      const signature = await sendTransaction(versionedTx, connection);
       const confirmed = await connection.confirmTransaction(
         signature,
         "processed"

@@ -2,6 +2,8 @@ import { PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 import { isMainnet } from '@/config'
 
+export { default as addPriorityFees } from './addPriorityFees'
+
 export const getImage = (imgUrl: string) => new URL(`/src/assets/images/${imgUrl}`, import.meta.url).href
 
 export const fetcher = (args: any) => fetch(args).then((res) => res.json())
@@ -34,10 +36,10 @@ export const getCurrentTimestamp = () => {
   const seconds = String(now.getSeconds()).padStart(2, '0');
   return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
 };
-export  function SliceAddress(address: string) :string {
+export function SliceAddress(address: string): string {
   let header = address.slice(0, 4);
   let fooler = address.slice(-4);
-  return header+ "..." + fooler;
+  return header + "..." + fooler;
 }
 
 // https://solscan.io/tx

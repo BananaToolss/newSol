@@ -9,7 +9,7 @@ import { Header, UpdataImage } from '@/components';
 import { getAsset } from '@/utils/sol'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { Page } from '@/styles';
-import { fetcher } from '@/utils'
+import { addPriorityFees } from '@/utils'
 import type { TOKEN_TYPE } from '@/type'
 import { Button_Style, Input_Style } from '@/config'
 import { CreatePage } from '../CreateToken/style'
@@ -135,7 +135,10 @@ function Update() {
           }
         )
       );
-      const result = await sendTransaction(updateMetadataTransaction, connection);
+
+      //增加费用，减少失败
+      const versionedTx = await addPriorityFees(connection, updateMetadataTransaction, publicKey);
+      const result = await sendTransaction(versionedTx, connection);
 
       const confirmed = await connection.confirmTransaction(
         result,
