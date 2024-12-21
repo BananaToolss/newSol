@@ -25,6 +25,6 @@ export interface Token_Type {
   decimals: number
   image: string
   balance: string
-  associaAccount?: string
+  associatedAccount: string
   isSelect?: boolean
 }

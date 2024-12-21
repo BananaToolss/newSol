@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import { Button, Modal, Input, Flex, Spin } from 'antd';
 import { useTranslation } from "react-i18next";
 import { BsPlus } from "react-icons/bs";
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { LoadingOutlined } from '@ant-design/icons'
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { getImage, addressHandler } from '@/utils';
-import { createCloseAccountInstruction } from '@solana/spl-token';
+import { createCloseAccountInstruction, createBurnCheckedInstruction } from '@solana/spl-token';
 import { Header } from '@/components';
 import { getAllToken } from '@/utils/newSol'
 import { Page } from '@/styles';
@@ -30,7 +30,7 @@ function CloseAccount() {
     try {
       setIsSearch(true)
       const data = await getAllToken(publicKey.toBase58())
-      console.log(data, 'data11111111')
+
       const tokenArr: Token_Type[] = []
       data.forEach((item) => {
         const token = {
@@ -41,32 +41,32 @@ function CloseAccount() {
           image: item.info.image,
           balance: item.balance,
           isSelect: false,
-          associatedAccount: ''
+          associatedAccount: item.associated_account
         }
         tokenArr.push(token)
       })
       console.log(tokenArr)
 
-      const splAccounts = await connection.getParsedTokenAccountsByOwner(
-        publicKey,
-        {
-          programId: new PublicKey(
-            "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-          ),
-        },
-        "processed"
-      );
-      console.log(splAccounts, 'splAccounts')
-      splAccounts.value.forEach((m) => {
-        const associatedAccount = m.pubkey.toBase58();
-        const token = m.account?.data?.parsed?.info?.mint;
-        tokenArr.forEach((item, index) => {
-          if (item.address === token) {
-            tokenArr[index].associaAccount = associatedAccount
-          }
-        })
-      });
-      console.log(tokenArr, 'tokenArr1111111')
+      // const splAccounts = await connection.getParsedTokenAccountsByOwner(
+      //   publicKey,
+      //   {
+      //     programId: new PublicKey(
+      //       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+      //     ),
+      //   },
+      //   "processed"
+      // );
+      // console.log(splAccounts, 'splAccounts')
+      // splAccounts.value.forEach((m) => {
+      //   const associatedAccount = m.pubkey.toBase58();
+      //   const token = m.account?.data?.parsed?.info?.mint;
+      //   tokenArr.forEach((item, index) => {
+      //     if (item.address === token) {
+      //       tokenArr[index].associaAccount = associatedAccount
+      //     }
+      //   })
+      // });
+      // console.log(tokenArr, 'tokenArr1111111')
 
       setAllTokenArr(tokenArr)
       setIsSearch(false)
@@ -84,10 +84,28 @@ function CloseAccount() {
 
   const closeAccount = async () => {
     try {
+      let Tx = new Transaction();
+      const account = allTokenArr[0]
       //余额不为0，需要先燃烧代币
+      const burn = createBurnCheckedInstruction(
+        new PublicKey(account.associatedAccount),
+        new PublicKey(account.address),
+        publicKey,
+        Number(account.balance) * (10 ** Number(account.decimals)),
+        account.decimals
+      )
+      const close = createCloseAccountInstruction(
+        new PublicKey(account.associatedAccount),
+        publicKey,
+        publicKey
+      )
+      Tx.add(burn).add(close)
+
+      // const versionedTx = await addPriorityFees(connection, Tx, publicKey)
+      const signature = await sendTransaction(Tx, connection);
 
     } catch (error) {
-
+      console.log(error)
     }
   }
 
@@ -121,6 +139,7 @@ function CloseAccount() {
         ))}
       </CardSwapper>
 
+      <Button onClick={closeAccount}>cse</Button>
 
     </Page>
   )

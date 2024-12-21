@@ -22,6 +22,7 @@ export const getAllToken = (account: string) => {
         `${base}/sol/v1/wallet/all_tokens?network=${network}&wallet=${account}`
         , requestOptions)
         .then(response => response.json())
+      console.log(data, 'data')
       resolve(data.result)
     } catch (error) {
       reject(error)
