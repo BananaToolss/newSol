@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button, Modal, Input, Flex, Spin } from 'antd';
 import { useTranslation } from "react-i18next";
 import { BsPlus } from "react-icons/bs";
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { LoadingOutlined } from '@ant-design/icons'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
@@ -12,6 +12,8 @@ import { Header } from '@/components';
 import { getAllToken } from '@/utils/newSol'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
+import { CLOSE_ACCOUNT_CU, ADD_COMPUTE_UNIT_PRICE_CU, ADD_COMPUTE_UNIT_LIMIT_CU } from "./CUPerInstruction";
+import { confirmTransaction } from './confirmTransaction'
 import {
   Card,
   CardSwapper
@@ -83,69 +85,73 @@ function CloseAccount() {
     setAllTokenArr(obj)
   }
 
-  const [totalTx, setTotalTx] = useState<number | null>(null); //执行参数
 
   const closeAccount = async () => {
     try {
-      const nbPerTx = 5;
+      // const assets = allTokenArr.filter(item => item.isSelect)
+      const assets = allTokenArr
+
+      console.log(assets, '_closeAccounts')
+
+      const transactions: VersionedTransaction[] = [];
+
+      const nbPerTx = 10;
       let nbTx: number;
-      if (allTokenArr.length % nbPerTx == 0) {
-        nbTx = allTokenArr.length / nbPerTx;
+      if (assets.length % nbPerTx == 0) {
+        nbTx = assets.length / nbPerTx;
       } else {
-        nbTx = Math.floor(allTokenArr.length / nbPerTx) + 1;
+        nbTx = Math.floor(assets.length / nbPerTx) + 1;
       }
-      setTotalTx(nbTx);
+      //需要签名几次
+      for (let i = 0; i < nbTx; i++) {
+        let bornSup: number;
 
-
-      let Tx = new Transaction();
-      for (let index = 0; index < 10; index++) {
-        const account = allTokenArr[index]
-        if (Number(account.balance) > 0) {
-          const burn = createBurnCheckedInstruction(
-            new PublicKey(account.associatedAccount),
-            new PublicKey(account.address),
-            publicKey,
-            Number(account.balance) * (10 ** Number(account.decimals)),
-            account.decimals
-          )
-          Tx.add(burn)
+        if (i == nbTx - 1) {
+          bornSup = assets.length;
+        } else {
+          bornSup = nbPerTx * (i + 1);
         }
-        const close = createCloseAccountInstruction(
-          new PublicKey(account.associatedAccount),
-          publicKey,
-          publicKey
-        )
-        Tx.add(close)
-      }
 
-      let Tx1 = new Transaction();
-      for (let index = 10; index < 20; index++) {
-        const account = allTokenArr[index]
-        if (Number(account.balance) > 0) {
-          const burn = createBurnCheckedInstruction(
-            new PublicKey(account.associatedAccount),
-            new PublicKey(account.address),
+        let Tx = new Transaction()
+
+        let n = 0;
+        for (let j = nbPerTx * i; j < bornSup; j++) {
+          n += 1;
+
+          if (Number(assets[j].balance) > 0) {
+            Tx.add(
+              createBurnCheckedInstruction(
+                new PublicKey(assets[j].associatedAccount),
+                new PublicKey(assets[j].address),
+                publicKey,
+                Number(assets[j].balance) * (10 ** Number(assets[j].decimals)),
+                assets[j].decimals,
+              )
+            )
+          }
+          Tx.add(createCloseAccountInstruction(
+            new PublicKey(assets[j].associatedAccount),
             publicKey,
-            Number(account.balance) * (10 ** Number(account.decimals)),
-            account.decimals
-          )
-          Tx1.add(burn)
+            publicKey
+          ))
         }
-        const close = createCloseAccountInstruction(
-          new PublicKey(account.associatedAccount),
-          publicKey,
-          publicKey
-        )
-        Tx1.add(close)
+
+        const versionedTx = await addPriorityFees(connection, Tx, publicKey)
+        transactions.push(versionedTx);
       }
 
-      const versionedTx = await addPriorityFees(connection, Tx, publicKey)
-      const versionedTx1 = await addPriorityFees(connection, Tx1, publicKey)
+      const signedTransactions = await signAllTransactions(transactions);
+      console.log(signedTransactions, 'signedTransactions')
+      for (let n = 0; n < signedTransactions.length; n++) {
+        const signature = await connection.sendRawTransaction(signedTransactions[n].serialize(), {
+          skipPreflight: true
+        });
+        console.log(signature, 'signature')
+        await confirmTransaction(connection, signature);
+      }
 
-      const signature = await signAllTransactions([versionedTx, versionedTx1]);
-      console.log(signature)
-      //余额不为0，需要先燃烧代币
-      // allTokenArr.forEach((item, index) => {
+      // let Tx = new Transaction();
+      // for (let index = 0; index < 10; index++) {
       //   const account = allTokenArr[index]
       //   if (Number(account.balance) > 0) {
       //     const burn = createBurnCheckedInstruction(
@@ -163,10 +169,34 @@ function CloseAccount() {
       //     publicKey
       //   )
       //   Tx.add(close)
-      // })
+      // }
+
+      // let Tx1 = new Transaction();
+      // for (let index = 10; index < 20; index++) {
+      //   const account = allTokenArr[index]
+      //   if (Number(account.balance) > 0) {
+      //     const burn = createBurnCheckedInstruction(
+      //       new PublicKey(account.associatedAccount),
+      //       new PublicKey(account.address),
+      //       publicKey,
+      //       Number(account.balance) * (10 ** Number(account.decimals)),
+      //       account.decimals
+      //     )
+      //     Tx1.add(burn)
+      //   }
+      //   const close = createCloseAccountInstruction(
+      //     new PublicKey(account.associatedAccount),
+      //     publicKey,
+      //     publicKey
+      //   )
+      //   Tx1.add(close)
+      // }
 
       // const versionedTx = await addPriorityFees(connection, Tx, publicKey)
-      // const signature = await sendTransaction(Tx, connection);
+      // const versionedTx1 = await addPriorityFees(connection, Tx1, publicKey)
+
+      // const signature = await signAllTransactions([versionedTx, versionedTx1]);
+      // console.log(signature)
 
     } catch (error) {
       console.log(error)
