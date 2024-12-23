@@ -69,10 +69,10 @@ export const upLoadImage = (data: TOKEN_TYPE, selectedFile: File | string, isFil
       if (data.description) {
         meta_data.pinataContent.description = data.description
       }
-      if (data.tags) {
-        const tags = data.tags.split(/[,，]+/)
-        meta_data.pinataContent.tags = tags
-      }
+      // if (data.tags) {
+      //   const tags = data.tags.split(/[,，]+/)
+      //   meta_data.pinataContent.tags = tags
+      // }
 
       console.log(meta_data, 'meta_data')
       //将NFT数据转化成JSON格式存储到变量中
