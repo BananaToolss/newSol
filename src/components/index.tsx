@@ -4,5 +4,7 @@ export { default as Language } from './Language'
 export { default as Vanity } from './Vanity'
 export { default as Header } from './Header'
 export { default as Hint } from './Hint'
+export { default as Hint1 } from './Hint1'
+
 export { default as SelectToken } from './SelectToken'
 export { default as Result } from './Result'

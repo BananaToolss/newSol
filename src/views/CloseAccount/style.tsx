@@ -30,6 +30,7 @@ export const Card = styled.div`
     position: relative;
     padding: 20px;
     height: 100%;
+    width: 100%;
     img {
       width: 80%;
       border-radius: 50%;

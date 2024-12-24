@@ -3,8 +3,8 @@ import { BsExclamationCircleFill, BsCheckCircleFill, BsXLg } from "react-icons/b
 import styled from 'styled-components';
 
 const HintPage = styled.div`
-  border: 1px solid #ff9815;
-  background-color: #fffbf6;
+  border: 1px solid #52c41a;
+  background-color: #f6ffed;
   border-radius: 6px;
   padding: 16px;
   font-size: 14px;
@@ -20,7 +20,7 @@ const HintPage = styled.div`
 
 interface PropsType {
   title: string
-  showClose: boolean
+  showClose?: boolean
 }
 
 function Hint(props: PropsType) {
@@ -33,7 +33,7 @@ function Hint(props: PropsType) {
     <div className={isClose ? 'hidden' : ''}>
       <HintPage>
         <div className='item'>
-          <BsExclamationCircleFill color='#faad14' />
+          <BsCheckCircleFill color='#52c41a' />
           <div className='ml-2'>{title}</div>
         </div>
         {showClose && <BsXLg className='pointer' onClick={() => setIsClose(true)} />}

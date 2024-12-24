@@ -486,7 +486,7 @@ function CreateToken() {
           </div>
         </div>
 
-        <Hint />
+        <Hint title='创建代币过程受本地网络环境影响较大。如果持续失败，请尝试切换到更稳定的网络或开启VPN全局模式后再进行操作' showClose />
 
         <div className='btn mt-6'>
           <div className='buttonSwapper'>
