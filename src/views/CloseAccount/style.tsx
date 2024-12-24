@@ -1,5 +1,11 @@
 import styled from "styled-components";
 
+export const CardBox = styled.div`
+  border: 1px solid #252424;
+  border-radius: 10px;
+  padding: 10px;
+`
+
 export const CardSwapper = styled.div`
   display: flex;
   flex-wrap: wrap;

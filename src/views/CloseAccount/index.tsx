@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Button, Modal, Input, Flex, Spin } from 'antd';
-import { useTranslation } from "react-i18next";
-import { BsPlus } from "react-icons/bs";
 import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { LoadingOutlined } from '@ant-design/icons'
 import { getTxLink, addPriorityFees } from '@/utils'
@@ -12,9 +10,10 @@ import { Header } from '@/components';
 import { getAllToken } from '@/utils/newSol'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
-import { CLOSE_ACCOUNT_CU, ADD_COMPUTE_UNIT_PRICE_CU, ADD_COMPUTE_UNIT_LIMIT_CU } from "./CUPerInstruction";
+import { Button_Style } from '@/config'
 import { confirmTransaction } from './confirmTransaction'
 import {
+  CardBox,
   Card,
   CardSwapper
 } from './style'
@@ -22,8 +21,12 @@ import {
 function CloseAccount() {
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
   const { connection } = useConnection();
-  const [allTokenArr, setAllTokenArr] = useState<Token_Type[]>([])
+
+  const [allTokenArr, setAllTokenArr] = useState<Token_Type[]>([]) //有余额
+  const [allTokenArr0, setAllTokenArr0] = useState<Token_Type[]>([]) //余额未0
+
   const [isSearch, setIsSearch] = useState(false)
+  const [isClose, setIsClose] = useState(false)
 
   useEffect(() => {
     if (publicKey && publicKey.toBase58()) getAccountAllToken()
@@ -35,6 +38,7 @@ function CloseAccount() {
       const data = await getAllToken(publicKey.toBase58())
 
       const tokenArr: Token_Type[] = []
+      const tokenArr0: Token_Type[] = []
       data.forEach((item) => {
         const token = {
           address: item.address,
@@ -46,32 +50,11 @@ function CloseAccount() {
           isSelect: false,
           associatedAccount: item.associated_account
         }
-        tokenArr.push(token)
+        Number(item.balance) >= 0 ? tokenArr.push(token) : tokenArr0.push(token)
       })
-      console.log(tokenArr)
-
-      // const splAccounts = await connection.getParsedTokenAccountsByOwner(
-      //   publicKey,
-      //   {
-      //     programId: new PublicKey(
-      //       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-      //     ),
-      //   },
-      //   "processed"
-      // );
-      // console.log(splAccounts, 'splAccounts')
-      // splAccounts.value.forEach((m) => {
-      //   const associatedAccount = m.pubkey.toBase58();
-      //   const token = m.account?.data?.parsed?.info?.mint;
-      //   tokenArr.forEach((item, index) => {
-      //     if (item.address === token) {
-      //       tokenArr[index].associaAccount = associatedAccount
-      //     }
-      //   })
-      // });
-      // console.log(tokenArr, 'tokenArr1111111')
-
       setAllTokenArr(tokenArr)
+      setAllTokenArr0(tokenArr0)
+
       setIsSearch(false)
     } catch (error) {
       console.log(error)
@@ -85,14 +68,26 @@ function CloseAccount() {
     setAllTokenArr(obj)
   }
 
+  const selecAll = (value: boolean) => {
+    const obj = [...allTokenArr]
+    obj.map(item => item.isSelect = value)
+    setAllTokenArr(obj)
+  }
+  const selecAll0 = (value: boolean) => {
+    const obj = [...allTokenArr0]
+    obj.map(item => item.isSelect = value)
+    setAllTokenArr0(obj)
+  }
+
 
   const closeAccount = async () => {
     try {
-      // const assets = allTokenArr.filter(item => item.isSelect)
-      const assets = allTokenArr
-
-      console.log(assets, '_closeAccounts')
-
+      setIsClose(true)
+      const assets1 = allTokenArr.filter(item => item.isSelect)
+      const assets0 = allTokenArr0.filter(item => item.isSelect)
+      
+      const assets = assets1.concat(assets0)
+      // const assets = allTokenArr
       const transactions: VersionedTransaction[] = [];
 
       const nbPerTx = 10;
@@ -105,19 +100,15 @@ function CloseAccount() {
       //需要签名几次
       for (let i = 0; i < nbTx; i++) {
         let bornSup: number;
-
         if (i == nbTx - 1) {
           bornSup = assets.length;
         } else {
           bornSup = nbPerTx * (i + 1);
         }
-
         let Tx = new Transaction()
-
         let n = 0;
         for (let j = nbPerTx * i; j < bornSup; j++) {
           n += 1;
-
           if (Number(assets[j].balance) > 0) {
             Tx.add(
               createBurnCheckedInstruction(
@@ -150,8 +141,10 @@ function CloseAccount() {
         await confirmTransaction(connection, signature);
       }
 
+      setIsClose(false)
     } catch (error) {
       console.log(error)
+      setIsClose(false)
     }
   }
 
@@ -166,26 +159,67 @@ function CloseAccount() {
         </Flex>
       }
 
-      <CardSwapper>
-        {allTokenArr.map((item, index) => (
-          <Card className={item.isSelect ? 'cardActive' : ''} key={index} onClick={() => cardClick(index)}>
-            <div className='header'>
-              <img src={item.image ? item.image : getImage('banana.png')} />
-              {item.isSelect &&
-                <div className='active'>已选择</div>
-              }
-            </div>
+      <CardBox className='mb-5'>
+        <div className='mb-5 flex items-center'>
+          <div className='font-semibold'>闲置账户</div>
+          <Button className='ml-4' onClick={() => selecAll0(true)}>全选</Button>
+          <Button className='ml-2' onClick={() => selecAll0(false)}>全不选</Button>
+        </div>
+        <CardSwapper>
+          {allTokenArr0.map((item, index) => (
+            <Card className={item.isSelect ? 'cardActive' : ''} key={index} onClick={() => cardClick(index)}>
+              <div className='header'>
+                <img src={item.image ? item.image : getImage('banana.png')} />
+                {item.isSelect &&
+                  <div className='active'>已选择</div>
+                }
+              </div>
 
-            <div className='footer'>
-              <div className='name'>{item.name}</div>
-              <div className='name'>{item.balance} {item.symbol}</div>
-              <div className='address'>{addressHandler(item.address)}</div>
-            </div>
-          </Card>
-        ))}
-      </CardSwapper>
+              <div className='footer'>
+                <div className='name'>{item.name}</div>
+                <div className='name'>{item.balance} {item.symbol}</div>
+                <div className='address'>{addressHandler(item.address)}</div>
+              </div>
+            </Card>
+          ))}
+        </CardSwapper>
+      </CardBox>
 
-      <Button onClick={closeAccount}>cse</Button>
+      <CardBox>
+        <div className='mb-5 flex items-center'>
+          <div className='font-semibold'>有余额的账户</div>
+          <Button className='ml-4' onClick={() => selecAll(true)}>全选</Button>
+          <Button className='ml-2' onClick={() => selecAll(false)}>全不选</Button>
+        </div>
+        <CardSwapper>
+          {allTokenArr.map((item, index) => (
+            <Card className={item.isSelect ? 'cardActive' : ''} key={index} onClick={() => cardClick(index)}>
+              <div className='header'>
+                <img src={item.image ? item.image : getImage('banana.png')} />
+                {item.isSelect &&
+                  <div className='active'>已选择</div>
+                }
+              </div>
+
+              <div className='footer'>
+                <div className='name'>{item.name}</div>
+                <div className='name'>{item.balance} {item.symbol}</div>
+                <div className='address'>{addressHandler(item.address)}</div>
+              </div>
+            </Card>
+          ))}
+        </CardSwapper>
+      </CardBox>
+
+      <div className='btn mt-6'>
+        <div className='buttonSwapper'>
+          <Button className={Button_Style}
+            onClick={closeAccount} loading={isClose}>
+            <span>批量回收账户</span>
+          </Button>
+        </div>
+        <div className='fee'>全网最低服务费: 0 SOL</div>
+      </div>
 
     </Page>
   )
