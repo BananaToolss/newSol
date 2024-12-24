@@ -10,8 +10,8 @@ const addPriorityFees = (connection: Connection, tx: Transaction, payerKey: Publ
   return new Promise(async (resolve: (value: VersionedTransaction) => void, reject) => {
     try {
       const priorityFees = {
-        unitLimit: 500000,
-        unitPrice: 250000,
+        unitLimit: 50000000,
+        unitPrice: 300000,
       }
       if (priorityFees) {
         const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({

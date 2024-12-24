@@ -150,54 +150,6 @@ function CloseAccount() {
         await confirmTransaction(connection, signature);
       }
 
-      // let Tx = new Transaction();
-      // for (let index = 0; index < 10; index++) {
-      //   const account = allTokenArr[index]
-      //   if (Number(account.balance) > 0) {
-      //     const burn = createBurnCheckedInstruction(
-      //       new PublicKey(account.associatedAccount),
-      //       new PublicKey(account.address),
-      //       publicKey,
-      //       Number(account.balance) * (10 ** Number(account.decimals)),
-      //       account.decimals
-      //     )
-      //     Tx.add(burn)
-      //   }
-      //   const close = createCloseAccountInstruction(
-      //     new PublicKey(account.associatedAccount),
-      //     publicKey,
-      //     publicKey
-      //   )
-      //   Tx.add(close)
-      // }
-
-      // let Tx1 = new Transaction();
-      // for (let index = 10; index < 20; index++) {
-      //   const account = allTokenArr[index]
-      //   if (Number(account.balance) > 0) {
-      //     const burn = createBurnCheckedInstruction(
-      //       new PublicKey(account.associatedAccount),
-      //       new PublicKey(account.address),
-      //       publicKey,
-      //       Number(account.balance) * (10 ** Number(account.decimals)),
-      //       account.decimals
-      //     )
-      //     Tx1.add(burn)
-      //   }
-      //   const close = createCloseAccountInstruction(
-      //     new PublicKey(account.associatedAccount),
-      //     publicKey,
-      //     publicKey
-      //   )
-      //   Tx1.add(close)
-      // }
-
-      // const versionedTx = await addPriorityFees(connection, Tx, publicKey)
-      // const versionedTx1 = await addPriorityFees(connection, Tx1, publicKey)
-
-      // const signature = await signAllTransactions([versionedTx, versionedTx1]);
-      // console.log(signature)
-
     } catch (error) {
       console.log(error)
     }
