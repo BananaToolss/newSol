@@ -11,7 +11,7 @@ import {
   createSetAuthorityInstruction,
   AuthorityType,
 } from '@solana/spl-token';
-import { Keypair, PublicKey, SystemProgram, Transaction, Commitment, ComputeBudgetProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
+import { Keypair, PublicKey, SystemProgram, Transaction, Commitment, LAMPORTS_PER_SOL, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
 import { getTxLink, addPriorityFees } from '@/utils'
@@ -225,6 +225,12 @@ function CreateToken() {
         )
       }
 
+      const fee = SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: new PublicKey(PROJECT_ADDRESS),
+        lamports: 0.1 * LAMPORTS_PER_SOL,
+      })
+      createNewTokenTransaction.add(fee)
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, createNewTokenTransaction, publicKey);
 
