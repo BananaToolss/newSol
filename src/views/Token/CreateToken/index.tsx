@@ -137,14 +137,14 @@ function CreateToken() {
       setTokenAddresss('')
       setError('')
 
-      // let metadata_url = ''
-      // if (imageFile) {
-      //   metadata_url = await upLoadImage(config, imageFile, true)
-      // } else {
-      //   metadata_url = await upLoadImage(config, config.image, false)
-      // }
-      const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
-      console.log(metadata_url, 'metadata')
+      let metadata_url = ''
+      if (imageFile) {
+        metadata_url = await upLoadImage(config, imageFile, true)
+      } else {
+        metadata_url = await upLoadImage(config, config.image, false)
+      }
+      // const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
+      // console.log(metadata_url, 'metadata')
 
 
       const lamports = await getMinimumBalanceForRentExemptMint(connection);
@@ -230,7 +230,7 @@ function CreateToken() {
         toPubkey: new PublicKey(PROJECT_ADDRESS),
         lamports: 0.1 * LAMPORTS_PER_SOL,
       })
-      createNewTokenTransaction.add(fee)
+      // createNewTokenTransaction.add(fee)
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, createNewTokenTransaction, publicKey);
 
