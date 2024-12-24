@@ -59,7 +59,25 @@ export default {
         path: 'closeAccount',
         name: '租金回收',
         icon: <BsHouseFill color={COLOR} />,
-      }
+      },
+      {
+        path: '/pump',
+        name: 'Pump专区',
+        icon: <BsHouseFill color={COLOR} />,
+        routes: [
+          {
+            path: 'create',
+            name: 'Pump开盘并买入',
+            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+          },
+          {
+            path: 'clone',
+            name: '卖出并捆绑买入',
+            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+          },
+          
+        ]
+      },
     ],
   },
   location: {

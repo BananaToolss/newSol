@@ -9,6 +9,8 @@ import MintToken from '@/views/Token/MintToken'
 
 import CloseAccount from '@/views/CloseAccount'
 
+import CreateBuy from '@/views/Pump/CreateBuy'
+
 const Routers = () => {
   const router = useRoutes([
     {
@@ -25,6 +27,21 @@ const Routers = () => {
       children: [
         { index: true, element: <Navigate to='create' /> },
         { path: "create", element: <CreateToken /> },
+        { path: "clone", element: <CreateToken /> },
+        { path: "update", element: <Update /> },
+        { path: "revokeAuthority", element: <RevokeAuthority /> },
+        { path: "burn", element: <BurnToken /> },
+        { path: "freezeAccount", element: <FreezeAccount /> },
+        { path: "mint", element: <MintToken /> },
+
+      ]
+    },
+    {
+      path: '/pump',
+      element: <Home />,
+      children: [
+        { index: true, element: <Navigate to='create' /> },
+        { path: "create", element: <CreateBuy /> },
         { path: "clone", element: <CreateToken /> },
         { path: "update", element: <Update /> },
         { path: "revokeAuthority", element: <RevokeAuthority /> },
