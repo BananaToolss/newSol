@@ -7,7 +7,7 @@ import {
   Transaction,
   VersionedTransaction,
 } from "@solana/web3.js";
-import { useConnection, useWallet, WalletContextState } from '@solana/wallet-adapter-react';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 import { Program, Provider } from "@coral-xyz/anchor";
 // import { setGlobalDispatcher, Agent } from 'undici'
 import { GlobalAccount } from "./globalAccount";
@@ -45,6 +45,7 @@ import {
   calculateWithSlippageSell,
   getRandomInt,
   sendTx,
+  sendTx2
 } from "./util";
 import { PumpFun, IDL } from "./IDL";
 // import { getUploadedMetadataURI } from "./uploadToIpfs";
@@ -175,8 +176,8 @@ export class PumpFunSDK {
         mint
       );
 
-      const newTx = new Transaction().add(createTx);
-      let buyTxs: VersionedTransaction[] = [];
+      const walletTx = new Transaction().add(createTx);
+      const buyerstxs: Transaction[] = [];
 
       const globalAccount = await this.getGlobalAccount(commitment); //账户
       const buyAmount = globalAccount.getInitialBuyPrice(buyAmountSol); //主号购买数量
@@ -192,7 +193,7 @@ export class PumpFunSDK {
         buyAmount,
         buyAmountWithSlippage
       );
-      newTx.add(buyTx)
+      walletTx.add(buyTx)
       const signers = [mint] //签名
       //第一个小号钱包买入
       if (buyers.length > 0) {
@@ -210,17 +211,17 @@ export class PumpFunSDK {
           buyAmount2,
           buyAmountWithSlippage2,
         );
-        newTx.add(buyTx2);
+        walletTx.add(buyTx2);
         signers.push(buyers[0])
       }
 
-      if (buyers.length === 1) { //只有有个小号钱包，直接购买
-        const versionedTx = await addPriorityFees(this.connection, newTx, wallet.publicKey);
+      if (buyers.length <= 1) { //只有有个小号钱包，直接购买
+        const versionedTx = await addPriorityFees(this.connection, walletTx, wallet.publicKey);
         const _signature = await wallet.sendTransaction(versionedTx, this.connection, { signers })
         console.log(_signature, '_signature')
       }
 
-      const txs: Transaction[] = [];
+ 
       const buyer2 = buyers.slice(1);// 去掉第一个钱包
       if (buyer2.length > 0) {
         // 三个一组
@@ -244,7 +245,7 @@ export class PumpFunSDK {
             );
             tx.add(buyTx2);
             if ((i + 1) % 3 == 0 && i != 0 || i == buyer2.length - 1) {
-              txs.push(tx);
+              buyerstxs.push(tx);
               break;
             }
           }
@@ -252,21 +253,17 @@ export class PumpFunSDK {
       }
 
       // // console.log(txs, "txs");
-      // const aa = await sendTx2(
-      //   xf,
-      //   rpc,
-      //   buyers,
-      //   txs,
-      //   wallet,
-      //   this.connection,
-      //   newTx,
-      //   creator,
-      //   [mint],
-      //   priorityFees,
-      //   "ok",
-      //   commitment,
-      //   finality
-      // );
+      await sendTx2(
+        this.connection,
+        wallet,
+        walletTx,
+        buyers,
+        buyerstxs,
+        [mint],
+        priorityFees,
+        commitment,
+        finality
+      );
       // return aa;
     } catch (error) {
       throw new Error(error as any);
