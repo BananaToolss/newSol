@@ -110,11 +110,11 @@ export async function sendTx2(
   let versionedTx;
   const transactions: string[] = [];
   // const jitoClient = new JitoJsonRpcClient('https://amsterdam.mainnet.block-engine.jito.wtf/api/v1', "");
-  const jitoClient = new JitoJsonRpcClient('https://ny.testnet.block-engine.jito.wtf/api/v1', "");
+  // const jitoClient = new JitoJsonRpcClient('https://ny.testnet.block-engine.jito.wtf/api/v1', "");
   // jito测试网
   // connection = new Connection('https://api.testnet.solana.com/');
   // const jitoClient = new JitoJsonRpcClient('https://ny.testnet.block-engine.jito.wtf/api/v1', "");
-  // const jitoClient = new JitoJsonRpcClient('https://amsterdam.mainnet.block-engine.jito.wtf/api/v1', "");
+  const jitoClient = new JitoJsonRpcClient('https://amsterdam.mainnet.block-engine.jito.wtf/api/v1', "");
 
   const randomTipAccount = await jitoClient?.getRandomTipAccount();
   const jitoTipAccount = new PublicKey(randomTipAccount);
@@ -124,7 +124,6 @@ export async function sendTx2(
   );
 
   const jitoTipAmount = Number(0.001) * 10 ** 9; // 小费
-
   for (let i = 0; i < buyerstxs.length + 1; i++) {
     if (i == 0) {
       const transaction = new Transaction();
