@@ -106,8 +106,6 @@ export async function sendTx2(
   finality: Finality = DEFAULT_FINALITY
 ): Promise<any> {
 
-  const newTx = new Transaction();
-  let versionedTx;
   const transactions: string[] = [];
   // const jitoClient = new JitoJsonRpcClient('https://amsterdam.mainnet.block-engine.jito.wtf/api/v1', "");
   // const jitoClient = new JitoJsonRpcClient('https://ny.testnet.block-engine.jito.wtf/api/v1', "");
