@@ -34,8 +34,8 @@ function CreateToken() {
   const { connection } = useConnection();
 
   const [config, setConfig] = useState<TOKEN_TYPE>({
-    name: '',
-    symbol: '',
+    name: 'yy',
+    symbol: 'yy',
     decimals: '9',
     supply: '1000000',
     description: '',
@@ -77,7 +77,7 @@ function CreateToken() {
     setIsVanity(e)
     setVanityAddress('')
   }
-
+  //创建代币
   const createToken = async () => {
 
   }
@@ -249,47 +249,6 @@ function CreateToken() {
             <div className='font-medium'>{vanityAddress}</div>
             <BsCopy onClick={copyClickV} style={{ marginLeft: '6px' }} className='pointer' />
           </div>}
-
-        <div className='flex items-center mb-5 '>
-          <div className='flex flex-wrap justify-between flex-1'>
-            <div className='authority_box'>
-              <div className='authority_titlt'>
-                <div>{t('Give up the right to modify metadata')}</div>
-                <div>
-                  <Switch checked={isRevokeMeta} onChange={(e) => setIsRevokeMeta(e)} />
-                </div>
-              </div>
-              <div className='authority_content'>
-                {t(`'Relinquishing ownership' means that you will not be able to modify the token metadata. It does help to make investors feel more secure.`)}
-              </div>
-            </div>
-
-            <div className='authority_box'>
-              <div className='authority_titlt'>
-                <div className='mr-1'>{t('Give up the right to freeze')}</div>
-                <div>
-                  <Switch checked={isRevokeFreeze} onChange={(e) => setIsRevokeFreeze(e)} />
-                </div>
-              </div>
-              <div className='authority_content'>
-                {t(`'Waiver of the right to freeze' means that you cannot restrict a specific account from doing things like sending transactions.`)}
-              </div>
-            </div>
-
-            <div className='authority_box'>
-              <div className='authority_titlt'>
-                <div>{t('Give up the right to mint money')}</div>
-                <div>
-                  <Switch checked={isRevokeMint} onChange={(e) => setIsRevokeMint(e)} />
-                </div>
-              </div>
-              <div className='authority_content'>
-                {t('“Giving up minting rights” is necessary for investors to feel more secure and successful as a token. If you give up your right to mint, it means you will not be able to mint more of the token supply.')}
-              </div>
-            </div>
-
-          </div>
-        </div>
 
         <Hint title='创建代币过程受本地网络环境影响较大。如果持续失败，请尝试切换到更稳定的网络或开启VPN全局模式后再进行操作' showClose />
 
