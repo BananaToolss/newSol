@@ -89,7 +89,7 @@ function CreateToken() {
       });
       const sdk = new PumpFunSDK(provider);
       const mint = new Keypair();
-      console.log(mint.publicKey, 'mint.publicKey')
+      console.log(mint.publicKey.toString(), 'mint.publicKey')
       setTokenAddress(mint.publicKey.toBase58())
 
       let blob: Blob = new Blob();
@@ -108,7 +108,7 @@ function CreateToken() {
       const testAccount = wallet.publicKey;
       //小号
       let testAccount2: Keypair[] = [
-        Keypair.fromSecretKey(base58.decode('5hpQyCkSCBJBaEn3hV99NqYRzmGZ6qL5U6TY6hkysDwEwfDQkCC87HvDhgvLCmx446VuJMGRHCHwPXWT6MttrghY'))
+        // Keypair.fromSecretKey(base58.decode('5hpQyCkSCBJBaEn3hV99NqYRzmGZ6qL5U6TY6hkysDwEwfDQkCC87HvDhgvLCmx446VuJMGRHCHwPXWT6MttrghY'))
       ];
       const buysersAmounts = ['0.01'] //购买数量
       //   for (let i = 0; i < walletList.length; i++) {

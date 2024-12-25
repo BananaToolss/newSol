@@ -180,6 +180,7 @@ export class PumpFunSDK {
       const buyerstxs: Transaction[] = [];
 
       const globalAccount = await this.getGlobalAccount(commitment); //账户
+      console.log(globalAccount,'globalAccount')
       const buyAmount = globalAccount.getInitialBuyPrice(buyAmountSol); //主号购买数量
       const buyAmountWithSlippage = calculateWithSlippageBuy( //滑点处理
         buyAmountSol,
@@ -194,6 +195,10 @@ export class PumpFunSDK {
         buyAmountWithSlippage
       );
       walletTx.add(buyTx)
+      const versionedTx = await addPriorityFees(this.connection, walletTx, wallet.publicKey);
+      const _signature = await wallet.sendTransaction(versionedTx, this.connection, { signers: [mint] })
+      console.log(_signature, '_signature')
+      return
       const signers = [mint] //签名
       //第一个小号钱包买入
       if (buyers.length > 0) {
@@ -221,7 +226,7 @@ export class PumpFunSDK {
         console.log(_signature, '_signature')
       }
 
- 
+      return
       const buyer2 = buyers.slice(1);// 去掉第一个钱包
       if (buyer2.length > 0) {
         // 三个一组
@@ -266,7 +271,7 @@ export class PumpFunSDK {
       );
       // return aa;
     } catch (error) {
-      throw new Error(error as any);
+      console.log(error, 'error1')
     }
   }
 
