@@ -1,12 +1,6 @@
 
 
-import { isMainnet } from '@/config'
-
-const KEY = 'dCV9zeef_E-v4OVl'
-const base = 'https://api.shyft.to'
-const network = isMainnet ? 'mainnet-beta' : 'devnet'
-
-const fetcher = (args: any) => fetch(args).then((res) => res.json())
+import { base, KEY, network } from '@/config'
 
 export const getAllToken = (account: string) => {
   return new Promise(async (resolve: (value: any) => void, reject) => {

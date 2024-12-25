@@ -2,12 +2,19 @@ export const TELEGRAMLINK = 'https://t.me/BananaTools'
 
 
 export const isMainnet = false
-
-// export const Devnet = 'https://devnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075'
-export const Devnet = 'https://api.testnet.solana.com/'
+export const isDev = false
+export const Devnet = 'https://devnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075'
+export const Testnet = 'https://api.testnet.solana.com/'
 export const Mainnet = "https://mainnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075"
+export const NetworkURL = isMainnet ? Mainnet : isDev ? Devnet : Testnet;
 
-export const NetworkURL = isMainnet ? Mainnet : Devnet;
+
+export const KEY = 'dCV9zeef_E-v4OVl'
+export const base = 'https://api.shyft.to'
+export const network = isMainnet ? 'mainnet-beta' : isDev ? 'devnet' : 'testnet'
+
+
+
 
 export const OPENBOOK_PROGRAM_ID_MAINNET = 'srmqPvymJeFKQ4zGQed1GFppgkRHL9kaELCbyksJtPX'
 export const OPENBOOK_PROGRAM_ID_DEVNET = 'EoTcMgcDRTJVZDMZWBoU6rhYHZfkNTVEAfz3uUJRcYGj'
