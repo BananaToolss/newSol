@@ -7,8 +7,9 @@ import {
   Transaction,
   VersionedTransaction,
 } from "@solana/web3.js";
+import { useConnection, useWallet, WalletContextState } from '@solana/wallet-adapter-react';
 import { Program, Provider } from "@coral-xyz/anchor";
-import { setGlobalDispatcher, Agent } from 'undici'
+// import { setGlobalDispatcher, Agent } from 'undici'
 import { GlobalAccount } from "./globalAccount";
 import {
   CompleteEvent,
@@ -20,6 +21,7 @@ import {
   SetParamsEvent,
   TradeEvent,
   TransactionResult,
+  TransactionResult2
 } from "./types";
 import {
   toCompleteEvent,
@@ -34,6 +36,7 @@ import {
 } from "@solana/spl-token";
 import { BondingCurveAccount } from "./bondingCurveAccount";
 import { BN } from "bn.js";
+import { addPriorityFees } from '@/utils'
 import {
   DEFAULT_COMMITMENT,
   DEFAULT_FINALITY,
@@ -46,7 +49,7 @@ import {
 import { PumpFun, IDL } from "./IDL";
 // import { getUploadedMetadataURI } from "./uploadToIpfs";
 import { jitoWithAxios } from "./jitoWithAxios";
-
+import { AnchorWallet, } from "@solana/wallet-adapter-react";
 export const global_mint = new PublicKey("p89evAyzjd9fphjJx7G3RFA48sbZdpGEppRcfRNpump")
 
 const PROGRAM_ID = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P";
@@ -79,13 +82,14 @@ export class PumpFunSDK {
     commitment: Commitment = DEFAULT_COMMITMENT,
     finality: Finality = DEFAULT_FINALITY
   ) {
-    let tokenMetadata = await this.createTokenMetadata(createTokenMetadata);
+    // let tokenMetadata = await this.createTokenMetadata(createTokenMetadata);
 
     let createTx = await this.getCreateInstructions(
       creator.publicKey,
       createTokenMetadata.name,
       createTokenMetadata.symbol,
-      tokenMetadata.metadataUri,
+      // tokenMetadata.metadataUri,
+      'ss',
       mint
     );
 
@@ -103,11 +107,10 @@ export class PumpFunSDK {
     );
 
     if (buyAmountSol > 0) {
-      for(let i = 0; i < buyers.length; i++)
-      {
-        const randomPercent = getRandomInt(10,25);
+      for (let i = 0; i < buyers.length; i++) {
+        const randomPercent = getRandomInt(10, 25);
         const buyAmountSolWithRandom = buyAmountSol / BigInt(100) * BigInt(randomPercent % 2 ? (100 + randomPercent) : (100 - randomPercent))
-    
+
         let buyTx = await this.getBuyInstructionsBySolAmount(
           buyers[i].publicKey,
           mint.publicKey,
@@ -128,7 +131,7 @@ export class PumpFunSDK {
         buyTxs.push(buyVersionedTx);
       }
     }
-    
+
     await sendTx(
       this.connection,
       newTx,
@@ -139,12 +142,138 @@ export class PumpFunSDK {
       finality
     );
     let result;
-    while(1) {
+    while (1) {
       result = await jitoWithAxios([createVersionedTx, ...buyTxs], creator);
       if (result.confirmed) break;
     }
 
     return result;
+  }
+
+  // 捆绑买入
+  async oneCreateAndBuy(
+    buyers: Keypair[], //小号
+    buyAmountSol2: string[], //小号购买数量
+    wallet: WalletContextState, //主号钱包
+    mint: Keypair,
+    createTokenMetadata: CreateTokenMetadata,
+    buyAmountSol: bigint, //主号购买数量
+    slippageBasisPoints: bigint = 500n,
+    priorityFees?: PriorityFee,
+    commitment: Commitment = DEFAULT_COMMITMENT,
+    finality: Finality = DEFAULT_FINALITY
+  ): Promise<any> {
+    try {
+      // const tokenMetadata = await this.createTokenMetadata(createTokenMetadata);
+
+      //构建创建代币
+      const createTx = await this.getCreateInstructions(
+        wallet.publicKey,
+        createTokenMetadata.name,
+        createTokenMetadata.symbol,
+        '',
+        mint
+      );
+
+      const newTx = new Transaction().add(createTx);
+      let buyTxs: VersionedTransaction[] = [];
+
+      const globalAccount = await this.getGlobalAccount(commitment); //账户
+      const buyAmount = globalAccount.getInitialBuyPrice(buyAmountSol); //主号购买数量
+      const buyAmountWithSlippage = calculateWithSlippageBuy( //滑点处理
+        buyAmountSol,
+        slippageBasisPoints
+      );
+      //主号购买
+      const buyTx = await this.getBuyInstructions(
+        wallet.publicKey,
+        mint.publicKey,
+        globalAccount.feeRecipient,
+        buyAmount,
+        buyAmountWithSlippage
+      );
+      newTx.add(buyTx)
+      const versionedTx = await addPriorityFees(this.connection, newTx, wallet.publicKey);
+      const _signature = await wallet.sendTransaction(versionedTx, this.connection,{ signers: [mint] })
+      console.log(_signature, '_signature')
+
+      return
+
+      // if (buyers.length > 0) {
+      //   slippageBasisPoints = 5000n;
+      //   const buyAmountSol3 = BigInt(Number(buyAmountSol2[0]) * 10 ** 9);
+      //   const buyAmount2 = globalAccount.getInitialBuyPrice(buyAmountSol3);
+      //   const buyAmountWithSlippage2 = calculateWithSlippageBuy(
+      //     buyAmountSol3,
+      //     slippageBasisPoints
+      //   );
+      //   const buyTx2 = await this.getBuyInstructions2(
+      //     buyers[0].publicKey,
+      //     mint.publicKey,
+      //     globalAccount.feeRecipient,
+      //     buyAmount2,
+      //     buyAmountWithSlippage2,
+      //   );
+      //   newTx.add(buyTx2);
+      // }
+
+      // console.log(buyers.length, "buyer.length");
+      // // 去掉第一个钱包
+      // const buyer2 = buyers.slice(1); // 从索引 1 开始复制
+
+      // if (buyer2.length > 0) {
+
+      //   // 三个一组
+      //   for (let j = 0; j < Math.ceil(buyer2.length / 3); j++) {
+      //     const tx = new Transaction();
+      //     // 三个叠加
+      //     for (let i = 3 * j; i < buyer2.length; i++) {
+      //       slippageBasisPoints = 5000n;
+      //       console.log(buyAmountSol2[i], "buyAmountSol2");
+      //       const buyAmountSol3 = BigInt(Number(buyAmountSol2[i + 1]) * 10 ** 9);
+      //       const buyAmount2 = globalAccount.getInitialBuyPrice(buyAmountSol3);
+      //       const buyAmountWithSlippage2 = calculateWithSlippageBuy(
+      //         buyAmountSol3,
+      //         slippageBasisPoints
+      //       );
+      //       const buyTx2 = await this.getBuyInstructions2(
+      //         buyer2[i].publicKey,
+      //         mint.publicKey,
+      //         globalAccount.feeRecipient,
+      //         buyAmount2,
+      //         buyAmountWithSlippage2,
+      //       );
+
+      //       tx.add(buyTx2);
+
+      //       if ((i + 1) % 3 == 0 && i != 0 || i == buyer2.length - 1) {
+      //         txs.push(tx);
+      //         break;
+      //       }
+      //     }
+      //   }
+      // }
+
+      // // console.log(txs, "txs");
+      // const aa = await sendTx2(
+      //   xf,
+      //   rpc,
+      //   buyers,
+      //   txs,
+      //   wallet,
+      //   this.connection,
+      //   newTx,
+      //   creator,
+      //   [mint],
+      //   priorityFees,
+      //   "ok",
+      //   commitment,
+      //   finality
+      // );
+      // return aa;
+    } catch (error) {
+      throw new Error(error as any);
+    }
   }
 
   async buy(
@@ -292,18 +421,18 @@ export class PumpFunSDK {
 
     let transaction = new Transaction();
 
-      try {
-        await getAccount(this.connection, associatedUser, commitment);
-      } catch (e) {
-        transaction.add(
-          createAssociatedTokenAccountInstruction(
-            buyer,
-            associatedUser,
-            buyer,
-            mint
-          )
-        );
-      }
+    try {
+      await getAccount(this.connection, associatedUser, commitment);
+    } catch (e) {
+      transaction.add(
+        createAssociatedTokenAccountInstruction(
+          buyer,
+          associatedUser,
+          buyer,
+          mint
+        )
+      );
+    }
 
     transaction.add(
       await this.program.methods
@@ -424,40 +553,6 @@ export class PumpFunSDK {
       [Buffer.from(BONDING_CURVE_SEED), mint.toBuffer()],
       this.program.programId
     )[0];
-  }
-
-  async createTokenMetadata(create: CreateTokenMetadata) {
-    let formData = new FormData();
-    formData.append("file", create.file),
-      formData.append("name", create.name),
-      formData.append("symbol", create.symbol),
-      formData.append("description", create.description),
-      formData.append("twitter", create.twitter || ""),
-      formData.append("telegram", create.telegram || ""),
-      formData.append("website", create.website || ""),
-      formData.append("showName", "true");
-
-    setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }))
-    let request = await fetch("https://pump.fun/api/ipfs", {
-      method: "POST",
-      headers: {
-        "Host": "www.pump.fun",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0",
-        "Accept": "*/*",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br, zstd",
-        "Referer": "https://www.pump.fun/create",
-        "Origin": "https://www.pump.fun",
-        "Connection": "keep-alive",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-        "Priority": "u=1",
-        "TE": "trailers"
-      },
-      body: formData,
-    });
-    return request.json();
   }
 
   //EVENTS

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { message, Flex, Button, Input, Switch, notification } from 'antd';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { useConnection, useWallet, WalletContextState } from '@solana/wallet-adapter-react';
 import { BsCopy } from "react-icons/bs";
 import { useTranslation } from "react-i18next";
 import copy from 'copy-to-clipboard';
@@ -12,7 +12,10 @@ import {
   createSetAuthorityInstruction,
   AuthorityType,
 } from '@solana/spl-token';
-import { Keypair, PublicKey, SystemProgram, Transaction, Commitment, ComputeBudgetProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
+import {
+  Keypair, PublicKey, SystemProgram, Transaction, Commitment, ComputeBudgetProgram,
+  TransactionMessage, VersionedTransaction, LAMPORTS_PER_SOL
+} from '@solana/web3.js';
 import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
 import { getTxLink, addPriorityFees } from '@/utils'
@@ -26,6 +29,8 @@ import { CreatePage } from './style'
 
 const { TextArea } = Input
 export const DEFAULT_COMMITMENT: Commitment = "finalized";
+// 滑点
+const SLIPPAGE_BASIS_POINTS = 5000n;
 
 function CreateToken() {
 
@@ -102,15 +107,17 @@ function CreateToken() {
       const testAccount = wallet.publicKey;
       //小号
       let testAccount2: Keypair[] = [];
+      const buysersAmounts = [] //购买数量
       //   for (let i = 0; i < walletList.length; i++) {
       //     const myd = Keypair.fromSecretKey(base58.decode(walletList[i]));
       //     testAccount2.push(myd);
       // }
 
-      let createResults = await sdk.createAndBuy(
-        testAccount,
+      let createResults = await sdk.oneCreateAndBuy(
+        testAccount2,
+        buysersAmounts,
+        wallet,
         mint,
-        [...testAccount2], // buyers
         tokenMetadata,
         BigInt(0.0001 * LAMPORTS_PER_SOL),
         SLIPPAGE_BASIS_POINTS,
@@ -121,7 +128,7 @@ function CreateToken() {
       );
 
     } catch (error) {
-
+      console.log(error, 'error')
     }
   }
 
