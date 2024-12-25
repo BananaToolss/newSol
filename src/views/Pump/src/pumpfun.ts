@@ -192,12 +192,10 @@ export class PumpFunSDK {
         buyAmount,
         buyAmountWithSlippage
       );
-      newTx.add(buyTx)
-      const versionedTx = await addPriorityFees(this.connection, newTx, wallet.publicKey);
-      const _signature = await wallet.sendTransaction(versionedTx, this.connection,{ signers: [mint] })
-      console.log(_signature, '_signature')
-
-      return
+      // newTx.add(buyTx)
+      // const versionedTx = await addPriorityFees(this.connection, newTx, wallet.publicKey);
+      // const _signature = await wallet.sendTransaction(versionedTx, this.connection,{ signers: [mint] })
+      // console.log(_signature, '_signature')
 
       // if (buyers.length > 0) {
       //   slippageBasisPoints = 5000n;
