@@ -4,6 +4,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { BsCopy } from "react-icons/bs";
 import { useTranslation } from "react-i18next";
 import copy from 'copy-to-clipboard';
+import { AnchorProvider } from "@coral-xyz/anchor";
 import {
   MINT_SIZE, TOKEN_PROGRAM_ID, createInitializeMintInstruction,
   getMinimumBalanceForRentExemptMint, getAssociatedTokenAddress,
@@ -19,6 +20,7 @@ import { getAsset } from '@/utils/sol'
 import type { TOKEN_TYPE } from '@/type'
 import { Vanity, UpdataImage, Header, Hint, Result } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
+import { PumpFunSDK } from "../src";
 import { Page } from '@/styles'
 import { CreatePage } from './style'
 
@@ -28,6 +30,8 @@ export const DEFAULT_COMMITMENT: Commitment = "finalized";
 function CreateToken() {
 
   const { publicKey, sendTransaction } = useWallet()
+  const wallet = useWallet()
+
   const { t } = useTranslation()
   const [messageApi, contextHolder] = message.useMessage();
   const [api, contextHolder1] = notification.useNotification();
@@ -73,7 +77,52 @@ function CreateToken() {
   }
   //创建代币
   const createToken = async () => {
+    try {
+      const provider = new AnchorProvider(connection, wallet, {
+        commitment: "finalized",
+      });
+      const sdk = new PumpFunSDK(provider);
+      const mint = new Keypair();
+      console.log(mint.publicKey, 'mint.publicKey')
+      setTokenAddress(mint.publicKey.toBase58())
 
+      let blob: Blob = new Blob();
+      if (imageFile) {
+        blob = new Blob([imageFile.file], { type: imageFile.file.type });
+      }
+      const tokenMetadata = {
+        name: 'yy',
+        symbol: 'yy',
+        description: 'sss',
+        file: blob,
+        twitter: '',
+        telegram: '',
+        website: '',
+      }
+      const testAccount = wallet.publicKey;
+      //小号
+      let testAccount2: Keypair[] = [];
+      //   for (let i = 0; i < walletList.length; i++) {
+      //     const myd = Keypair.fromSecretKey(base58.decode(walletList[i]));
+      //     testAccount2.push(myd);
+      // }
+
+      let createResults = await sdk.createAndBuy(
+        testAccount,
+        mint,
+        [...testAccount2], // buyers
+        tokenMetadata,
+        BigInt(0.0001 * LAMPORTS_PER_SOL),
+        SLIPPAGE_BASIS_POINTS,
+        {
+          unitLimit: 5_000_000,
+          unitPrice: 200_000,
+        },
+      );
+
+    } catch (error) {
+
+    }
   }
 
   const copyClickV = () => {
