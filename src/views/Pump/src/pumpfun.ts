@@ -179,7 +179,6 @@ export class PumpFunSDK {
       const walletTx = new Transaction().add(createTx);
       //主号购买
       const globalAccount = await this.getGlobalAccount(commitment); //账户
-      console.log(globalAccount, 'globalAccount')
       const buyAmount = globalAccount.getInitialBuyPrice(buyAmountSol); //主号购买数量
       const buyAmountWithSlippage = calculateWithSlippageBuy( //滑点处理
         buyAmountSol,
