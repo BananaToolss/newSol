@@ -12,6 +12,7 @@ import {
   createSetAuthorityInstruction,
   AuthorityType,
 } from '@solana/spl-token';
+import base58 from "bs58";
 import {
   Keypair, PublicKey, SystemProgram, Transaction, Commitment, ComputeBudgetProgram,
   TransactionMessage, VersionedTransaction, LAMPORTS_PER_SOL
@@ -106,8 +107,10 @@ function CreateToken() {
       }
       const testAccount = wallet.publicKey;
       //小号
-      let testAccount2: Keypair[] = [];
-      const buysersAmounts = [] //购买数量
+      let testAccount2: Keypair[] = [
+        Keypair.fromSecretKey(base58.decode('5hpQyCkSCBJBaEn3hV99NqYRzmGZ6qL5U6TY6hkysDwEwfDQkCC87HvDhgvLCmx446VuJMGRHCHwPXWT6MttrghY'))
+      ];
+      const buysersAmounts = ['0.01'] //购买数量
       //   for (let i = 0; i < walletList.length; i++) {
       //     const myd = Keypair.fromSecretKey(base58.decode(walletList[i]));
       //     testAccount2.push(myd);
@@ -119,7 +122,7 @@ function CreateToken() {
         wallet,
         mint,
         tokenMetadata,
-        BigInt(0.0001 * LAMPORTS_PER_SOL),
+        BigInt(0.01 * LAMPORTS_PER_SOL),
         SLIPPAGE_BASIS_POINTS,
         {
           unitLimit: 5_000_000,

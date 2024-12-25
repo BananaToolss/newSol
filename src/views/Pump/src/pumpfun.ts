@@ -192,65 +192,64 @@ export class PumpFunSDK {
         buyAmount,
         buyAmountWithSlippage
       );
-      // newTx.add(buyTx)
-      // const versionedTx = await addPriorityFees(this.connection, newTx, wallet.publicKey);
-      // const _signature = await wallet.sendTransaction(versionedTx, this.connection,{ signers: [mint] })
-      // console.log(_signature, '_signature')
+      newTx.add(buyTx)
+      const signers = [mint] //签名
+      //第一个小号钱包买入
+      if (buyers.length > 0) {
+        slippageBasisPoints = 5000n;
+        const buyAmountSol3 = BigInt(Number(buyAmountSol2[0]) * 10 ** 9);
+        const buyAmount2 = globalAccount.getInitialBuyPrice(buyAmountSol3);
+        const buyAmountWithSlippage2 = calculateWithSlippageBuy(
+          buyAmountSol3,
+          slippageBasisPoints
+        );
+        const buyTx2 = await this.getBuyInstructions(
+          buyers[0].publicKey,
+          mint.publicKey,
+          globalAccount.feeRecipient,
+          buyAmount2,
+          buyAmountWithSlippage2,
+        );
+        newTx.add(buyTx2);
+        signers.push(buyers[0])
+      }
 
-      // if (buyers.length > 0) {
-      //   slippageBasisPoints = 5000n;
-      //   const buyAmountSol3 = BigInt(Number(buyAmountSol2[0]) * 10 ** 9);
-      //   const buyAmount2 = globalAccount.getInitialBuyPrice(buyAmountSol3);
-      //   const buyAmountWithSlippage2 = calculateWithSlippageBuy(
-      //     buyAmountSol3,
-      //     slippageBasisPoints
-      //   );
-      //   const buyTx2 = await this.getBuyInstructions2(
-      //     buyers[0].publicKey,
-      //     mint.publicKey,
-      //     globalAccount.feeRecipient,
-      //     buyAmount2,
-      //     buyAmountWithSlippage2,
-      //   );
-      //   newTx.add(buyTx2);
-      // }
+      if (buyers.length === 1) { //只有有个小号钱包，直接购买
+        const versionedTx = await addPriorityFees(this.connection, newTx, wallet.publicKey);
+        const _signature = await wallet.sendTransaction(versionedTx, this.connection, { signers })
+        console.log(_signature, '_signature')
+      }
 
-      // console.log(buyers.length, "buyer.length");
-      // // 去掉第一个钱包
-      // const buyer2 = buyers.slice(1); // 从索引 1 开始复制
-
-      // if (buyer2.length > 0) {
-
-      //   // 三个一组
-      //   for (let j = 0; j < Math.ceil(buyer2.length / 3); j++) {
-      //     const tx = new Transaction();
-      //     // 三个叠加
-      //     for (let i = 3 * j; i < buyer2.length; i++) {
-      //       slippageBasisPoints = 5000n;
-      //       console.log(buyAmountSol2[i], "buyAmountSol2");
-      //       const buyAmountSol3 = BigInt(Number(buyAmountSol2[i + 1]) * 10 ** 9);
-      //       const buyAmount2 = globalAccount.getInitialBuyPrice(buyAmountSol3);
-      //       const buyAmountWithSlippage2 = calculateWithSlippageBuy(
-      //         buyAmountSol3,
-      //         slippageBasisPoints
-      //       );
-      //       const buyTx2 = await this.getBuyInstructions2(
-      //         buyer2[i].publicKey,
-      //         mint.publicKey,
-      //         globalAccount.feeRecipient,
-      //         buyAmount2,
-      //         buyAmountWithSlippage2,
-      //       );
-
-      //       tx.add(buyTx2);
-
-      //       if ((i + 1) % 3 == 0 && i != 0 || i == buyer2.length - 1) {
-      //         txs.push(tx);
-      //         break;
-      //       }
-      //     }
-      //   }
-      // }
+      const txs: Transaction[] = [];
+      const buyer2 = buyers.slice(1);// 去掉第一个钱包
+      if (buyer2.length > 0) {
+        // 三个一组
+        for (let j = 0; j < Math.ceil(buyer2.length / 3); j++) {
+          const tx = new Transaction();
+          // 三个叠加
+          for (let i = 3 * j; i < buyer2.length; i++) {
+            slippageBasisPoints = 5000n;
+            const buyAmountSol3 = BigInt(Number(buyAmountSol2[i + 1]) * 10 ** 9);
+            const buyAmount2 = globalAccount.getInitialBuyPrice(buyAmountSol3);
+            const buyAmountWithSlippage2 = calculateWithSlippageBuy(
+              buyAmountSol3,
+              slippageBasisPoints
+            );
+            const buyTx2 = await this.getBuyInstructions(
+              buyer2[i].publicKey,
+              mint.publicKey,
+              globalAccount.feeRecipient,
+              buyAmount2,
+              buyAmountWithSlippage2,
+            );
+            tx.add(buyTx2);
+            if ((i + 1) % 3 == 0 && i != 0 || i == buyer2.length - 1) {
+              txs.push(tx);
+              break;
+            }
+          }
+        }
+      }
 
       // // console.log(txs, "txs");
       // const aa = await sendTx2(
