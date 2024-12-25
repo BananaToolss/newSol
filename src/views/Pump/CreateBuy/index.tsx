@@ -52,18 +52,12 @@ function CreateToken() {
     metadataUrl: ""
   })
   const [tokenAddress, setTokenAddress] = useState('')
-  const [isSearch, setIsSearch] = useState(false)
-
   const [imageFile, setImageFile] = useState(null);
 
   const [isOptions, setIsOptions] = useState(false)
   const [isVanity, setIsVanity] = useState(false)
   const [vanityAddress, setVanityAddress] = useState('')
   const [mintKeypair, setMintKeypair] = useState(Keypair.generate())
-
-  const [isRevokeFreeze, setIsRevokeFreeze] = useState(false)
-  const [isRevokeMint, setIsRevokeMint] = useState(false)
-  const [isRevokeMeta, setIsRevokeMeta] = useState(false)
 
   const [iscreating, setIscreating] = useState(false);
   const [tokenAddresss, setTokenAddresss] = useState("");
