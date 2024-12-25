@@ -107,11 +107,6 @@ export async function sendTx2(
 ): Promise<any> {
 
   const transactions: string[] = [];
-  // const jitoClient = new JitoJsonRpcClient('https://amsterdam.mainnet.block-engine.jito.wtf/api/v1', "");
-  // const jitoClient = new JitoJsonRpcClient('https://ny.testnet.block-engine.jito.wtf/api/v1', "");
-  // jito测试网
-  // connection = new Connection('https://api.testnet.solana.com/');
-  // const jitoClient = new JitoJsonRpcClient('https://ny.testnet.block-engine.jito.wtf/api/v1', "");
   const jitoClient = new JitoJsonRpcClient('https://amsterdam.mainnet.block-engine.jito.wtf/api/v1', "");
 
   // const randomTipAccount = await jitoClient?.getRandomTipAccount();
@@ -190,10 +185,6 @@ export async function sendTx2(
       // Crete transaction
       const transaction = new Transaction();
 
-      priorityFees = {
-        unitLimit: 500000,
-        unitPrice: 1000000,
-      };
       if (priorityFees) {
         const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
           units: priorityFees.unitLimit,
