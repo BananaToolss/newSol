@@ -177,16 +177,14 @@ export class PumpFunSDK {
       );
 
       const walletTx = new Transaction().add(createTx);
-      const buyerstxs: Transaction[] = [];
-
+      //主号购买
       const globalAccount = await this.getGlobalAccount(commitment); //账户
-      console.log(globalAccount,'globalAccount')
+      console.log(globalAccount, 'globalAccount')
       const buyAmount = globalAccount.getInitialBuyPrice(buyAmountSol); //主号购买数量
       const buyAmountWithSlippage = calculateWithSlippageBuy( //滑点处理
         buyAmountSol,
         slippageBasisPoints
       );
-      //主号购买
       const buyTx = await this.getBuyInstructions(
         wallet.publicKey,
         mint.publicKey,
@@ -195,10 +193,6 @@ export class PumpFunSDK {
         buyAmountWithSlippage
       );
       walletTx.add(buyTx)
-      const versionedTx = await addPriorityFees(this.connection, walletTx, wallet.publicKey);
-      const _signature = await wallet.sendTransaction(versionedTx, this.connection, { signers: [mint] })
-      console.log(_signature, '_signature')
-      return
       const signers = [mint] //签名
       //第一个小号钱包买入
       if (buyers.length > 0) {
@@ -220,13 +214,14 @@ export class PumpFunSDK {
         signers.push(buyers[0])
       }
 
-      if (buyers.length <= 1) { //只有有个小号钱包，直接购买
-        const versionedTx = await addPriorityFees(this.connection, walletTx, wallet.publicKey);
-        const _signature = await wallet.sendTransaction(versionedTx, this.connection, { signers })
-        console.log(_signature, '_signature')
-      }
+      // if (buyers.length <= 1) { //只有有个小号钱包，直接购买
+      //   const versionedTx = await addPriorityFees(this.connection, walletTx, wallet.publicKey);
+      //   const _signature = await wallet.sendTransaction(versionedTx, this.connection, { signers })
+      //   console.log(_signature, '_signature')
+      //   return
+      // }
 
-      return
+      const buyerstxs: Transaction[] = []; //除去小号钱包1，其他的钱包购买
       const buyer2 = buyers.slice(1);// 去掉第一个钱包
       if (buyer2.length > 0) {
         // 三个一组
