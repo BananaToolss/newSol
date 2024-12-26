@@ -23,7 +23,7 @@ import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FE
 import { getTxLink, addPriorityFees } from '@/utils'
 import { getAsset } from '@/utils/sol'
 import type { TOKEN_TYPE } from '@/type'
-import { Vanity, UpdataImage, Header, Hint, Result } from '@/components'
+import { Vanity, UpdataImage, Header, Hint, Result, WalletInfo } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { PumpFunSDK } from "../src";
 import { Page } from '@/styles'
@@ -326,7 +326,7 @@ zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySg
           <div>{t('Pump.fun同时买入请保证买入钱包有足够的买入金额和 GAS，避免买入失败，同时买入最多设置 1 个地址。')}</div>
         </div>
 
-
+        <WalletInfo />
 
         <div className='btn mt-6'>
           <div className='buttonSwapper'>

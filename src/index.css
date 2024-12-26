@@ -71,6 +71,13 @@ input:disabled {
   height: 48px;
 }
 
+.keybtn button {
+  width: 100%;
+  color: #fff;
+  font-weight: bold;
+  height: 48px;
+}
+
 .buttonSwapper .ant-btn-default:not(:disabled):not(.ant-btn-disabled):hover {
   box-sizing: border-box;
   font-family: inherit;
