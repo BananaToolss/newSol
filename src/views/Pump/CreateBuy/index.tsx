@@ -110,14 +110,6 @@ function CreateToken() {
       let testAccount2: Keypair[] = [
         Keypair.fromSecretKey(base58.decode('5hpQyCkSCBJBaEn3hV99NqYRzmGZ6qL5U6TY6hkysDwEwfDQkCC87HvDhgvLCmx446VuJMGRHCHwPXWT6MttrghY')),
         Keypair.fromSecretKey(base58.decode('mk1KUAnoTRiAJQbEvWGsqip1bYBMDWzFroWnPWK6gefqqC9V9sJYcYpatvqQ6zzPcEtEGXbNfNaW3KWwUnY9j5N')),
-        Keypair.fromSecretKey(base58.decode('Ms8BuLCnmVkmVepjKsQVbsemrYLb3egHU3RtvzkmuzQM5HDLyjwRGn6YisN6JmX5KDZupi3RN88xLUUCQZEhM8G')),
-        Keypair.fromSecretKey(base58.decode('5obbow7nSmPhFwZ4YN5tqAy2yyw697RvRpj9d37kJYjcvNXgCBncdYhppVNXKMgdim7WHzegUgD2yGMUFhcZDFA5')),
-        Keypair.fromSecretKey(base58.decode('4xfB3A5BzopJwpB4NLDeik4Ah73L4jWSQQooFdHukXru14H913EC97KnpRk1zXNfnbwrM3B68fVu56UdV2GqGHmD')),
-        Keypair.fromSecretKey(base58.decode('zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySgcGSe7S5')),
-        Keypair.fromSecretKey(base58.decode('42A2ZmmCsPggX61kPGu4dAwHePb65tYogk3FBSQXcraSNt3h6ycCAt6hpWGyzLFbgracHbGabrDNFqhNhEnLoVG2')),
-        Keypair.fromSecretKey(base58.decode('551YovUN6ydHGohgm26CURb2Z73PfCoFeqRU7p3BKUaiEBrgGZ72dw2vnPSedYNVbpGMWt6rtjFXQ97Eb9uExtfR')),
-        Keypair.fromSecretKey(base58.decode('5kG2UFoyFvFJ6M7mNFfCvYgRvy4QW7K6qRzGaJb9ZJ87jmnB3cEjy6BPyqMvqUDFmvrpzRmBVuNWukCUyYf49h8T')),
-        Keypair.fromSecretKey(base58.decode('5RuruwcxW4KoVCMxAbjF5eadhH8EaXprNweSQn55ze5PSiea1hfu9iLKbVcxVgUkgbx9Jfn4zeyjXTNGK5NvxP8V')),
       ];
       const buysersAmounts = ['0.01', '0.01', '0.01', '0.01', '0.01', '0.01', '0.01', '0.01', '0.01', '0.01',] //购买数量
       //   for (let i = 0; i < walletList.length; i++) {

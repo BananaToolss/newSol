@@ -3,6 +3,8 @@ import bs58 from "bs58";
 import { isMainnet } from '@/config'
 
 export { default as addPriorityFees } from './addPriorityFees'
+export { default as addPriorityFeesJito } from './addPriorityFeesJito'
+
 
 export const getImage = (imgUrl: string) => new URL(`/src/assets/images/${imgUrl}`, import.meta.url).href
 

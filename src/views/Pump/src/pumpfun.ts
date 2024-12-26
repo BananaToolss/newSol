@@ -6,9 +6,15 @@ import {
   PublicKey,
   Transaction,
   VersionedTransaction,
+  ComputeBudgetProgram,
+  SystemProgram,
+  TransactionInstruction,
+  TransactionMessage
 } from "@solana/web3.js";
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { Program, Provider } from "@coral-xyz/anchor";
+import base58 from "bs58";
+import axios from 'axios'
 // import { setGlobalDispatcher, Agent } from 'undici'
 import { GlobalAccount } from "./globalAccount";
 import {
@@ -166,7 +172,6 @@ export class PumpFunSDK {
   ): Promise<any> {
     try {
       // const tokenMetadata = await this.createTokenMetadata(createTokenMetadata);
-
       //构建创建代币
       const createTx = await this.getCreateInstructions(
         wallet.publicKey,
@@ -175,7 +180,6 @@ export class PumpFunSDK {
         '',
         mint
       );
-
       const walletTx = new Transaction().add(createTx);
       //主号购买
       const globalAccount = await this.getGlobalAccount(commitment); //账户
@@ -219,6 +223,80 @@ export class PumpFunSDK {
       //   console.log(_signature, '_signature')
       //   return
       // }
+
+      //捆绑买入
+      const tipAccounts = [
+        'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+        'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+        '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+        '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+        'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+        'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+        'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+      ];
+      const jitoTipAccount = new PublicKey(tipAccounts[Math.floor(tipAccounts.length * Math.random())])
+      const memoProgramId = new PublicKey(
+        "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
+      );
+      const JITO_FEE = Number(0.00003) * 10 ** 9; // 小费
+      //主钱包+小号1
+      if (priorityFees) {
+        const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+          units: priorityFees.unitLimit,
+        });
+        const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: priorityFees.unitPrice,
+        });
+        walletTx.add(modifyComputeUnits);
+        walletTx.add(addPriorityFee);
+      }
+      walletTx.add(
+        SystemProgram.transfer({
+          fromPubkey: wallet.publicKey,
+          toPubkey: jitoTipAccount,
+          lamports: JITO_FEE,
+        })
+      );
+      // Add memo instruction
+      const memoInstruction = new TransactionInstruction({
+        keys: [],
+        programId: memoProgramId,
+        data: Buffer.from("Hello, Jito!"),
+      });
+      walletTx.add(memoInstruction);
+
+      const blockHash = (await this.connection.getLatestBlockhash(DEFAULT_COMMITMENT))
+        .blockhash;
+      let messageV0 = new TransactionMessage({
+        payerKey: wallet.publicKey,
+        recentBlockhash: blockHash,
+        instructions: walletTx.instructions,
+      }).compileToV0Message();
+
+      const versionedTx = new VersionedTransaction(messageV0);
+      versionedTx.sign(signers);
+      const signedTx = await wallet.signTransaction(versionedTx); // 使用钱包签名
+      const serializedTransaction = signedTx?.serialize();
+      const base58EncodedTransaction = base58.encode(
+        serializedTransaction as any
+      );
+
+      const transactions: string[] = [];
+      transactions.push(base58EncodedTransaction);
+
+      const endpoints = [
+        'https://tokyo.mainnet.block-engine.jito.wtf/api/v1/bundles',
+      ];
+
+      const result = await axios.post(endpoints[0], {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'sendBundle',
+        params: [transactions],
+      })
+      console.log(result, 'result')
+      return
 
       const buyerstxs: Transaction[] = []; //除去小号钱包1，其他的钱包购买
       const buyer2 = buyers.slice(1);// 去掉第一个钱包
