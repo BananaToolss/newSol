@@ -113,7 +113,7 @@ zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySg
       // console.log(Keypair.fromSecretKey(base58.decode('5RuruwcxW4KoVCMxAbjF5eadhH8EaXprNweSQn55ze5PSiea1hfu9iLKbVcxVgUkgbx9Jfn4zeyjXTNGK5NvxP8V')),'ssssss')
       //小号
       let testAccount2: Keypair[] = [];
-      const buysersAmounts = ['0.001', '1', '1', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001',] //购买数量
+      const buysersAmounts = ['0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001',] //购买数量
       for (let i = 0; i < walletList.length; i++) {
         const myd = Keypair.fromSecretKey(base58.decode(walletList[i]));
         testAccount2.push(myd);

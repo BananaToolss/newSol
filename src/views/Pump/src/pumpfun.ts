@@ -267,17 +267,17 @@ export class PumpFunSDK {
       console.log(buyTxs.length, '小号个数')
       //3个小号一组
       const _buyers = buyers.slice(1)
-
-      for (let j = 0; j < Math.ceil(buyTxs.length / 3); j++) {
+      const NUM = 3
+      for (let j = 0; j < Math.ceil(buyTxs.length / NUM); j++) {
         const _tx = new Transaction();
-        const _txs = buyTxs.slice(j * 3, (j + 1) * 3)
+        const _txs = buyTxs.slice(j * NUM, (j + 1) * NUM)
         _txs.forEach(item => {
           _tx.add(item)
         })
         const versionedTx = await addPriorityFeesJito(
-          this.connection, _tx, _buyers[j * 3].publicKey,
+          this.connection, _tx, _buyers[j * NUM].publicKey,
           jitoTipAccount, JITO_FEE)
-        versionedTx.sign(_buyers.slice(j * 3, (j + 1) * 3));
+        versionedTx.sign(_buyers.slice(j * NUM, (j + 1) * NUM));
         const serializedTransaction = base58.encode(versionedTx.serialize());
         transactions.push(serializedTransaction);
       }
@@ -301,11 +301,17 @@ export class PumpFunSDK {
       const result1 = await axios.post(endpoints, {
         jsonrpc: '2.0',
         id: 1,
-        method: 'getInflightBundleStatuses',
+        method: 'getBundleStatuses',
         params: [[bundleId]],
       })
       console.log(result1, 'result1')
-      console.log(result1.data.result.value[0].status)
+      const value = result1.data.result.value
+      if (value[0] && value[0].confirmation_status) {
+        const state = value[0].confirmation_status
+        console.log(state)
+      } else {
+        console.log('提交错误')
+      }
 
     } catch (error) {
       console.log(error, 'error1')
