@@ -1,7 +1,7 @@
 export const TELEGRAMLINK = 'https://t.me/BananaTools'
 
 
-export const isMainnet = false
+export const isMainnet = true
 export const isDev = true
 export const Devnet = 'https://devnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075'
 export const Testnet = 'https://api.testnet.solana.com/'

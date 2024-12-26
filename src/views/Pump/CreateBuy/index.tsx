@@ -44,11 +44,11 @@ function CreateToken() {
   const { connection } = useConnection();
 
   const [config, setConfig] = useState<TOKEN_TYPE>({
-    name: 'yy',
-    symbol: 'yy',
+    name: 'Bolt token',
+    symbol: 'Bolt2',
     decimals: '9',
     supply: '1000000',
-    description: '',
+    description: 'Brave Veer & Bolt',
     website: '',
     telegram: '',
     twitter: '',

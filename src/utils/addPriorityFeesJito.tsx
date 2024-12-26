@@ -13,7 +13,6 @@ const addPriorityFeesJito = (
   payerKey: PublicKey,
   jitoTipAccount: PublicKey,
   jito_Fee: number,
-  blockHash: string
 ) => {
   return new Promise(async (resolve: (value: VersionedTransaction) => void, reject) => {
     try {
@@ -49,8 +48,8 @@ const addPriorityFeesJito = (
         data: Buffer.from("Hello, Jito!"),
       });
       tx.add(memoInstruction);
-      // const blockHash = (await connection.getLatestBlockhash(DEFAULT_COMMITMENT))
-      //   .blockhash;
+      const blockHash = (await connection.getLatestBlockhash(DEFAULT_COMMITMENT))
+        .blockhash;
       let messageV0 = new TransactionMessage({
         payerKey: payerKey,
         recentBlockhash: blockHash,

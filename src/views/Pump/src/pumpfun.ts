@@ -42,7 +42,7 @@ import {
 } from "@solana/spl-token";
 import { BondingCurveAccount } from "./bondingCurveAccount";
 import { BN } from "bn.js";
-import { addPriorityFees } from '@/utils'
+import { addPriorityFeesJito, addPriorityFees } from '@/utils'
 import {
   DEFAULT_COMMITMENT,
   DEFAULT_FINALITY,
@@ -56,7 +56,8 @@ import {
 import { PumpFun, IDL } from "./IDL";
 // import { getUploadedMetadataURI } from "./uploadToIpfs";
 import { jitoWithAxios } from "./jitoWithAxios";
-import { AnchorWallet, } from "@solana/wallet-adapter-react";
+
+
 export const global_mint = new PublicKey("p89evAyzjd9fphjJx7G3RFA48sbZdpGEppRcfRNpump")
 
 const PROGRAM_ID = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P";
@@ -171,60 +172,7 @@ export class PumpFunSDK {
     finality: Finality = DEFAULT_FINALITY
   ): Promise<any> {
     try {
-      // const tokenMetadata = await this.createTokenMetadata(createTokenMetadata);
-      //构建创建代币
-      const createTx = await this.getCreateInstructions(
-        wallet.publicKey,
-        createTokenMetadata.name,
-        createTokenMetadata.symbol,
-        '',
-        mint
-      );
-      const walletTx = new Transaction().add(createTx);
-      //主号购买
-      const globalAccount = await this.getGlobalAccount(commitment); //账户
-      const buyAmount = globalAccount.getInitialBuyPrice(buyAmountSol); //主号购买数量
-      const buyAmountWithSlippage = calculateWithSlippageBuy( //滑点处理
-        buyAmountSol,
-        slippageBasisPoints
-      );
-      const buyTx = await this.getBuyInstructions(
-        wallet.publicKey,
-        mint.publicKey,
-        globalAccount.feeRecipient,
-        buyAmount,
-        buyAmountWithSlippage
-      );
-      walletTx.add(buyTx)
-      const signers = [mint] //签名
-      //第一个小号钱包买入
-      if (buyers.length > 0) {
-        slippageBasisPoints = 5000n;
-        const buyAmountSol3 = BigInt(Number(buyAmountSol2[0]) * 10 ** 9);
-        const buyAmount2 = globalAccount.getInitialBuyPrice(buyAmountSol3);
-        const buyAmountWithSlippage2 = calculateWithSlippageBuy(
-          buyAmountSol3,
-          slippageBasisPoints
-        );
-        const buyTx2 = await this.getBuyInstructions(
-          buyers[0].publicKey,
-          mint.publicKey,
-          globalAccount.feeRecipient,
-          buyAmount2,
-          buyAmountWithSlippage2,
-        );
-        walletTx.add(buyTx2);
-        signers.push(buyers[0])
-      }
-
-      // if (buyers.length <= 1) { //只有有个小号钱包，直接购买
-      //   const versionedTx = await addPriorityFees(this.connection, walletTx, wallet.publicKey);
-      //   const _signature = await wallet.sendTransaction(versionedTx, this.connection, { signers })
-      //   console.log(_signature, '_signature')
-      //   return
-      // }
-
-      //捆绑买入
+      const transactions: string[] = [];
       const tipAccounts = [
         'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
         'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
@@ -236,58 +184,92 @@ export class PumpFunSDK {
         'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
       ];
       const jitoTipAccount = new PublicKey(tipAccounts[Math.floor(tipAccounts.length * Math.random())])
-      const memoProgramId = new PublicKey(
-        "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
-      );
       const JITO_FEE = Number(0.00003) * 10 ** 9; // 小费
-      //主钱包+小号1
-      if (priorityFees) {
-        const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
-          units: priorityFees.unitLimit,
-        });
-        const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports: priorityFees.unitPrice,
-        });
-        walletTx.add(modifyComputeUnits);
-        walletTx.add(addPriorityFee);
-      }
-      walletTx.add(
-        SystemProgram.transfer({
-          fromPubkey: wallet.publicKey,
-          toPubkey: jitoTipAccount,
-          lamports: JITO_FEE,
-        })
+      console.log('小费', JITO_FEE)
+      // const tokenMetadata = await this.createTokenMetadata(createTokenMetadata);
+      const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
+      //构建创建代币
+      const createTx = await this.getCreateInstructions(
+        wallet.publicKey,
+        createTokenMetadata.name,
+        createTokenMetadata.symbol,
+        metadata_url,
+        mint
       );
-      // Add memo instruction
-      const memoInstruction = new TransactionInstruction({
-        keys: [],
-        programId: memoProgramId,
-        data: Buffer.from("Hello, Jito!"),
-      });
-      walletTx.add(memoInstruction);
+      console.log('创建代币')
+      const walletTx = new Transaction().add(createTx);
+      //主号购买
+      const globalAccount = await this.getGlobalAccount(commitment); //账户
 
-      const blockHash = (await this.connection.getLatestBlockhash(DEFAULT_COMMITMENT))
-        .blockhash;
-      let messageV0 = new TransactionMessage({
-        payerKey: wallet.publicKey,
-        recentBlockhash: blockHash,
-        instructions: walletTx.instructions,
-      }).compileToV0Message();
+      if (buyAmountSol) {
+        const buyAmount = globalAccount.getInitialBuyPrice(buyAmountSol); //主号购买数量
+        const buyAmountWithSlippage = calculateWithSlippageBuy( //滑点处理
+          buyAmountSol,
+          slippageBasisPoints
+        );
+        const buyTx = await this.getBuyInstructions(
+          wallet.publicKey,
+          mint.publicKey,
+          globalAccount.feeRecipient,
+          buyAmount,
+          buyAmountWithSlippage
+        );
+        walletTx.add(buyTx)
+      }
+      console.log('主号购买')
+      const signers = [mint] //签名
+      let buyTxs: VersionedTransaction[] = []; //小号签名
+      slippageBasisPoints = 5000n;
+      for (let index = 0; index < buyers.length; index++) {
+        const buyAmountSol = BigInt(Number(buyAmountSol2[index]) * 10 ** 9);
+        const buyAmount = globalAccount.getInitialBuyPrice(buyAmountSol);
+        const buyAmountWithSlippage = calculateWithSlippageBuy(
+          buyAmountSol,
+          slippageBasisPoints
+        );
+        const buyTx = await this.getBuyInstructions(
+          buyers[index].publicKey,
+          mint.publicKey,
+          globalAccount.feeRecipient,
+          buyAmount,
+          buyAmountWithSlippage,
+        );
+        if (index === 0) {
+          walletTx.add(buyTx)
+          signers.push(buyers[index])
+        }
+        const buyVersionedTx = await addPriorityFees(this.connection, buyTx, buyers[index].publicKey)
+        buyVersionedTx.sign([buyers[index]]);
+        buyTxs.push(buyVersionedTx);
+      }
+      console.log(buyers.length, 'buyers.length')
+      if (buyers.length <= 1) { //只有有个小号钱包，直接购买
+        console.log('只有有个小号钱包，直接购买')
+        const versionedTx = await addPriorityFees(this.connection, walletTx, wallet.publicKey);
+        const _signature = await wallet.sendTransaction(versionedTx, this.connection, { signers })
+        console.log(_signature, '_signature')
+        return
+      }
 
-      const versionedTx = new VersionedTransaction(messageV0);
+      //捆绑买入 主钱包签名
+      const versionedTx = await addPriorityFeesJito(
+        this.connection, walletTx, wallet.publicKey,
+        jitoTipAccount, JITO_FEE)
       versionedTx.sign(signers);
+
       const signedTx = await wallet.signTransaction(versionedTx); // 使用钱包签名
       const serializedTransaction = signedTx?.serialize();
       const base58EncodedTransaction = base58.encode(
         serializedTransaction as any
       );
-
-      const transactions: string[] = [];
       transactions.push(base58EncodedTransaction);
+      for (let i = 0; i < buyTxs.length; i++) {
+        const serializedTransaction = base58.encode(buyTxs[i].serialize());
+        transactions.push(serializedTransaction);
+      }
+      console.log(transactions, 'transactions')
 
-      const endpoints = [
-        'https://tokyo.mainnet.block-engine.jito.wtf/api/v1/bundles',
-      ];
+      const endpoints = ['https://tokyo.mainnet.block-engine.jito.wtf/api/v1/bundles']
 
       const result = await axios.post(endpoints[0], {
         jsonrpc: '2.0',
@@ -296,52 +278,6 @@ export class PumpFunSDK {
         params: [transactions],
       })
       console.log(result, 'result')
-      return
-
-      const buyerstxs: Transaction[] = []; //除去小号钱包1，其他的钱包购买
-      const buyer2 = buyers.slice(1);// 去掉第一个钱包
-      if (buyer2.length > 0) {
-        // 三个一组
-        for (let j = 0; j < Math.ceil(buyer2.length / 3); j++) {
-          const tx = new Transaction();
-          // 三个叠加
-          for (let i = 3 * j; i < buyer2.length; i++) {
-            slippageBasisPoints = 5000n;
-            const buyAmountSol3 = BigInt(Number(buyAmountSol2[i + 1]) * 10 ** 9);
-            const buyAmount2 = globalAccount.getInitialBuyPrice(buyAmountSol3);
-            const buyAmountWithSlippage2 = calculateWithSlippageBuy(
-              buyAmountSol3,
-              slippageBasisPoints
-            );
-            const buyTx2 = await this.getBuyInstructions(
-              buyer2[i].publicKey,
-              mint.publicKey,
-              globalAccount.feeRecipient,
-              buyAmount2,
-              buyAmountWithSlippage2,
-            );
-            tx.add(buyTx2);
-            if ((i + 1) % 3 == 0 && i != 0 || i == buyer2.length - 1) {
-              buyerstxs.push(tx);
-              break;
-            }
-          }
-        }
-      }
-
-      // // console.log(txs, "txs");
-      await sendTx2(
-        this.connection,
-        wallet,
-        walletTx,
-        buyers,
-        buyerstxs,
-        [mint],
-        priorityFees,
-        commitment,
-        finality
-      );
-      // return aa;
     } catch (error) {
       console.log(error, 'error1')
     }
