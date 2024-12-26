@@ -17,6 +17,7 @@ import {
   Keypair, PublicKey, SystemProgram, Transaction, Commitment, ComputeBudgetProgram,
   TransactionMessage, VersionedTransaction, LAMPORTS_PER_SOL
 } from '@solana/web3.js';
+import axios from 'axios'
 import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
 import { getTxLink, addPriorityFees } from '@/utils'
@@ -95,6 +96,7 @@ zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySg
   //创建代币
   const createToken = async () => {
     try {
+
       const provider = new AnchorProvider(connection, wallet, {
         commitment: "finalized",
       });
@@ -108,14 +110,17 @@ zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySg
         blob = new Blob([imageFile.file], { type: imageFile.file.type });
       }
       const tokenMetadata = {
-        name: 'Banana',
-        symbol: 'Banana',
-        description: 'Banana',
+        name: config.name,
+        symbol: config.supply,
+        description: config.description,
         file: blob,
         twitter: '',
         telegram: '',
         website: '',
       }
+
+      let metadata_url = await upLoadImage(config, imageFile, true)
+
 
       const walletList = textValue.split(/[(\r\n)\r\n]+/)
       // console.log(walletList, 'walletList')
@@ -129,6 +134,7 @@ zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySg
       }
 
       let createResults = await sdk.oneCreateAndBuy(
+        metadata_url,
         testAccount2,
         buysersAmounts,
         wallet,

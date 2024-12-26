@@ -161,6 +161,7 @@ export class PumpFunSDK {
 
   // 捆绑买入
   async oneCreateAndBuy(
+    metadata_url: string,
     buyers: Keypair[], //小号
     buyAmountSol2: string[], //小号购买数量
     wallet: WalletContextState, //主号钱包
@@ -187,8 +188,7 @@ export class PumpFunSDK {
       const jitoTipAccount = new PublicKey(tipAccounts[Math.floor(tipAccounts.length * Math.random())])
       const JITO_FEE = Number(0.0001) * 10 ** 9; // 小费
       console.log('小费', JITO_FEE)
-      // const tokenMetadata = await this.createTokenMetadata(createTokenMetadata);
-      const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
+
       //构建创建代币
       const createTx = await this.getCreateInstructions(
         wallet.publicKey,
@@ -264,73 +264,29 @@ export class PumpFunSDK {
       );
       transactions.push(base58EncodedTransaction);
 
-
-
       console.log(buyTxs.length, '小号个数')
       //3个小号一组
       const _buyers = buyers.slice(1)
 
-      const tx1 = new Transaction();
-      const signers1: Keypair[] = []
-      for (let index = 0; index < 3; index++) {
-        tx1.add(buyTxs[index])
-        signers1.push(_buyers[index])
+      for (let j = 0; j < Math.ceil(buyTxs.length / 3); j++) {
+        const _tx = new Transaction();
+        const _txs = buyTxs.slice(j * 3, (j + 1) * 3)
+        _txs.forEach(item => {
+          _tx.add(item)
+        })
+        const versionedTx = await addPriorityFeesJito(
+          this.connection, _tx, _buyers[j * 3].publicKey,
+          jitoTipAccount, JITO_FEE)
+        versionedTx.sign(_buyers.slice(j * 3, (j + 1) * 3));
+        const serializedTransaction = base58.encode(versionedTx.serialize());
+        transactions.push(serializedTransaction);
       }
-      const versionedTx1 = await addPriorityFeesJito(
-        this.connection, tx1, signers1[0].publicKey,
-        jitoTipAccount, JITO_FEE)
-      versionedTx1.sign(signers1);
-      const serializedTransaction1 = base58.encode(versionedTx1.serialize());
-      transactions.push(serializedTransaction1);
-
-
-      // const tx2 = new Transaction();
-      // const signers2: Keypair[] = []
-      // for (let index = 0; index < 3; index++) {
-      //   tx2.add(buyTxs[index])
-      //   signers2.push(_buyers[index])
-      // }
-      // const versionedTx2 = await addPriorityFeesJito(
-      //   this.connection, tx2, signers2[0].publicKey,
-      //   jitoTipAccount, JITO_FEE)
-      // versionedTx2.sign(signers2);
-      // const serializedTransaction2 = base58.encode(versionedTx2.serialize());
-      // transactions.push(serializedTransaction2);
-
-      // for (let j = 0; j < Math.ceil(buyTxs.length / 3); j++) {
-      //   const tx = new Transaction();
-      //   const _txs = buyTxs.slice(j * 3, (j + 1) * 3)
-      //   _txs.forEach(item => {
-      //     tx.add(item)
-      //   })
-      //   const versionedTx = await addPriorityFeesJito(
-      //     this.connection, tx, buyers[j * 3].publicKey,
-      //     jitoTipAccount, JITO_FEE)
-      //   versionedTx.sign(_buyers.slice(j * 3, (j + 1) * 3));
-      //   // _buyers.slice(j * 3, (j + 1) * 3).forEach(item => {
-      //   //   console.log(item.publicKey.toBase58(), 'sss', j)
-      //   // })
-      //   const serializedTransaction = base58.encode(versionedTx.serialize());
-      //   transactions.push(serializedTransaction);
-      // }
-
-
-      // for (let i = 0; i < txs.length; i++) {
-      //   const versionedTx = await addPriorityFeesJito(
-      //     this.connection, txs[i], buyers[i * 3].publicKey,
-      //     jitoTipAccount, JITO_FEE)
-      //    versionedTx.sign(signers);
-      //   const serializedTransaction = base58.encode(versionedTx.serialize());
-      //   transactions.push(serializedTransaction);
-      // }
-
 
       console.log(transactions, 'transactions')
       // return
-      const endpoints = ['https://mainnet.block-engine.jito.wtf/api/v1/bundles']
-      const jitoClient = new JitoJsonRpcClient('https://mainnet.block-engine.jito.wtf/api/v1', "");
+      const endpoints = 'https://mainnet.block-engine.jito.wtf/api/v1/bundles'
 
-      const result = await axios.post(endpoints[0], {
+      const result = await axios.post(endpoints, {
         jsonrpc: '2.0',
         id: 1,
         method: 'sendBundle',
@@ -341,18 +297,16 @@ export class PumpFunSDK {
       console.log(bundleId, 'bundleId')
       const explorerUrl = `https://explorer.jito.wtf/bundle/${bundleId}`;
       console.log(explorerUrl, 'explorerUrl')
-      // Wait for confirmation with a longer timeout
-      const inflightStatus = await jitoClient?.confirmInflightBundle(
-        bundleId,
-        180000
-      ); // 120 seconds timeout
-      console.log(inflightStatus, 'inflightStatus')
-      if (inflightStatus === 'Landed') {
-        const finalStatus = await jitoClient?.getBundleStatuses([
-          [bundleId],
-        ]);
-        console.log(finalStatus, 'finalStatus')
-      }
+
+      const result1 = await axios.post(endpoints, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getInflightBundleStatuses',
+        params: [[bundleId]],
+      })
+      console.log(result1, 'result1')
+      console.log(result1.data.result.value[0].status)
+      
     } catch (error) {
       console.log(error, 'error1')
     }
