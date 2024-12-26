@@ -43,7 +43,7 @@ import {
 import { BondingCurveAccount } from "./bondingCurveAccount";
 import { BN } from "bn.js";
 import { addPriorityFeesJito, addPriorityFees } from '@/utils'
-import JitoJsonRpcClient from "../jito/src/index";
+
 import {
   DEFAULT_COMMITMENT,
   DEFAULT_FINALITY,
@@ -52,7 +52,6 @@ import {
   calculateWithSlippageSell,
   getRandomInt,
   sendTx,
-  sendTx2
 } from "./util";
 import { PumpFun, IDL } from "./IDL";
 // import { getUploadedMetadataURI } from "./uploadToIpfs";
