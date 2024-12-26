@@ -160,12 +160,13 @@ export class PumpFunSDK {
 
   // 捆绑买入
   async oneCreateAndBuy(
+    name: string,
+    symbol: string,
     metadata_url: string,
     buyers: Keypair[], //小号
     buyAmountSol2: string[], //小号购买数量
     wallet: WalletContextState, //主号钱包
     mint: Keypair,
-    createTokenMetadata: CreateTokenMetadata,
     buyAmountSol: bigint, //主号购买数量
     slippageBasisPoints: bigint = 500n,
     priorityFees?: PriorityFee,
@@ -191,8 +192,8 @@ export class PumpFunSDK {
       //构建创建代币
       const createTx = await this.getCreateInstructions(
         wallet.publicKey,
-        createTokenMetadata.name,
-        createTokenMetadata.symbol,
+        name,
+        symbol,
         metadata_url,
         mint
       );
@@ -305,7 +306,7 @@ export class PumpFunSDK {
       })
       console.log(result1, 'result1')
       console.log(result1.data.result.value[0].status)
-      
+
     } catch (error) {
       console.log(error, 'error1')
     }
