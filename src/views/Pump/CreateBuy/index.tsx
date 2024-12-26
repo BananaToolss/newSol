@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { message, Flex, Button, Input, Switch, notification } from 'antd';
+import { message, Segmented, Button, Input, Switch, notification } from 'antd';
 import { useConnection, useWallet, WalletContextState } from '@solana/wallet-adapter-react';
 import { BsCopy } from "react-icons/bs";
 import { useTranslation } from "react-i18next";
@@ -69,6 +69,8 @@ function CreateToken() {
   const [isVanity, setIsVanity] = useState(false)
   const [vanityAddress, setVanityAddress] = useState('')
   const [mintKeypair, setMintKeypair] = useState(Keypair.generate())
+  const [isOtherWalletBuy, setIsOtherWalletBuy] = useState(false) //小号钱包买入
+  const [transferType, setTransferType] = useState<string | number>(`${t('high speed')}0.001`);
 
   const [iscreating, setIscreating] = useState(false);
   const [tokenAddresss, setTokenAddresss] = useState("");
@@ -308,7 +310,23 @@ zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySg
             <BsCopy onClick={copyClickV} style={{ marginLeft: '6px' }} className='pointer' />
           </div>}
 
-        <Hint title='创建代币过程受本地网络环境影响较大。如果持续失败，请尝试切换到更稳定的网络或开启VPN全局模式后再进行操作' showClose />
+        <div className='flex items-center mb-5'>
+          <div className='mr-3 font-semibold'>{t('Bundle buy')}</div>
+          <Switch checked={isOtherWalletBuy} onChange={(e) => setIsOtherWalletBuy(e)} />
+        </div>
+
+        <div className='segmentd'>
+          <div>{t('Jito Bundle Tips')}：</div>
+          <Segmented options={[`${t('default')}0.00003`, `${t('high speed')}0.001`, `${t('extremely fast')}0.01`]}
+            value={transferType} onChange={setTransferType}
+            size='large' />
+        </div>
+
+        <div className='auth_box'>
+          <div>{t('Pump.fun同时买入请保证买入钱包有足够的买入金额和 GAS，避免买入失败，同时买入最多设置 1 个地址。')}</div>
+        </div>
+
+
 
         <div className='btn mt-6'>
           <div className='buttonSwapper'>
