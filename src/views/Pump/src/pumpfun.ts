@@ -198,6 +198,7 @@ export class PumpFunSDK {
         mint
       );
       console.log('创建代币')
+      console.log(buyers.length, 'buyers.length')
       const walletTx = new Transaction().add(createTx);
       //主号购买
       const globalAccount = await this.getGlobalAccount(commitment); //账户
@@ -219,7 +220,7 @@ export class PumpFunSDK {
       }
       console.log('主号购买')
       const signers = [mint] //签名
-      let buyTxs: VersionedTransaction[] = []; //小号签名
+      let buyTxs: Transaction[] = []; //小号签名
       slippageBasisPoints = 5000n;
       for (let index = 0; index < buyers.length; index++) {
         const buyAmountSol = BigInt(Number(buyAmountSol2[index]) * 10 ** 9);
@@ -238,12 +239,10 @@ export class PumpFunSDK {
         if (index === 0) {
           walletTx.add(buyTx)
           signers.push(buyers[index])
+        } else {
+          buyTxs.push(buyTx);
         }
-        const buyVersionedTx = await addPriorityFees(this.connection, buyTx, buyers[index].publicKey)
-        buyVersionedTx.sign([buyers[index]]);
-        buyTxs.push(buyVersionedTx);
       }
-      console.log(buyers.length, 'buyers.length')
       if (buyers.length <= 1) { //只有有个小号钱包，直接购买
         console.log('只有有个小号钱包，直接购买')
         const versionedTx = await addPriorityFees(this.connection, walletTx, wallet.publicKey);
@@ -265,13 +264,69 @@ export class PumpFunSDK {
       );
       transactions.push(base58EncodedTransaction);
 
-      // const transactions1: string[] = [];
-      // for (let i = 0; i < buyTxs.length; i++) {
-      //   const serializedTransaction = base58.encode(buyTxs[i].serialize());
-      //   transactions1.push(serializedTransaction);
-      // }
-      // console.log(transactions, 'transactions')
 
+
+      console.log(buyTxs.length, '小号个数')
+      //3个小号一组
+      const _buyers = buyers.slice(1)
+
+      const tx1 = new Transaction();
+      const signers1: Keypair[] = []
+      for (let index = 0; index < 3; index++) {
+        tx1.add(buyTxs[index])
+        signers1.push(_buyers[index])
+      }
+      const versionedTx1 = await addPriorityFeesJito(
+        this.connection, tx1, signers1[0].publicKey,
+        jitoTipAccount, JITO_FEE)
+      versionedTx1.sign(signers1);
+      const serializedTransaction1 = base58.encode(versionedTx1.serialize());
+      transactions.push(serializedTransaction1);
+
+
+      // const tx2 = new Transaction();
+      // const signers2: Keypair[] = []
+      // for (let index = 0; index < 3; index++) {
+      //   tx2.add(buyTxs[index])
+      //   signers2.push(_buyers[index])
+      // }
+      // const versionedTx2 = await addPriorityFeesJito(
+      //   this.connection, tx2, signers2[0].publicKey,
+      //   jitoTipAccount, JITO_FEE)
+      // versionedTx2.sign(signers2);
+      // const serializedTransaction2 = base58.encode(versionedTx2.serialize());
+      // transactions.push(serializedTransaction2);
+
+      // for (let j = 0; j < Math.ceil(buyTxs.length / 3); j++) {
+      //   const tx = new Transaction();
+      //   const _txs = buyTxs.slice(j * 3, (j + 1) * 3)
+      //   _txs.forEach(item => {
+      //     tx.add(item)
+      //   })
+      //   const versionedTx = await addPriorityFeesJito(
+      //     this.connection, tx, buyers[j * 3].publicKey,
+      //     jitoTipAccount, JITO_FEE)
+      //   versionedTx.sign(_buyers.slice(j * 3, (j + 1) * 3));
+      //   // _buyers.slice(j * 3, (j + 1) * 3).forEach(item => {
+      //   //   console.log(item.publicKey.toBase58(), 'sss', j)
+      //   // })
+      //   const serializedTransaction = base58.encode(versionedTx.serialize());
+      //   transactions.push(serializedTransaction);
+      // }
+
+
+      // for (let i = 0; i < txs.length; i++) {
+      //   const versionedTx = await addPriorityFeesJito(
+      //     this.connection, txs[i], buyers[i * 3].publicKey,
+      //     jitoTipAccount, JITO_FEE)
+      //    versionedTx.sign(signers);
+      //   const serializedTransaction = base58.encode(versionedTx.serialize());
+      //   transactions.push(serializedTransaction);
+      // }
+
+
+      console.log(transactions, 'transactions')
+      // return
       const endpoints = ['https://mainnet.block-engine.jito.wtf/api/v1/bundles']
       const jitoClient = new JitoJsonRpcClient('https://mainnet.block-engine.jito.wtf/api/v1', "");
 

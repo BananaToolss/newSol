@@ -81,6 +81,17 @@ function CreateToken() {
     setIsVanity(e)
     setVanityAddress('')
   }
+
+  const textValue = `5hpQyCkSCBJBaEn3hV99NqYRzmGZ6qL5U6TY6hkysDwEwfDQkCC87HvDhgvLCmx446VuJMGRHCHwPXWT6MttrghY
+mk1KUAnoTRiAJQbEvWGsqip1bYBMDWzFroWnPWK6gefqqC9V9sJYcYpatvqQ6zzPcEtEGXbNfNaW3KWwUnY9j5N
+Ms8BuLCnmVkmVepjKsQVbsemrYLb3egHU3RtvzkmuzQM5HDLyjwRGn6YisN6JmX5KDZupi3RN88xLUUCQZEhM8G
+5obbow7nSmPhFwZ4YN5tqAy2yyw697RvRpj9d37kJYjcvNXgCBncdYhppVNXKMgdim7WHzegUgD2yGMUFhcZDFA5
+4xfB3A5BzopJwpB4NLDeik4Ah73L4jWSQQooFdHukXru14H913EC97KnpRk1zXNfnbwrM3B68fVu56UdV2GqGHmD
+zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySgcGSe7S5
+42A2ZmmCsPggX61kPGu4dAwHePb65tYogk3FBSQXcraSNt3h6ycCAt6hpWGyzLFbgracHbGabrDNFqhNhEnLoVG2
+551YovUN6ydHGohgm26CURb2Z73PfCoFeqRU7p3BKUaiEBrgGZ72dw2vnPSedYNVbpGMWt6rtjFXQ97Eb9uExtfR
+5kG2UFoyFvFJ6M7mNFfCvYgRvy4QW7K6qRzGaJb9ZJ87jmnB3cEjy6BPyqMvqUDFmvrpzRmBVuNWukCUyYf49h8T
+5RuruwcxW4KoVCMxAbjF5eadhH8EaXprNweSQn55ze5PSiea1hfu9iLKbVcxVgUkgbx9Jfn4zeyjXTNGK5NvxP8V`
   //创建代币
   const createToken = async () => {
     try {
@@ -97,25 +108,25 @@ function CreateToken() {
         blob = new Blob([imageFile.file], { type: imageFile.file.type });
       }
       const tokenMetadata = {
-        name: 'yy',
-        symbol: 'yy',
-        description: 'sss',
+        name: 'Banana',
+        symbol: 'Banana',
+        description: 'Banana',
         file: blob,
         twitter: '',
         telegram: '',
         website: '',
       }
-      const testAccount = wallet.publicKey;
+
+      const walletList = textValue.split(/[(\r\n)\r\n]+/)
+      // console.log(walletList, 'walletList')
+      // console.log(Keypair.fromSecretKey(base58.decode('5RuruwcxW4KoVCMxAbjF5eadhH8EaXprNweSQn55ze5PSiea1hfu9iLKbVcxVgUkgbx9Jfn4zeyjXTNGK5NvxP8V')),'ssssss')
       //小号
-      let testAccount2: Keypair[] = [
-        Keypair.fromSecretKey(base58.decode('5hpQyCkSCBJBaEn3hV99NqYRzmGZ6qL5U6TY6hkysDwEwfDQkCC87HvDhgvLCmx446VuJMGRHCHwPXWT6MttrghY')),
-        Keypair.fromSecretKey(base58.decode('mk1KUAnoTRiAJQbEvWGsqip1bYBMDWzFroWnPWK6gefqqC9V9sJYcYpatvqQ6zzPcEtEGXbNfNaW3KWwUnY9j5N')),
-      ];
-      const buysersAmounts = ['0.01', '0.01', '0.01', '0.01', '0.01', '0.01', '0.01', '0.01', '0.01', '0.01',] //购买数量
-      //   for (let i = 0; i < walletList.length; i++) {
-      //     const myd = Keypair.fromSecretKey(base58.decode(walletList[i]));
-      //     testAccount2.push(myd);
-      // }
+      let testAccount2: Keypair[] = [];
+      const buysersAmounts = ['0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001',] //购买数量
+      for (let i = 0; i < walletList.length; i++) {
+        const myd = Keypair.fromSecretKey(base58.decode(walletList[i]));
+        testAccount2.push(myd);
+      }
 
       let createResults = await sdk.oneCreateAndBuy(
         testAccount2,
