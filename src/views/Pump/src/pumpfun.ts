@@ -43,6 +43,7 @@ import {
 import { BondingCurveAccount } from "./bondingCurveAccount";
 import { BN } from "bn.js";
 import { addPriorityFeesJito, addPriorityFees } from '@/utils'
+import JitoJsonRpcClient from "../jito/src/index";
 import {
   DEFAULT_COMMITMENT,
   DEFAULT_FINALITY,
@@ -184,7 +185,7 @@ export class PumpFunSDK {
         'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
       ];
       const jitoTipAccount = new PublicKey(tipAccounts[Math.floor(tipAccounts.length * Math.random())])
-      const JITO_FEE = Number(0.00003) * 10 ** 9; // 小费
+      const JITO_FEE = Number(0.0001) * 10 ** 9; // 小费
       console.log('小费', JITO_FEE)
       // const tokenMetadata = await this.createTokenMetadata(createTokenMetadata);
       const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
@@ -263,13 +264,16 @@ export class PumpFunSDK {
         serializedTransaction as any
       );
       transactions.push(base58EncodedTransaction);
-      for (let i = 0; i < buyTxs.length; i++) {
-        const serializedTransaction = base58.encode(buyTxs[i].serialize());
-        transactions.push(serializedTransaction);
-      }
-      console.log(transactions, 'transactions')
 
-      const endpoints = ['https://tokyo.mainnet.block-engine.jito.wtf/api/v1/bundles']
+      // const transactions1: string[] = [];
+      // for (let i = 0; i < buyTxs.length; i++) {
+      //   const serializedTransaction = base58.encode(buyTxs[i].serialize());
+      //   transactions1.push(serializedTransaction);
+      // }
+      // console.log(transactions, 'transactions')
+
+      const endpoints = ['https://mainnet.block-engine.jito.wtf/api/v1/bundles']
+      const jitoClient = new JitoJsonRpcClient('https://mainnet.block-engine.jito.wtf/api/v1', "");
 
       const result = await axios.post(endpoints[0], {
         jsonrpc: '2.0',
@@ -278,6 +282,22 @@ export class PumpFunSDK {
         params: [transactions],
       })
       console.log(result, 'result')
+      const bundleId = result?.data.result;
+      console.log(bundleId, 'bundleId')
+      const explorerUrl = `https://explorer.jito.wtf/bundle/${bundleId}`;
+      console.log(explorerUrl, 'explorerUrl')
+      // Wait for confirmation with a longer timeout
+      const inflightStatus = await jitoClient?.confirmInflightBundle(
+        bundleId,
+        180000
+      ); // 120 seconds timeout
+      console.log(inflightStatus, 'inflightStatus')
+      if (inflightStatus === 'Landed') {
+        const finalStatus = await jitoClient?.getBundleStatuses([
+          [bundleId],
+        ]);
+        console.log(finalStatus, 'finalStatus')
+      }
     } catch (error) {
       console.log(error, 'error1')
     }

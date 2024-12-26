@@ -46,14 +46,8 @@ class JitoJsonRpcClient {
       method,
       params,
     };
-
-    console.log(`Sending request to: ${url}`);
-    console.log(`Request body: ${JSON.stringify(data, null, 2)}`);
-
     try {
       const response = await this.client.post<JsonRpcResponse>(url, data);
-      console.log(`Response status: ${response.status}`);
-      console.log(`Response body: ${JSON.stringify(response.data, null, 2)}`);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -123,35 +117,19 @@ class JitoJsonRpcClient {
     while (Date.now() - start < timeoutMs) {
       try {
         const response = await this.getInFlightBundleStatuses([[bundleId]]);
-
+        console.log(response, 'response')
         if (response.result && Array.isArray(response.result.value) && response.result.value.length > 0) {
           const bundleStatus = response.result.value[0];
-
-          console.log(`Bundle status: ${bundleStatus.status}, Landed slot: ${bundleStatus.landed_slot}`);
-
-          if (bundleStatus.status === "Failed") {
-            return bundleStatus;
-          } else if (bundleStatus.status === "Landed") {
-            const detailedStatus = await this.getBundleStatuses([[bundleId]]);
-            if (detailedStatus.result && Array.isArray(detailedStatus.result.value) && detailedStatus.result.value.length > 0) {
-              return detailedStatus.result.value[0];
-            } else {
-              console.log('No detailed status returned for landed bundle.');
-              return bundleStatus;
-            }
+          if (bundleStatus.status !== 'Pending') {
+            return bundleStatus.status
           }
-        } else {
-          console.log('No status returned for the bundle. It may be invalid or very old.');
         }
       } catch (error) {
         console.error('Error checking bundle status:', error);
       }
-
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
-
-    console.log(`Bundle ${bundleId} has not reached a final state within ${timeoutMs}ms`);
-    return { status: 'Timeout' };
+    return 'Timeout'
   }
 }
 
