@@ -66,7 +66,7 @@ function WalletInfo() {
       })
       setConfig(_config)
     } catch (error) {
-
+      api.error({ message: error.toString() })
     }
   }
 
