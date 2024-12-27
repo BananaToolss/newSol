@@ -16,7 +16,7 @@ import {
   BiMailSend,
   BiSolidSend,
   BiCollection,
-  BiDuplicate, BiLockAlt 
+  BiDuplicate, BiLockAlt
 } from "react-icons/bi";
 import {
   AiOutlineFire,
@@ -70,7 +70,7 @@ export default {
             icon: <BsPersonLock color={COLOR} style={{ marginRight: '6px' }} />,
           }, {
             path: 'mint',
-            name: '代币蒸发',
+            name: '代币增发',
             icon: <BsGraphUp color={COLOR} style={{ marginRight: '6px' }} />,
           },
         ]
@@ -110,7 +110,7 @@ export default {
           {
             path: 'collector',
             name: '批量归集',
-            icon:<BiCollection color={COLOR} />,
+            icon: <BiCollection color={COLOR} />,
           },
           {
             path: 'createwallet',
