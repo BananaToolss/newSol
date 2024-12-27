@@ -242,7 +242,7 @@ export class PumpFunSDK {
         }
       }
       if (buyers.length <= 1) { //只有有个小号钱包，直接购买
-        console.log('只有有个小号钱包，直接购买')
+        console.log('只有有个小号钱包，直接购买', signers)
         const versionedTx = await addPriorityFees(this.connection, walletTx, wallet.publicKey);
         const _signature = await wallet.sendTransaction(versionedTx, this.connection, { signers })
         return { type: 'success', message: 'success', url: _signature }

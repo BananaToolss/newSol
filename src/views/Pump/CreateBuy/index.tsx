@@ -83,6 +83,7 @@ function CreateToken() {
       setIscreating(true)
       setSignature('')
       setError('')
+      setTokenAddress('')
 
       const provider = new AnchorProvider(connection, wallet, {
         commitment: "finalized",
@@ -123,7 +124,7 @@ function CreateToken() {
       if (result.type == 'success') {
         api.success({ message: '创建成功' })
         setTokenAddress(mint.publicKey.toBase58())
-        setSignature(result.message)
+        setSignature(result.url)
       } else {
         api.error({ message: result.message })
         setError(result.message)
