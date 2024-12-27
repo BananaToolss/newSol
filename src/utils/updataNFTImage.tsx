@@ -2,7 +2,8 @@ import axios from "axios";
 import type { TOKEN_TYPE } from '../type'
 
 const JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJiYTNmOTJjNy05YjE5LTQ1YjgtODMwNC1iM2Q5MTQyYWM3Y2EiLCJlbWFpbCI6InlpMTc5MTc4QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImlkIjoiRlJBMSIsImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxfSx7ImlkIjoiTllDMSIsImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxfV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiJkYTM0NDAxNGY1ZGI2ZmFjNmQ5MCIsInNjb3BlZEtleVNlY3JldCI6IjAzNTQ5ZDk4YjI4ODkxYzVhMjVmMDdmNmZiOTk0OTlkOTE1YTE3ZTMyZWM0NGVkOWM5NmZjNDg2YTYxMzMzMDEiLCJpYXQiOjE3MTQ0NDc5NDF9.ntgzYg_mbV3pBdezkHN7ttZ734DTEH2htdKvM3l6Q1s'
-const BASE_URL = 'https://blue-electronic-herring-408.mypinata.cloud/ipfs/'
+// const BASE_URL = 'https://blue-electronic-herring-408.mypinata.cloud/ipfs/'
+const BASE_URL = 'https://ipfs.io/ipfs/'
 
 export const upLoadImage = (data: TOKEN_TYPE, selectedFile: File | string, isFile: boolean) => {
   return new Promise(async (resolve: (value: string) => void, reject) => {

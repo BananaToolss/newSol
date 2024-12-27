@@ -85,15 +85,17 @@ function CreateToken() {
       const mint = new Keypair();
       console.log(mint.publicKey.toString(), 'mint.publicKey')
       setTokenAddress(mint.publicKey.toBase58())
-      let metadata_url = await upLoadImage(config, imageFile, true)
-
+      // let metadata_url = await upLoadImage(config, imageFile, true)
+      let metadata_url = '11'
+      console.log(metadata_url, 'metadata_url')
       const buysersAmounts = []
       let testAccount2: Keypair[] = [];
-
+      console.log(walletConfig, 'walletConfig')
       if (isOtherWalletBuy) {
         for (let i = 0; i < walletConfig.length; i++) {
           const walletAddr = Keypair.fromSecretKey(base58.decode(walletConfig[i].privateKey));
           testAccount2.push(walletAddr)
+          buysersAmounts.push(walletConfig[i].buySol)
         }
       }
 

@@ -317,13 +317,11 @@ export class PumpFunSDK {
         console.log(state)
         return state
       } else {
-        console.log('提交错误')
-        return '提交错误'
+        return { type: 'err', message: '提交错误' }
       }
 
-    } catch (error) {
-      console.log(error, 'error1')
-      return error
+    } catch (error: any) {
+      return { type: 'err', message: error.message ?? error.toString() }
     }
   }
 

@@ -63,7 +63,7 @@ function WalletInfo(props: PropsType) {
       const _config: WalletConfigType[] = []
       _addressArr.forEach((item, index) => {
         const wallet: WalletConfigType = {
-          privateKey: privateKeys[index],
+          privateKey: _privateKeys[index],
           walletAddr: item,
           balance: balances[index].toString(),
           buySol: '',
