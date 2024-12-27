@@ -75,20 +75,9 @@ function CreateToken() {
     setVanityAddress('')
   }
 
-  const textValue = `5hpQyCkSCBJBaEn3hV99NqYRzmGZ6qL5U6TY6hkysDwEwfDQkCC87HvDhgvLCmx446VuJMGRHCHwPXWT6MttrghY
-mk1KUAnoTRiAJQbEvWGsqip1bYBMDWzFroWnPWK6gefqqC9V9sJYcYpatvqQ6zzPcEtEGXbNfNaW3KWwUnY9j5N
-Ms8BuLCnmVkmVepjKsQVbsemrYLb3egHU3RtvzkmuzQM5HDLyjwRGn6YisN6JmX5KDZupi3RN88xLUUCQZEhM8G
-5obbow7nSmPhFwZ4YN5tqAy2yyw697RvRpj9d37kJYjcvNXgCBncdYhppVNXKMgdim7WHzegUgD2yGMUFhcZDFA5
-4xfB3A5BzopJwpB4NLDeik4Ah73L4jWSQQooFdHukXru14H913EC97KnpRk1zXNfnbwrM3B68fVu56UdV2GqGHmD
-zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySgcGSe7S5
-42A2ZmmCsPggX61kPGu4dAwHePb65tYogk3FBSQXcraSNt3h6ycCAt6hpWGyzLFbgracHbGabrDNFqhNhEnLoVG2
-551YovUN6ydHGohgm26CURb2Z73PfCoFeqRU7p3BKUaiEBrgGZ72dw2vnPSedYNVbpGMWt6rtjFXQ97Eb9uExtfR
-5kG2UFoyFvFJ6M7mNFfCvYgRvy4QW7K6qRzGaJb9ZJ87jmnB3cEjy6BPyqMvqUDFmvrpzRmBVuNWukCUyYf49h8T
-5RuruwcxW4KoVCMxAbjF5eadhH8EaXprNweSQn55ze5PSiea1hfu9iLKbVcxVgUkgbx9Jfn4zeyjXTNGK5NvxP8V`
   //创建代币
   const createToken = async () => {
     try {
-
       const provider = new AnchorProvider(connection, wallet, {
         commitment: "finalized",
       });
@@ -96,37 +85,32 @@ zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySg
       const mint = new Keypair();
       console.log(mint.publicKey.toString(), 'mint.publicKey')
       setTokenAddress(mint.publicKey.toBase58())
-
-
       let metadata_url = await upLoadImage(config, imageFile, true)
 
-      const walletList = textValue.split(/[(\r\n)\r\n]+/)
-      // console.log(walletList, 'walletList')
-      // console.log(Keypair.fromSecretKey(base58.decode('5RuruwcxW4KoVCMxAbjF5eadhH8EaXprNweSQn55ze5PSiea1hfu9iLKbVcxVgUkgbx9Jfn4zeyjXTNGK5NvxP8V')),'ssssss')
-      //小号
+      const buysersAmounts = []
       let testAccount2: Keypair[] = [];
-      const buysersAmounts = ['0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001', '0.001',] //购买数量
-      for (let i = 0; i < walletList.length; i++) {
-        const myd = Keypair.fromSecretKey(base58.decode(walletList[i]));
-        testAccount2.push(myd);
+
+      if (isOtherWalletBuy) {
+        for (let i = 0; i < walletConfig.length; i++) {
+          const walletAddr = Keypair.fromSecretKey(base58.decode(walletConfig[i].privateKey));
+          testAccount2.push(walletAddr)
+        }
       }
 
       let createResults = await sdk.oneCreateAndBuy(
         config.name,
         config.symbol,
         metadata_url,
+        mint,
+        wallet,
+        BigInt(0.01 * LAMPORTS_PER_SOL),
         testAccount2,
         buysersAmounts,
-        wallet,
-        mint,
-        BigInt(0.01 * LAMPORTS_PER_SOL),
         SLIPPAGE_BASIS_POINTS,
-        {
-          unitLimit: 5_000_000,
-          unitPrice: 200_000,
-        },
+        'https://mainnet.block-engine.jito.wtf',
+        0.0001,
       );
-
+      console.log(createResults, 'createResults')
     } catch (error) {
       console.log(error, 'error')
     }

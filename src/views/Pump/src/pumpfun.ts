@@ -163,15 +163,15 @@ export class PumpFunSDK {
     name: string,
     symbol: string,
     metadata_url: string,
+    mint: Keypair,
+    wallet: WalletContextState, //主号钱包
+    buyAmountSol: bigint, //主号购买数量
     buyers: Keypair[], //小号
     buyAmountSol2: string[], //小号购买数量
-    wallet: WalletContextState, //主号钱包
-    mint: Keypair,
-    buyAmountSol: bigint, //主号购买数量
     slippageBasisPoints: bigint = 500n,
-    priorityFees?: PriorityFee,
+    jito_url: string,
+    jiti_Fee: number,
     commitment: Commitment = DEFAULT_COMMITMENT,
-    finality: Finality = DEFAULT_FINALITY
   ): Promise<any> {
     try {
       const transactions: string[] = [];
@@ -186,7 +186,7 @@ export class PumpFunSDK {
         'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
       ];
       const jitoTipAccount = new PublicKey(tipAccounts[Math.floor(tipAccounts.length * Math.random())])
-      const JITO_FEE = Number(0.0001) * 10 ** 9; // 小费
+      const JITO_FEE = Number(jiti_Fee) * 10 ** 9; // 小费
       console.log('小费', JITO_FEE)
 
       //构建创建代币
@@ -284,7 +284,7 @@ export class PumpFunSDK {
 
       console.log(transactions, 'transactions')
       // return
-      const endpoints = 'https://mainnet.block-engine.jito.wtf/api/v1/bundles'
+      const endpoints = `${jito_url}/api/v1/bundles`
 
       const result = await axios.post(endpoints, {
         jsonrpc: '2.0',
@@ -295,7 +295,7 @@ export class PumpFunSDK {
       console.log(result, 'result')
       const bundleId = result?.data.result;
       console.log(bundleId, 'bundleId')
-      const explorerUrl = `https://explorer.jito.wtf/bundle/${bundleId}`;
+      const explorerUrl = `${jito_url}/bundle/${bundleId}`;
       console.log(explorerUrl, 'explorerUrl')
 
       const result1 = await axios.post(endpoints, {
@@ -309,12 +309,15 @@ export class PumpFunSDK {
       if (value[0] && value[0].confirmation_status) {
         const state = value[0].confirmation_status
         console.log(state)
+        return state
       } else {
         console.log('提交错误')
+        return '提交错误'
       }
 
     } catch (error) {
       console.log(error, 'error1')
+      return error
     }
   }
 
