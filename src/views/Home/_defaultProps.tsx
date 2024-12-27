@@ -79,7 +79,7 @@ export default {
       },
       {
         path: '/tool',
-        name: '工具',
+        name: '批量工具',
         icon: <BsHouseFill color={COLOR} />,
         routes: [
           {
