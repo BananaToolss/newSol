@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { PublicKey, Connection } from '@solana/web3.js';
+import { PublicKey, Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Metadata, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { NetworkURL } from '@/config'
 import { fetcher } from './'
@@ -31,10 +31,8 @@ export const getAsset = (connection: Connection, token: string) => {
       const response = await axios.request(config1)
 
       const data = response.data.result
-
       const token_info = data.token_info
       const metadata = data.content.metadata
-
       const name = metadata.name
       const symbol = metadata.symbol
 
@@ -43,8 +41,6 @@ export const getAsset = (connection: Connection, token: string) => {
       let telegram = metadata.telegram ?? ''
       let discord = metadata.discord ?? ''
       let twitter = metadata.twitter ?? ''
-
-
       let image = data.content.links.image ?? ''
 
       const decimals = token_info.decimals
@@ -66,9 +62,7 @@ export const getAsset = (connection: Connection, token: string) => {
           PROGRAM_ID,
         )[0]
         const metadataAccount = await connection.getAccountInfo(metadataPDA);
-
         const [metadata, _] = Metadata.deserialize(metadataAccount.data);
-
         if (metadata.data.uri) {
           try {
             let logoRes = await fetcher(metadata.data.uri);
@@ -86,13 +80,9 @@ export const getAsset = (connection: Connection, token: string) => {
             if (!discord && _discord) discord = _discord
             if (!twitter && _twitter) twitter = _twitter
           } catch (error) {
-
           }
         }
-
       }
-
-
       resolve({
         name, symbol, description, website, twitter,
         telegram, discord, image, decimals, supply,
@@ -139,4 +129,42 @@ export const getTokenAccountsByOwner = async (token: string) => {
   } catch (error) {
     console.log(error)
   }
+}
+
+export const getMultipleAccounts = (accounts: string[]) => {
+  return new Promise(async (resolve: (value: number[]) => void, reject) => {
+    try {
+      let _data = JSON.stringify({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getMultipleAccounts",
+        "params": [
+          accounts,
+          {
+            "encoding": "jsonParsed"
+          }
+        ]
+      });
+      let config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: NetworkURL,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        data: _data
+      };
+      const response = await axios.request(config)
+      console.log(response)
+      const data = response.data.result.value
+      const balances: number[] = []
+      data.forEach(item => {
+        const balance = item.lamports / LAMPORTS_PER_SOL
+        balances.push(balance)
+      })
+      resolve(balances)
+    } catch (error) {
+      reject(error)
+    }
+  })
 }

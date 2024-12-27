@@ -14,17 +14,21 @@ export const WalletInfoPage = styled.div`
     justify-content: space-between;
     margin: 10px 0 0 0;
     border: 1px solid #e2e8f0;
+
     background-color: #fafafa;
     font-weight: bold;
     border-radius: 10px 10px 0 0;
-
-    div {
-      width: 25%;
+    overflow: hidden;
+    div:not(:last-child) {
+      width: 29%;
       text-align: center;
       padding: 10px 0;
-    }
-    div:not(:last-child) {
       border-right: 1px solid #e2e8f0;
+    }
+    div:last-child {
+      width: 13%;
+      text-align: center;
+      padding: 10px;
     }
   }
 
@@ -32,13 +36,20 @@ export const WalletInfoPage = styled.div`
     display: flex;
     justify-content: space-between;
     border-bottom: 1px solid #e2e8f0;
-    div {
-      width: 25%;
-      text-align: center;
-      padding: 10px 0;
-    }
     div:not(:last-child) {
+      width: 29%;
+      padding: 10px;
+    }
+    div:last-child {
+      width: 13%;
+      text-align: center;
+      padding: 10px;
+    }
+    div {
       border-right: 1px solid #e2e8f0;
+    }
+    div:first-child {
+      border-left: 1px solid #e2e8f0;
     }
   }
 `
