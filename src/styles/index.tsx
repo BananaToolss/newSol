@@ -5,7 +5,7 @@ export const Page = styled.div`
   padding: 50px;
   margin: 0 auto;
   font-size: 18px;
-  height: 200vh;
+  /* height: 200vh; */
 
   .btn {
     text-align: center;

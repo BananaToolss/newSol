@@ -92,8 +92,8 @@ function CreateToken() {
       const mint = mintKeypair
 
       console.log(mint.publicKey.toString(), 'mint.publicKey')
-      // let metadata_url = await upLoadImage(config, imageFile, true)
-      let metadata_url = '11'
+      let metadata_url = await upLoadImage(config, imageFile, true)
+      // let metadata_url = '11'
       console.log(metadata_url, 'metadata_url')
       console.log(jitoRpc, jitoFee, 'jitoRpcjitoFee, ')
       const buysersAmounts = []
