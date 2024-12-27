@@ -10,10 +10,15 @@ const JITOFEEARR = [
 
 const { Option } = Select
 
-function JitoFee() {
+interface PropsType {
+  callBack: (jitoFee: number, jitoRpc: string) => void
+}
 
-  const [transferType, setTransferType] = useState<string>(JITOFEEARR[0].label);
-  const [jitoFee, setJitoFee] = useState(JITOFEEARR[0].value)
+function JitoFee(props: PropsType) {
+  const { callBack } = props
+
+  const [transferType, setTransferType] = useState<string>(JITOFEEARR[1].label);
+  const [jitoFee, setJitoFee] = useState<number>(JITOFEEARR[1].value)
 
   const [rpcOptions, setRpcOptions] = useState([
     {
@@ -53,10 +58,14 @@ function JitoFee() {
       color: '',
     },
   ])
+  const [rpcUrl, setRpcUrl] = useState(rpcOptions[0].value)
 
   useEffect(() => {
     getAllTime()
-  }, [])
+  }, [rpcUrl])
+  useEffect(() => {
+    callBack(jitoFee, rpcUrl)
+  }, [jitoFee, rpcUrl])
 
   const transferTypeChange = (e: string) => {
     setTransferType(e)
@@ -79,7 +88,7 @@ function JitoFee() {
       const _rpcOptions = [...rpcOptions]
       _rpcOptions.map((item, index) => {
         item.time = times[index]
-        item.color = Number(times[index]) > 1000 ? '#f15555' : Number(times[index]) > 100 ? '#ca8a04' : '#1fa751'
+        item.color = Number(times[index]) < 100 ? '#1fa751' : Number(times[index]) < 1000 ? '#ca8a04' : '#f15555'
       })
       setRpcOptions(_rpcOptions)
     } catch (error) {
@@ -100,6 +109,9 @@ function JitoFee() {
     })
   }
 
+  const selectionChange = (e) => {
+    setRpcUrl(e)
+  }
 
   return (
     <JitoPage>
@@ -116,7 +128,7 @@ function JitoFee() {
 
       <div className='flex items-center mt-5'>
         <div className='text-sm mr-6'>Jito服务器:</div>
-        <Select style={{ width: '300px' }} defaultValue={rpcOptions[0].value}>
+        <Select style={{ width: '300px' }} defaultValue={rpcOptions[0].value} onChange={selectionChange}>
           {rpcOptions.map((item, index) => (
             <Option value={item.value} key={index}>
               <div className='flex'>

@@ -11,21 +11,29 @@ const HintPage = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin: 10px 0;
 
   .item {
     display: flex;
     align-items: center;
   }
+  .svg {
+    width: 20px;
+    svg {
+    width: 16px !important;
+    height: 16px !important;
+    }
+  }
 `
 
 interface PropsType {
   title: string
-  showClose: boolean
+  showClose?: boolean
 }
 
 function Hint(props: PropsType) {
 
-  const { title,  showClose } = props
+  const { title, showClose } = props
 
   const [isClose, setIsClose] = useState(false)
 
@@ -33,7 +41,9 @@ function Hint(props: PropsType) {
     <div className={isClose ? 'hidden' : ''}>
       <HintPage>
         <div className='item'>
-          <BsExclamationCircleFill color='#faad14' />
+          <div className='svg'>
+            <BsExclamationCircleFill color='#faad14' />
+          </div>
           <div className='ml-2'>{title}</div>
         </div>
         {showClose && <BsXLg className='pointer' onClick={() => setIsClose(true)} />}

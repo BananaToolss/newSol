@@ -186,7 +186,7 @@ export class PumpFunSDK {
         'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
       ];
       const jitoTipAccount = new PublicKey(tipAccounts[Math.floor(tipAccounts.length * Math.random())])
-      const JITO_FEE = Number(jiti_Fee) * 10 ** 9; // 小费
+      const JITO_FEE = Number(jiti_Fee) * LAMPORTS_PER_SOL; // 小费
       console.log('小费', JITO_FEE)
 
       //构建创建代币
@@ -223,7 +223,7 @@ export class PumpFunSDK {
       let buyTxs: Transaction[] = []; //小号签名
       slippageBasisPoints = 5000n;
       for (let index = 0; index < buyers.length; index++) {
-        const buyAmountSol = BigInt(Number(buyAmountSol2[index]) * 10 ** 9);
+        const buyAmountSol = BigInt(Number(buyAmountSol2[index]) * LAMPORTS_PER_SOL);
         const buyAmount = globalAccount.getInitialBuyPrice(buyAmountSol);
         const buyAmountWithSlippage = calculateWithSlippageBuy(
           buyAmountSol,

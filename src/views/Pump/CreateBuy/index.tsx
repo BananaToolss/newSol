@@ -11,7 +11,7 @@ import {
 } from '@solana/web3.js';
 import { Input_Style, Button_Style, CREATE_TOKEN_FEE } from '@/config'
 import type { TOKEN_TYPE, WalletConfigType } from '@/type'
-import { Vanity, UpdataImage, Header, Result, WalletInfo, JitoFee } from '@/components'
+import { Vanity, UpdataImage, Header, Result, WalletInfo, JitoFee, Hint } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { PumpFunSDK } from "../src";
 import { Page } from '@/styles'
@@ -53,6 +53,7 @@ function CreateToken() {
   })
   const [tokenAddress, setTokenAddress] = useState('')
   const [imageFile, setImageFile] = useState(null);
+  const [buySol, setBuySol] = useState('')
 
   const [isOptions, setIsOptions] = useState(false)
   const [isVanity, setIsVanity] = useState(false)
@@ -67,6 +68,8 @@ function CreateToken() {
   const [error, setError] = useState('');
 
   const [walletConfig, setWalletConfig] = useState<WalletConfigType[]>([])
+  const [jitoFee, setJitoFee] = useState<number>(0)
+  const [jitoRpc, setJitoRpc] = useState('')
 
   const configChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value })
@@ -90,6 +93,7 @@ function CreateToken() {
       // let metadata_url = await upLoadImage(config, imageFile, true)
       let metadata_url = '11'
       console.log(metadata_url, 'metadata_url')
+      console.log(jitoRpc, jitoFee, 'jitoRpcjitoFee, ')
       const buysersAmounts = []
       let testAccount2: Keypair[] = [];
 
@@ -107,12 +111,12 @@ function CreateToken() {
         metadata_url,
         mint,
         wallet,
-        BigInt(0.01 * LAMPORTS_PER_SOL),
+        BigInt(Number(buySol) * LAMPORTS_PER_SOL),
         testAccount2,
         buysersAmounts,
         SLIPPAGE_BASIS_POINTS,
-        'https://mainnet.block-engine.jito.wtf',
-        0.0001,
+        jitoRpc,
+        jitoFee,
       );
       console.log(createResults, 'createResults')
     } catch (error) {
@@ -129,6 +133,11 @@ function CreateToken() {
     const _Keypair = Keypair.fromSecretKey(secretKey)
     setMintKeypair(_Keypair)
     setVanityAddress(_Keypair.publicKey.toBase58())
+  }
+
+  const jitoCallBack = (jitoFee_: number, jitoRpc_: string) => {
+    setJitoFee(jitoFee_)
+    setJitoRpc(jitoRpc_)
   }
 
   return (
@@ -218,6 +227,17 @@ function CreateToken() {
           </div>
         </div>
 
+        <div className='itemSwapper'>
+          <div className='textarea'>
+            <div className='mb-1 start'>购买数量（SOL）</div>
+            <Input
+              className={Input_Style}
+              placeholder='请输入需要购买的数量sol'
+              value={buySol}
+              onChange={(e) => setBuySol(e.target.value)} />
+          </div>
+        </div>
+
         <div className='flex items-center mb-5 options'>
           <div className='mr-3 font-semibold'>添加社交链接</div>
           <Switch checked={isOptions} onChange={(e) => setIsOptions(e)} />
@@ -287,17 +307,22 @@ function CreateToken() {
             <BsCopy onClick={copyClickV} style={{ marginLeft: '6px' }} className='pointer' />
           </div>}
 
-        <div className='flex items-center mb-5'>
+        <div className='flex items-center mb-5 options'>
           <div className='mr-3 font-semibold'>捆绑买入</div>
           <Switch checked={isOtherWalletBuy} onChange={(e) => setIsOtherWalletBuy(e)} />
         </div>
 
-        <JitoFee />
-        {/* <div className='auth_box'>
-          <div>{t('Pump.fun同时买入请保证买入钱包有足够的买入金额和 GAS，避免买入失败，同时买入最多设置 1 个地址。')}</div>
-        </div> */}
+        {isOtherWalletBuy &&
+          <>
+            <JitoFee callBack={jitoCallBack} />
+            <WalletInfo config={walletConfig} setConfig={setWalletConfig} />
+          </>
+        }
 
-        {isOtherWalletBuy && <WalletInfo config={walletConfig} setConfig={setWalletConfig} />}
+        <Hint title='当仅导入一个地址时(共2个地址买入) ,无需使用Jito捆绑功能,可能会提高成功率。' />
+        <Hint title={`买入地址超过2个时,需要使用 Jito的捆绑功能。请尽量保证Jito服务器延迟在 200ms 以内。为提高成功率,在弹出钱包后,请尽快确认。
+          若捆绑失败,无任何费用,请尝试更换VPN节点,并考虑在链上活跃度较低的时段再次尝试
+          `} />
 
         <div className='btn mt-6'>
           <div className='buttonSwapper'>
