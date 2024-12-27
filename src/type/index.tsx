@@ -28,3 +28,10 @@ export interface Token_Type {
   associatedAccount?: string
   isSelect?: boolean
 }
+
+export interface WalletConfigType {
+  privateKey: string,
+  walletAddr: string,
+  balance: string,
+  buySol: string,
+}

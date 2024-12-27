@@ -13,7 +13,7 @@ export const CreatePage = styled.div`
   .textarea {
     width: 100%;
     textarea {
-      height: 160px;
+      height: 100px;
     }
   }
 }

@@ -7,10 +7,10 @@ import copy from 'copy-to-clipboard';
 import { AnchorProvider } from "@coral-xyz/anchor";
 import base58 from "bs58";
 import {
-  Keypair, Commitment,  LAMPORTS_PER_SOL
+  Keypair, Commitment, LAMPORTS_PER_SOL
 } from '@solana/web3.js';
-import { Input_Style, Button_Style,  CREATE_TOKEN_FEE } from '@/config'
-import type { TOKEN_TYPE } from '@/type'
+import { Input_Style, Button_Style, CREATE_TOKEN_FEE } from '@/config'
+import type { TOKEN_TYPE, WalletConfigType } from '@/type'
 import { Vanity, UpdataImage, Header, Result, WalletInfo } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { PumpFunSDK } from "../src";
@@ -64,6 +64,8 @@ function CreateToken() {
   const [tokenAddresss, setTokenAddresss] = useState("");
   const [signature, setSignature] = useState("");
   const [error, setError] = useState('');
+
+  const [walletConfig, setWalletConfig] = useState<WalletConfigType[]>([])
 
   const configChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value })
@@ -299,7 +301,7 @@ zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySg
           </div>}
 
         <div className='flex items-center mb-5'>
-          <div className='mr-3 font-semibold'>{t('Bundle buy')}</div>
+          <div className='mr-3 font-semibold'>捆绑买入</div>
           <Switch checked={isOtherWalletBuy} onChange={(e) => setIsOtherWalletBuy(e)} />
         </div>
 
@@ -310,11 +312,11 @@ zPRYw25RgTuvVpWCXGttDotyUhcsN2WVdoXokmGy6REw557neMS9hixsn5tm8EkdNqyvtzmYMc1LqySg
             size='large' />
         </div>
 
-        <div className='auth_box'>
+        {/* <div className='auth_box'>
           <div>{t('Pump.fun同时买入请保证买入钱包有足够的买入金额和 GAS，避免买入失败，同时买入最多设置 1 个地址。')}</div>
-        </div>
+        </div> */}
 
-        <WalletInfo />
+        {isOtherWalletBuy && <WalletInfo config={walletConfig} setConfig={setWalletConfig} />}
 
         <div className='btn mt-6'>
           <div className='buttonSwapper'>

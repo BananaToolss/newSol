@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, SetStateAction, Dispatch } from 'react'
 import { Button, message, notification, Input, Flex, Spin } from 'antd'
 import {
   Keypair,
@@ -12,27 +12,25 @@ import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { addressHandler } from '@/utils'
 import { getMultipleAccounts } from '@/utils/sol'
 import { LoadingOut } from '@/components'
+import type { WalletConfigType } from '@/type'
 import PrivateKeyPage from './PrivateKeyPage'
 import {
   WalletInfoPage
 } from './style'
 
 
-interface ConfigType {
-  walletAddr: string,
-  balance: string,
-  buySol: string,
+interface PropsType {
+  config: WalletConfigType[]
+  setConfig: Dispatch<SetStateAction<WalletConfigType[]>>
 }
 
+function WalletInfo(props: PropsType) {
+  const { config, setConfig } = props
 
-
-function WalletInfo() {
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
   const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
 
-
-  const [config, setConfig] = useState<ConfigType[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [fixedAmount, setFixedAmount] = useState('')
 
@@ -42,7 +40,6 @@ function WalletInfo() {
     const resultArr = keys.split(/[(\r\n)\r\n]+/)
     const _privateKeys = resultArr.filter((item: string) => item !== '')
     setPrivateKeys(_privateKeys)
-
     getWalletsInfo(_privateKeys)
   }
 
@@ -63,9 +60,10 @@ function WalletInfo() {
       })
 
       const balances = await getMultipleAccounts(_addressArr)
-      const _config = []
+      const _config: WalletConfigType[] = []
       _addressArr.forEach((item, index) => {
-        const wallet = {
+        const wallet: WalletConfigType = {
+          privateKey: privateKeys[index],
           walletAddr: item,
           balance: balances[index].toString(),
           buySol: '',
