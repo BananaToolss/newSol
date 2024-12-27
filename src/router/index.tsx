@@ -6,10 +6,12 @@ import RevokeAuthority from '@/views/Token/RevokeAuthority'
 import BurnToken from '@/views/Token/Burn'
 import FreezeAccount from '@/views/Token/FreezeAccount'
 import MintToken from '@/views/Token/MintToken'
-
 import CloseAccount from '@/views/CloseAccount'
-
 import CreateBuy from '@/views/Pump/CreateBuy'
+import NotFound from '@/views/NotFound'
+import Multisend from "@/views/Tool/Multisend"
+import Collector from '@/views/Tool/Collector'
+import CreateWallet from "@/views/Tool/CreateWallet"
 
 const Routers = () => {
   const router = useRoutes([
@@ -18,7 +20,8 @@ const Routers = () => {
       children: [
         { path: '/', element: <Home /> },
         { path: "closeAccount", element: <CloseAccount /> },
-
+        { path: '/404', element: <NotFound /> },
+        { path: '*', element: <Navigate to="/404" replace /> }
       ]
     },
     {
@@ -42,13 +45,17 @@ const Routers = () => {
       children: [
         { index: true, element: <Navigate to='create' /> },
         { path: "create", element: <CreateBuy /> },
-        { path: "clone", element: <CreateToken /> },
-        { path: "update", element: <Update /> },
-        { path: "revokeAuthority", element: <RevokeAuthority /> },
-        { path: "burn", element: <BurnToken /> },
-        { path: "freezeAccount", element: <FreezeAccount /> },
-        { path: "mint", element: <MintToken /> },
 
+      ]
+    },
+    {
+      path: '/tool',
+      element: <Home />,
+      children: [
+        { index: true, element: <Navigate to='multisend' /> },
+        { path: "multisend", element: <Multisend /> },
+        { path: "collector", element: <Collector /> },
+        { path: "createwallet", element: <CreateWallet /> },
       ]
     },
   ])

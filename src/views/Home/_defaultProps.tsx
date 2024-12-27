@@ -70,12 +70,33 @@ export default {
             name: 'Pump开盘并买入',
             icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
           },
+          // {
+          //   path: 'clone',
+          //   name: '卖出并捆绑买入',
+          //   icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+          // },
+        ]
+      },
+      {
+        path: '/tool',
+        name: '工具',
+        icon: <BsHouseFill color={COLOR} />,
+        routes: [
           {
-            path: 'clone',
-            name: '卖出并捆绑买入',
+            path: 'multisend',
+            name: '批量发送',
             icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
           },
-          
+          {
+            path: 'collector',
+            name: '批量归集',
+            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+          },
+          {
+            path: 'createwallet',
+            name: '批量创建钱包',
+            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+          },
         ]
       },
     ],
