@@ -43,7 +43,7 @@ import {
 import { BondingCurveAccount } from "./bondingCurveAccount";
 import { BN } from "bn.js";
 import { addPriorityFeesJito, addPriorityFees } from '@/utils'
-import { PROJECT_ADDRESS } from '@/config'
+import { BANANATOOLS_ADDRESS } from '@/config'
 import {
   DEFAULT_COMMITMENT,
   DEFAULT_FINALITY,
@@ -250,7 +250,7 @@ export class PumpFunSDK {
 
       const fee = SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
-        toPubkey: new PublicKey(PROJECT_ADDRESS),
+        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
         lamports: 0.03 * LAMPORTS_PER_SOL,
       })
       walletTx.add(fee)

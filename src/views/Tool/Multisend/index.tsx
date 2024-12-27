@@ -22,7 +22,7 @@ import {
 } from "@solana/spl-token";
 import { useTranslation } from "react-i18next";
 import { Header } from '@/components'
-import { Button_Style, PROJECT_ADDRESS, MULTISEND_FEE, Input_Style } from '@/config'
+import { Button_Style, BANANATOOLS_ADDRESS, MULTISEND_FEE, Input_Style } from '@/config'
 import { IsAddress, getTxLink, numAdd } from '@/utils'
 import { Page } from '@/styles';
 import { Modal, Upload, Select } from '@/components'
@@ -277,7 +277,7 @@ function Multisend() {
           SystemProgram.transfer({
             fromPubkey: wallet.publicKey,
             toPubkey: new PublicKey(
-              PROJECT_ADDRESS
+              BANANATOOLS_ADDRESS
             ),
             lamports: MULTISEND_FEE * LAMPORTS_PER_SOL
           }),

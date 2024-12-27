@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Metadata, PROGRAM_ID, DataV2, createUpdateMetadataAccountV2Instruction } from '@metaplex-foundation/mpl-token-metadata';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useTranslation } from "react-i18next";
@@ -11,7 +11,7 @@ import { upLoadImage } from '@/utils/updataNFTImage'
 import { Page } from '@/styles';
 import { addPriorityFees } from '@/utils'
 import type { TOKEN_TYPE } from '@/type'
-import { Button_Style, Input_Style } from '@/config'
+import { Button_Style, Input_Style, UPDATE_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { CreatePage } from '../CreateToken/style'
 import { UpdatePage } from './style'
 
@@ -142,6 +142,12 @@ function Update() {
         )
       );
 
+      const fee = SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+        lamports: UPDATE_FEE * LAMPORTS_PER_SOL,
+      })
+      updateMetadataTransaction.add(fee)
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, updateMetadataTransaction, publicKey);
       const result = await sendTransaction(versionedTx, connection);
@@ -152,6 +158,7 @@ function Update() {
       );
       console.log(confirmed, 'confirmed')
       setIsUpdate(false)
+      setSignature(result)
       api.success({ message: '更新成功' })
     } catch (error) {
       console.log(error)
@@ -264,7 +271,7 @@ function Update() {
                     value={config.supply}
                     onChange={configChange}
                     name='supply'
-                    disabled={!isOwner}
+                    disabled
                   />
                 </div>
                 <div>
@@ -276,7 +283,7 @@ function Update() {
                     value={config.decimals}
                     onChange={configChange}
                     name='decimals'
-                    disabled={!isOwner}
+                    disabled
                   />
                 </div>
               </div>
@@ -366,7 +373,7 @@ function Update() {
                     value={config.mint_authority}
                     onChange={configChange}
                     name='mint_authority'
-                    disabled={config.mint_authority === '已弃权' || !isOwner}
+                    disabled
                   />
                 </div>
                 <div className='item'>
@@ -378,7 +385,7 @@ function Update() {
                     value={config.freeze_authority}
                     onChange={configChange}
                     name='freeze_authority'
-                    disabled={config.freeze_authority === '已弃权' || !isOwner}
+                    disabled
                   />
                 </div>
               </div>
@@ -390,7 +397,7 @@ function Update() {
                   <span>确认更新</span>
                 </Button>
               </div>
-              <div className='fee'>全网最低服务费: 0.05 SOL</div>
+              <div className='fee'>全网最低服务费: {UPDATE_FEE} SOL</div>
             </div>
 
             <Result signature={signature} error={error} />

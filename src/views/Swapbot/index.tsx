@@ -46,7 +46,7 @@ import { isValidAmm } from "@/utils/ray";
 import { initSdk, RaydiumApi, txVersion } from '@/utils/raydiumConfig'
 import {
   Button_Style1 as Button_Style, Input_Style, isMainnet,
-  PROJECT_ADDRESS,
+  BANANATOOLS_ADDRESS,
   SWAP_BOT_FEE,
   PUMP_SWAP_BOT_FEE
 } from '@/config'
@@ -555,7 +555,7 @@ function Swapbot() {
         let tx = new Transaction().add(
           SystemProgram.transfer({
             fromPubkey: owner.publicKey,
-            toPubkey: new PublicKey(PROJECT_ADDRESS),
+            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
             lamports: SWAP_BOT_FEE * LAMPORTS_PER_SOL,
           })
         )
@@ -739,7 +739,7 @@ function Swapbot() {
           SystemProgram.transfer({
             fromPubkey: testAccount.publicKey,
             toPubkey: new PublicKey(
-              PROJECT_ADDRESS
+              BANANATOOLS_ADDRESS
             ),
             lamports: PUMP_SWAP_BOT_FEE * LAMPORTS_PER_SOL
           }),
@@ -797,7 +797,7 @@ function Swapbot() {
         //   SystemProgram.transfer({
         //     fromPubkey: testAccount.publicKey,
         //     toPubkey: new PublicKey(
-        //       PROJECT_ADDRESS
+        //       BANANATOOLS_ADDRESS
         //     ),
         //     lamports: PUMP_SWAP_BOT_FEE * LAMPORTS_PER_SOL
         //   }),

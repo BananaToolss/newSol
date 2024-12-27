@@ -8,7 +8,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import type { Token_Type } from '@/type'
-import { Input_Style, Button_Style, PROJECT_ADDRESS, BURN_FEE } from '@/config'
+import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, BURN_FEE } from '@/config'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { Page } from '@/styles';
 import { Header, SelectToken, Result } from '@/components'

@@ -13,7 +13,7 @@ import {
 } from '@solana/spl-token';
 import { Keypair, PublicKey, SystemProgram, Transaction, Commitment, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
-import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
+import { Input_Style, Button_Style, Text_Style, BANANATOOLS_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { getAsset } from '@/utils/sol'
 import type { TOKEN_TYPE } from '@/type'
@@ -228,7 +228,7 @@ function CreateToken() {
 
       const fee = SystemProgram.transfer({
         fromPubkey: publicKey,
-        toPubkey: new PublicKey(PROJECT_ADDRESS),
+        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
         lamports: CREATE_TOKEN_FEE * LAMPORTS_PER_SOL,
       })
       createNewTokenTransaction.add(fee)

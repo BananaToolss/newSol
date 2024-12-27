@@ -28,7 +28,7 @@ import {
 import bs58 from "bs58";
 import { useTranslation } from "react-i18next";
 import { Page } from '@/styles';
-import { Input_Style, Button_Style1 as Button_Style, AUTHORITY_FEE, PROJECT_ADDRESS } from '@/config'
+import { Input_Style, Button_Style1 as Button_Style, AUTHORITY_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { IsAddress, getTxLink, addressHandler, fetcher, getImage, getCurrentTimestamp, getLink } from '@/utils'
 import { fromSecretKey, printSOLBalance, getSPLBalance } from '@/utils/util'
 import { Header } from '@/components'
