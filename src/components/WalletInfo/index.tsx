@@ -6,6 +6,7 @@ import {
   Connection,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
+import { BsCopy } from "react-icons/bs";
 import { LoadingOutlined } from '@ant-design/icons';
 import { DeleteOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
@@ -133,7 +134,11 @@ function WalletInfo(props: PropsType) {
           <>
             {config.map((item, index) => (
               <div className='walletInfo' key={item.walletAddr}>
-                <div>钱包{index + 1}：{addressHandler(item.walletAddr)}</div>
+                <div className='flex items-center'>
+                  <span>钱包{index + 1}：</span>
+                  <span>{addressHandler(item.walletAddr)} </span>
+                  <BsCopy className='ml-2'/>
+                </div>
                 <div>{item.balance}</div>
                 <div>
                   <Input value={item.buySol} onChange={(e) => buySolChange(e, index)} placeholder='请输入购买sol数量' />

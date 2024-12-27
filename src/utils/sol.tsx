@@ -159,8 +159,12 @@ export const getMultipleAccounts = (accounts: string[]) => {
       const data = response.data.result.value
       const balances: number[] = []
       data.forEach(item => {
-        const balance = item.lamports / LAMPORTS_PER_SOL
-        balances.push(balance)
+        if (item && item.lamports) {
+          const balance = item.lamports / LAMPORTS_PER_SOL
+          balances.push(balance)
+        } else {
+          balances.push(0)
+        }
       })
       resolve(balances)
     } catch (error) {
