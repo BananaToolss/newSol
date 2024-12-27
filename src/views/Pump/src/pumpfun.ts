@@ -188,7 +188,6 @@ export class PumpFunSDK {
       const jitoTipAccount = new PublicKey(tipAccounts[Math.floor(tipAccounts.length * Math.random())])
       const JITO_FEE = Number(jiti_Fee) * LAMPORTS_PER_SOL; // 小费
       console.log('小费', JITO_FEE)
-
       //构建创建代币
       const createTx = await this.getCreateInstructions(
         wallet.publicKey,
@@ -197,7 +196,6 @@ export class PumpFunSDK {
         metadata_url,
         mint
       );
-      console.log('创建代币')
       console.log(buyers.length, 'buyers.length')
       const walletTx = new Transaction().add(createTx);
       //主号购买
@@ -247,8 +245,7 @@ export class PumpFunSDK {
         console.log('只有有个小号钱包，直接购买')
         const versionedTx = await addPriorityFees(this.connection, walletTx, wallet.publicKey);
         const _signature = await wallet.sendTransaction(versionedTx, this.connection, { signers })
-        console.log(_signature, '_signature')
-        return
+        return { type: 'success', message: 'success', url: _signature }
       }
 
       const fee = SystemProgram.transfer({
@@ -288,8 +285,6 @@ export class PumpFunSDK {
         transactions.push(serializedTransaction);
       }
 
-      console.log(transactions, 'transactions')
-      // return
       const endpoints = `${jito_url}/api/v1/bundles`
 
       const result = await axios.post(endpoints, {
@@ -298,11 +293,9 @@ export class PumpFunSDK {
         method: 'sendBundle',
         params: [transactions],
       })
-      console.log(result, 'result')
       const bundleId = result?.data.result;
       console.log(bundleId, 'bundleId')
       const explorerUrl = `${jito_url}/bundle/${bundleId}`;
-      console.log(explorerUrl, 'explorerUrl')
 
       const result1 = await axios.post(endpoints, {
         jsonrpc: '2.0',
@@ -314,14 +307,12 @@ export class PumpFunSDK {
       const value = result1.data.result.value
       if (value[0] && value[0].confirmation_status) {
         const state = value[0].confirmation_status
-        console.log(state)
-        return state
+        return { type: 'success', message: state, url: explorerUrl }
       } else {
-        return { type: 'err', message: '提交错误' }
+        return { type: 'err', message: '提交错误', url: '' }
       }
-
     } catch (error: any) {
-      return { type: 'err', message: error.message ?? error.toString() }
+      return { type: 'err', message: error.message ?? error.toString(), url: '' }
     }
   }
 

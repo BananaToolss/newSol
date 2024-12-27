@@ -25,9 +25,7 @@ const SLIPPAGE_BASIS_POINTS = 5000n;
 
 function CreateToken() {
 
-  const { publicKey, sendTransaction } = useWallet()
   const wallet = useWallet()
-
   const { t } = useTranslation()
   const [messageApi, contextHolder] = message.useMessage();
   const [api, contextHolder1] = notification.useNotification();
@@ -63,7 +61,6 @@ function CreateToken() {
 
 
   const [iscreating, setIscreating] = useState(false);
-  const [tokenAddresss, setTokenAddresss] = useState("");
   const [signature, setSignature] = useState("");
   const [error, setError] = useState('');
 
@@ -83,13 +80,17 @@ function CreateToken() {
   //创建代币
   const createToken = async () => {
     try {
+      setIscreating(true)
+      setSignature('')
+      setError('')
+
       const provider = new AnchorProvider(connection, wallet, {
         commitment: "finalized",
       });
       const sdk = new PumpFunSDK(provider);
-      const mint = new Keypair();
+      const mint = mintKeypair
+
       console.log(mint.publicKey.toString(), 'mint.publicKey')
-      setTokenAddress(mint.publicKey.toBase58())
       // let metadata_url = await upLoadImage(config, imageFile, true)
       let metadata_url = '11'
       console.log(metadata_url, 'metadata_url')
@@ -105,7 +106,7 @@ function CreateToken() {
         }
       }
 
-      let createResults = await sdk.oneCreateAndBuy(
+      let result = await sdk.oneCreateAndBuy(
         config.name,
         config.symbol,
         metadata_url,
@@ -118,9 +119,22 @@ function CreateToken() {
         jitoRpc,
         jitoFee,
       );
-      console.log(createResults, 'createResults')
-    } catch (error) {
+      console.log(result, 'result')
+      if (result.type == 'success') {
+        api.success({ message: '创建成功' })
+        setTokenAddress(mint.publicKey.toBase58())
+        setSignature(result.message)
+      } else {
+        api.error({ message: result.message })
+        setError(result.message)
+      }
+
+      setIscreating(false)
+    } catch (error: any) {
       console.log(error, 'error')
+      api.error({ message: error.message })
+      setError(error.message)
+      setIscreating(false)
     }
   }
 
@@ -334,7 +348,7 @@ function CreateToken() {
           <div className='fee'>全网最低服务费: {CREATE_TOKEN_FEE} SOL</div>
         </div>
 
-        <Result tokenAddress={tokenAddresss} signature={signature} error={error} />
+        <Result tokenAddress={tokenAddress} signature={signature} error={error} />
       </CreatePage>
     </Page>
 

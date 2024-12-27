@@ -46,6 +46,7 @@ export function SliceAddress(address: string): string {
 
 // https://solscan.io/tx
 export const getTxLink = (signature: string) => {
+  if (signature.includes('bundle')) return signature
   let link = 'https://solscan.io/tx/' + signature + '?cluster=devnet'
   if (isMainnet) {
     link = 'https://solscan.io/tx/' + signature
