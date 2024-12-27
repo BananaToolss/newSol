@@ -7,7 +7,7 @@ import {
   createFreezeAccountInstruction
 } from "@solana/spl-token";
 import type { Token_Type } from '@/type'
-import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, BURN_FEE } from '@/config'
+import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, FREE_TOKEN_FEE } from '@/config'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { getAta } from '@/utils/getAta'
 import { Page } from '@/styles';
@@ -63,6 +63,12 @@ function BrunToken() {
           publicKey,
         )
       )
+      const fee = SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+        lamports: FREE_TOKEN_FEE * LAMPORTS_PER_SOL,
+      })
+      Tx.add(fee)
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, Tx, publicKey)
 
@@ -114,6 +120,7 @@ function BrunToken() {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={freezeAccountClick} loading={isBurning}>确认冻结</Button>
           </div>
+          <div className='fee'>全网最低服务费: {FREE_TOKEN_FEE} SOL</div>
         </div>
 
         <Result signature={signature} error={error} />

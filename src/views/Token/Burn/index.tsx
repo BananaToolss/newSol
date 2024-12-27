@@ -125,6 +125,7 @@ function BrunToken() {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={burnClick} loading={isBurning}>确认燃烧</Button>
           </div>
+          <div className='fee'>全网最低服务费: {BURN_FEE} SOL</div>
         </div>
 
         <Result signature={signature} error={error} />
