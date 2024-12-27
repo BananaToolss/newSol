@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import { Button, Segmented, notification, message, Checkbox } from 'antd'
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
+import {
+  Metadata, PROGRAM_ID, DataV2,
+  createUpdateMetadataAccountV2Instruction
+} from '@metaplex-foundation/mpl-token-metadata';
 import { PublicKey, Transaction, LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
 import { useTranslation } from "react-i18next";
-import { Metadata, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { getMint, createSetAuthorityInstruction, AuthorityType } from '@solana/spl-token';
 import {
-  Input_Style, Button_Style,
+  Input_Style, Button_Style, BANANATOOLS_ADDRESS, AUTHORITY_FEE
 } from '@/config'
+import { getAsset } from '@/utils/sol'
 import { Page } from '@/styles';
 import { Result } from '@/components'
-import { IsAddress, getTxLink, numAdd } from '@/utils'
 import { Header } from '@/components'
 import { AuthorityPage } from './style'
 
@@ -40,6 +42,7 @@ function Authority() {
   })
 
   const [isSending, setIsSending] = useState<boolean>(false);
+  const [isUpdata, setIsUpdata] = useState(false)
   const [error, setError] = useState<string>("");
   const [signature, setSignature] = useState<string>("");
 
@@ -50,6 +53,7 @@ function Authority() {
   const getTokenInfo = async () => {
     try {
       setIsSearch(true)
+      setIsUpdata(false)
       const token = new PublicKey(tokenAddr)
       const tokenMint = new PublicKey(token);
       const metadataPDA = PublicKey.findProgramAddressSync(
@@ -84,6 +88,7 @@ function Authority() {
       console.log(isFreeze, isMint, isMutable)
       setIsAuthority({ isFreeze, isMint, isMutable })
       setIsSearch(false)
+      setIsUpdata(true)
     } catch (error) {
       console.log(error)
       messageApi.error('查询错误')
@@ -116,6 +121,48 @@ function Authority() {
         )
         tx.add(transaction)
       }
+      if (options.isMutable) {
+        const data = await getAsset(connection, tokenAddr)
+        const metadataPDA = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("metadata"),
+            PROGRAM_ID.toBuffer(),
+            token.toBuffer(),
+          ],
+          PROGRAM_ID,
+        )[0]
+        const tokenMetadata = {
+          name: data.name,
+          symbol: data.symbol,
+          uri: data.metadataUrl,
+          sellerFeeBasisPoints: 0,
+          creators: null,
+          collection: null,
+          uses: null
+        } as DataV2;
+        const updateMetadataTransaction = createUpdateMetadataAccountV2Instruction(
+          {
+            metadata: metadataPDA,
+            updateAuthority: publicKey,
+          },
+          {
+            updateMetadataAccountArgsV2: {
+              data: tokenMetadata,
+              updateAuthority: publicKey,
+              primarySaleHappened: true,
+              isMutable: false,
+            },
+          }
+        )
+        tx.add(updateMetadataTransaction)
+      }
+
+      const fee = SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+        lamports: AUTHORITY_FEE * LAMPORTS_PER_SOL,
+      })
+      tx.add(fee)
 
       const result = await sendTransaction(tx, connection);
       const confirmed = await connection.confirmTransaction(
@@ -123,6 +170,7 @@ function Authority() {
         "processed"
       );
       console.log(confirmed, 'confirmed')
+      getTokenInfo()
       setIsSending(false)
       setSignature(result)
       api.success({ message: "success" })
@@ -173,7 +221,7 @@ function Authority() {
             <div className='auth_title'>{t('Token Information Update Authority')}</div>
             <div className='auti_title1'>{t('Revoking ownership means you will be unable to modify token metadata, which can enhance investor security.')}</div>
           </div>
-          {tokenAddr &&
+          {isUpdata &&
             <div className='right'>
               {isAuthority.isMutable ?
                 <div className='right_t1'>未放弃</div> :
@@ -191,7 +239,7 @@ function Authority() {
             <div className='auth_title'>{t('Revoke Freeze Authority')}</div>
             <div className='auti_title1'>{t(`Creating a liquidity pool requires revoking freeze authority. Revoking this authority means you won't be able to freeze tokens in holder wallets.`)}</div>
           </div>
-          {tokenAddr &&
+          {isUpdata &&
             <div className='right'>
               {isAuthority.isFreeze ?
                 <div className='right_t1'>未放弃</div> :
@@ -209,7 +257,7 @@ function Authority() {
             <div className='auth_title'>{t('Revoke Mint Authority')}</div>
             <div className='auti_title1'>{t(`Revoking mint authority is necessary for investor confidence and token success. If you revoke this authority, you won't be able to mint additional token supply.`)}</div>
           </div>
-          {tokenAddr &&
+          {isUpdata &&
             <div className='right'>
               {isAuthority.isMint ?
                 <div className='right_t1'>未放弃</div> :
@@ -229,7 +277,7 @@ function Authority() {
               <span>放弃</span>
             </Button>
           </div>
-          <div className='fee'>全网最低服务费: 1 SOL</div>
+          <div className='fee'>全网最低服务费: {AUTHORITY_FEE} SOL</div>
         </div>
 
 
