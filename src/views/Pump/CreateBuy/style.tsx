@@ -87,11 +87,7 @@ export const CreatePage = styled.div`
     margin-bottom: 10px;
     background-image: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
 }
-.segmentd {
-  input {
-    height: 38px;
-  }
-}
+
 
 @media screen and (max-width:968px) {
    .itemSwapper {

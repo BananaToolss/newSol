@@ -10,6 +10,8 @@ export { default as SelectToken } from './SelectToken'
 export { default as Result } from './Result'
 export { default as WalletInfo } from './WalletInfo'
 export { default as LoadingOut } from './LoadingOut'
+export { default as JitoFee } from './JitoFee'
+
 
 
 

@@ -11,7 +11,7 @@ import {
 } from '@solana/web3.js';
 import { Input_Style, Button_Style, CREATE_TOKEN_FEE } from '@/config'
 import type { TOKEN_TYPE, WalletConfigType } from '@/type'
-import { Vanity, UpdataImage, Header, Result, WalletInfo } from '@/components'
+import { Vanity, UpdataImage, Header, Result, WalletInfo, JitoFee } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { PumpFunSDK } from "../src";
 import { Page } from '@/styles'
@@ -21,6 +21,7 @@ const { TextArea } = Input
 export const DEFAULT_COMMITMENT: Commitment = "finalized";
 // 滑点
 const SLIPPAGE_BASIS_POINTS = 5000n;
+
 
 function CreateToken() {
 
@@ -58,8 +59,7 @@ function CreateToken() {
   const [vanityAddress, setVanityAddress] = useState('')
   const [mintKeypair, setMintKeypair] = useState(Keypair.generate())
   const [isOtherWalletBuy, setIsOtherWalletBuy] = useState(false) //小号钱包买入
-  const [transferType, setTransferType] = useState<string>(`高速0.001`);
-  const [jitoFee, setJitoFee] = useState('0.001')
+
 
   const [iscreating, setIscreating] = useState(false);
   const [tokenAddresss, setTokenAddresss] = useState("");
@@ -71,16 +71,7 @@ function CreateToken() {
   const configChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value })
   }
-  const transferTypeChange = (e) => {
-    setTransferType(e)
-    if (e === '高速0.001') {
-      setJitoFee('0.001')
-    } else if (e === '极快0.01') {
-      setJitoFee('0.01')
-    } else {
-      setJitoFee('0.00003')
-    }
-  }
+
   const isVanityChange = (e) => {
     setIsVanity(e)
     setVanityAddress('')
@@ -301,17 +292,7 @@ function CreateToken() {
           <Switch checked={isOtherWalletBuy} onChange={(e) => setIsOtherWalletBuy(e)} />
         </div>
 
-        <div className='segmentd flex items-center'>
-          <div>Jito捆绑小费：</div>
-          <Segmented options={[`默认0.00003`, `高速0.001`, `极快0.01`]}
-            value={transferType} onChange={transferTypeChange}
-            size='large' />
-          <div className='ml-2 flex items-center'>
-            <Input value={jitoFee} onChange={(e) => setJitoFee(e.target.value)} />
-            <div className='text-base ml-1'>SOL</div>
-          </div>
-        </div>
-
+        <JitoFee />
         {/* <div className='auth_box'>
           <div>{t('Pump.fun同时买入请保证买入钱包有足够的买入金额和 GAS，避免买入失败，同时买入最多设置 1 个地址。')}</div>
         </div> */}
