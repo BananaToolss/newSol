@@ -43,7 +43,7 @@ const App = (props: PropsType) => {
     const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
         if (newFileList[0] && newFileList[0].originFileObj) {
             console.log(newFileList[0].originFileObj.size)
-            if (newFileList[0].originFileObj.size > 102400 * 2) return messageApi.error('图片大小不能超过100K')
+            if (newFileList[0].originFileObj.size > 102400 * 10) return messageApi.error('图片大小不能超过1M')
             setImageFile(newFileList[0].originFileObj)
         }
         setFileList(newFileList);

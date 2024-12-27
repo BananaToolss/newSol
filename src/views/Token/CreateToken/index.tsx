@@ -136,14 +136,15 @@ function CreateToken() {
       setIscreating(true)
       setTokenAddresss('')
       setError('')
+      setSignature('')
 
-      // let metadata_url = ''
-      // if (imageFile) {
-      //   metadata_url = await upLoadImage(config, imageFile, true)
-      // } else {
-      //   metadata_url = await upLoadImage(config, config.image, false)
-      // }
-      const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
+      let metadata_url = ''
+      if (imageFile) {
+        metadata_url = await upLoadImage(config, imageFile, true)
+      } else {
+        metadata_url = await upLoadImage(config, config.image, false)
+      }
+      // const metadata_url = 'https://node1.irys.xyz/KEiuNrk9AlTd8LJp5RfLzBYHOk5TwiPXE3lsVA_HbTQ'
       console.log(metadata_url, 'metadata')
 
 
@@ -228,9 +229,9 @@ function CreateToken() {
       const fee = SystemProgram.transfer({
         fromPubkey: publicKey,
         toPubkey: new PublicKey(PROJECT_ADDRESS),
-        lamports: 0.1 * LAMPORTS_PER_SOL,
+        lamports: CREATE_TOKEN_FEE * LAMPORTS_PER_SOL,
       })
-      // createNewTokenTransaction.add(fee)
+      createNewTokenTransaction.add(fee)
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, createNewTokenTransaction, publicKey);
 
@@ -243,6 +244,8 @@ function CreateToken() {
       setSignature(result);
       setTokenAddresss(mintKeypair.publicKey.toBase58())
       setIscreating(false)
+      setIsVanity(false)
+      setMintKeypair(Keypair.generate())
       api.success({ message: 'Success' })
     } catch (error: any) {
       api.error({ message: error.toString() })
