@@ -9,7 +9,7 @@ import {
   ComputeBudgetProgram,
   SystemProgram,
   TransactionInstruction,
-  TransactionMessage
+  LAMPORTS_PER_SOL
 } from "@solana/web3.js";
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { Program, Provider } from "@coral-xyz/anchor";
@@ -43,7 +43,7 @@ import {
 import { BondingCurveAccount } from "./bondingCurveAccount";
 import { BN } from "bn.js";
 import { addPriorityFeesJito, addPriorityFees } from '@/utils'
-
+import { PROJECT_ADDRESS } from '@/config'
 import {
   DEFAULT_COMMITMENT,
   DEFAULT_FINALITY,
@@ -251,6 +251,12 @@ export class PumpFunSDK {
         return
       }
 
+      const fee = SystemProgram.transfer({
+        fromPubkey: wallet.publicKey,
+        toPubkey: new PublicKey(PROJECT_ADDRESS),
+        lamports: 0.03 * LAMPORTS_PER_SOL,
+      })
+      walletTx.add(fee)
       //捆绑买入 主钱包签名
       const versionedTx = await addPriorityFeesJito(
         this.connection, walletTx, wallet.publicKey,
