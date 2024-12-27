@@ -188,7 +188,7 @@ function CloseAccount() {
       {
         isSearch &&
         <Flex align="center" gap="middle" className='mt-4 mb-4 ml-4'>
-          <Spin indicator={<LoadingOutlined spin />} size="large" />
+         <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
         </Flex>
       }
 

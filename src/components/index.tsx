@@ -9,4 +9,5 @@ export { default as Hint1 } from './Hint1'
 export { default as SelectToken } from './SelectToken'
 export { default as Result } from './Result'
 export { default as WalletInfo } from './WalletInfo'
+export { default as LoadingOut } from './LoadingOut'
 
