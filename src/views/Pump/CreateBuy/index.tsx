@@ -58,7 +58,8 @@ function CreateToken() {
   const [vanityAddress, setVanityAddress] = useState('')
   const [mintKeypair, setMintKeypair] = useState(Keypair.generate())
   const [isOtherWalletBuy, setIsOtherWalletBuy] = useState(false) //小号钱包买入
-  const [transferType, setTransferType] = useState<string | number>(`${t('high speed')}0.001`);
+  const [transferType, setTransferType] = useState<string>(`高速0.001`);
+  const [jitoFee, setJitoFee] = useState('0.001')
 
   const [iscreating, setIscreating] = useState(false);
   const [tokenAddresss, setTokenAddresss] = useState("");
@@ -69,6 +70,16 @@ function CreateToken() {
 
   const configChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value })
+  }
+  const transferTypeChange = (e) => {
+    setTransferType(e)
+    if (e === '高速0.001') {
+      setJitoFee('0.001')
+    } else if (e === '极快0.01') {
+      setJitoFee('0.01')
+    } else {
+      setJitoFee('0.00003')
+    }
   }
   const isVanityChange = (e) => {
     setIsVanity(e)
@@ -90,7 +101,7 @@ function CreateToken() {
       console.log(metadata_url, 'metadata_url')
       const buysersAmounts = []
       let testAccount2: Keypair[] = [];
-      console.log(walletConfig, 'walletConfig')
+
       if (isOtherWalletBuy) {
         for (let i = 0; i < walletConfig.length; i++) {
           const walletAddr = Keypair.fromSecretKey(base58.decode(walletConfig[i].privateKey));
@@ -130,7 +141,6 @@ function CreateToken() {
   }
 
   return (
-
     <Page>
       {contextHolder}
       {contextHolder1}
@@ -291,11 +301,15 @@ function CreateToken() {
           <Switch checked={isOtherWalletBuy} onChange={(e) => setIsOtherWalletBuy(e)} />
         </div>
 
-        <div className='segmentd'>
-          <div>{t('Jito Bundle Tips')}：</div>
-          <Segmented options={[`${t('default')}0.00003`, `${t('high speed')}0.001`, `${t('extremely fast')}0.01`]}
-            value={transferType} onChange={setTransferType}
+        <div className='segmentd flex items-center'>
+          <div>Jito捆绑小费：</div>
+          <Segmented options={[`默认0.00003`, `高速0.001`, `极快0.01`]}
+            value={transferType} onChange={transferTypeChange}
             size='large' />
+          <div className='ml-2 flex items-center'>
+            <Input value={jitoFee} onChange={(e) => setJitoFee(e.target.value)} />
+            <div className='text-base ml-1'>SOL</div>
+          </div>
         </div>
 
         {/* <div className='auth_box'>
