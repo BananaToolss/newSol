@@ -24,6 +24,8 @@ interface ConfigType {
   buySol: string,
 }
 
+
+
 function WalletInfo() {
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
@@ -34,22 +36,23 @@ function WalletInfo() {
   const [isLoading, setIsLoading] = useState(false)
   const [fixedAmount, setFixedAmount] = useState('')
 
-  useEffect(() => {
-    getWalletsInfo()
-  }, [privateKeys])
+
   //**钱包私钥数组 */
   const privateKeyCallBack = async (keys: string) => {
     const resultArr = keys.split(/[(\r\n)\r\n]+/)
     const _privateKeys = resultArr.filter((item: string) => item !== '')
     setPrivateKeys(_privateKeys)
+
+    getWalletsInfo(_privateKeys)
   }
 
-  const getWalletsInfo = async () => {
+  const getWalletsInfo = async (keys?: string[]) => {
     try {
-      if (privateKeys.length === 0) return setConfig([])
+      const _privateKeys = keys ? keys : privateKeys
+      if (_privateKeys.length === 0) return setConfig([])
       setIsLoading(true)
       const _addressArr = []
-      privateKeys.forEach(async (item, index) => {
+      _privateKeys.forEach(async (item, index) => {
         try {
           const wallet = Keypair.fromSecretKey(bs58.decode(item))
           const address = wallet.publicKey.toBase58()
@@ -82,9 +85,13 @@ function WalletInfo() {
     _config[index].buySol = e.target.value
     setConfig(_config)
   }
-  const deleteClick = (account: string) => {
+  const deleteClick = (account: string, index: number) => {
     const _config = config.filter(item => item.walletAddr !== account)
     setConfig(_config)
+
+    const _privateKeys = [...privateKeys]
+    _privateKeys.splice(index, 1)
+    setPrivateKeys(_privateKeys)
   }
   const fixedAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFixedAmount(e.target.value)
@@ -106,7 +113,7 @@ function WalletInfo() {
       {/* <div className='header'>钱包信息</div> */}
       <div>
         <PrivateKeyPage privateKeys={privateKeys} callBack={privateKeyCallBack} title='导入钱包' />
-        <Button className='ml-3' onClick={getWalletsInfo}>获取余额</Button>
+        <Button className='ml-3' onClick={() => getWalletsInfo()}>获取余额</Button>
       </div>
 
       <div className='autoInput'>
@@ -133,7 +140,7 @@ function WalletInfo() {
                 <div>
                   <Input value={item.buySol} onChange={(e) => buySolChange(e, index)} placeholder='请输入购买sol数量' />
                 </div>
-                <div><DeleteOutlined onClick={() => deleteClick(item.walletAddr)} /></div>
+                <div><DeleteOutlined onClick={() => deleteClick(item.walletAddr, index)} /></div>
               </div>
             ))}
           </>

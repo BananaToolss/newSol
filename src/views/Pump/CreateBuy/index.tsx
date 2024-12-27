@@ -1,29 +1,17 @@
 import { useEffect, useState } from 'react'
 import { message, Segmented, Button, Input, Switch, notification } from 'antd';
-import { useConnection, useWallet, WalletContextState } from '@solana/wallet-adapter-react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { BsCopy } from "react-icons/bs";
 import { useTranslation } from "react-i18next";
 import copy from 'copy-to-clipboard';
 import { AnchorProvider } from "@coral-xyz/anchor";
-import {
-  MINT_SIZE, TOKEN_PROGRAM_ID, createInitializeMintInstruction,
-  getMinimumBalanceForRentExemptMint, getAssociatedTokenAddress,
-  createAssociatedTokenAccountInstruction, createMintToInstruction,
-  createSetAuthorityInstruction,
-  AuthorityType,
-} from '@solana/spl-token';
 import base58 from "bs58";
 import {
-  Keypair, PublicKey, SystemProgram, Transaction, Commitment, ComputeBudgetProgram,
-  TransactionMessage, VersionedTransaction, LAMPORTS_PER_SOL
+  Keypair, Commitment,  LAMPORTS_PER_SOL
 } from '@solana/web3.js';
-import axios from 'axios'
-import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
-import { Input_Style, Button_Style, Text_Style, PROJECT_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
-import { getTxLink, addPriorityFees } from '@/utils'
-import { getAsset } from '@/utils/sol'
+import { Input_Style, Button_Style,  CREATE_TOKEN_FEE } from '@/config'
 import type { TOKEN_TYPE } from '@/type'
-import { Vanity, UpdataImage, Header, Hint, Result, WalletInfo } from '@/components'
+import { Vanity, UpdataImage, Header, Result, WalletInfo } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { PumpFunSDK } from "../src";
 import { Page } from '@/styles'

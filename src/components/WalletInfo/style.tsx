@@ -47,8 +47,6 @@ export const WalletInfoPage = styled.div`
     }
     div {
       border-right: 1px solid #e2e8f0;
-      display: flex;
-      align-items: center;
     }
     div:first-child {
       border-left: 1px solid #e2e8f0;
