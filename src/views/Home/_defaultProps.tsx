@@ -1,10 +1,30 @@
 
 import {
+  BsWallet,
+  BsCoin,
   BsHouseFill,
+  BsDatabaseFill,
+  BsRobot,
+  BsCopy,
+  BsSend,
+  BsPersonLock,
+  BsGraphUp,
+  BsArrowUpCircle,
 } from "react-icons/bs";
+import {
+  BiSolidBot,
+  BiMailSend,
+  BiSolidSend,
+  BiCollection,
+  BiDuplicate, BiLockAlt 
+} from "react-icons/bi";
+import {
+  AiOutlineFire,
+  AiOutlinePlusCircle
+} from "react-icons/ai";
+import { getImage } from "@/utils";
 
-
-const COLOR = '#bf39f1'
+const COLOR = '#924ef9'
 
 export default {
   route: {
@@ -18,40 +38,40 @@ export default {
       {
         path: '/token',
         name: '代币管理',
-        icon: <BsHouseFill color={COLOR} />,
+        icon: <BsCoin color={COLOR} />,
         routes: [
           {
             path: 'create',
             name: '创建代币',
-            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <AiOutlinePlusCircle color={COLOR} style={{ marginRight: '6px' }} />,
           },
           {
             path: 'clone',
             name: '克隆代币',
-            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <BiDuplicate color={COLOR} style={{ marginRight: '6px' }} />,
           },
           {
             path: 'update',
             name: '代币更新',
-            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <BsArrowUpCircle color={COLOR} style={{ marginRight: '6px' }} />,
           },
           {
             path: 'revokeAuthority',
             name: '放弃权限',
-            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <BiLockAlt color={COLOR} style={{ marginRight: '6px' }} />,
           },
           {
             path: 'burn',
             name: '燃烧代币',
-            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <AiOutlineFire color={COLOR} style={{ marginRight: '6px' }} />,
           }, {
             path: 'freezeAccount',
             name: '冻结账户',
-            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <BsPersonLock color={COLOR} style={{ marginRight: '6px' }} />,
           }, {
             path: 'mint',
             name: '代币蒸发',
-            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <BsGraphUp color={COLOR} style={{ marginRight: '6px' }} />,
           },
         ]
       },
@@ -63,12 +83,12 @@ export default {
       {
         path: '/pump',
         name: 'Pump专区',
-        icon: <BsHouseFill color={COLOR} />,
+        icon: <img src={getImage('pump.svg')} width={16} height={16} color={COLOR} />,
         routes: [
           {
             path: 'create',
             name: 'Pump开盘并买入',
-            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <img src={getImage('pumpcreate.svg')} width={16} height={16} />,
           },
           // {
           //   path: 'clone',
@@ -80,22 +100,22 @@ export default {
       {
         path: '/tool',
         name: '批量工具',
-        icon: <BsHouseFill color={COLOR} />,
+        icon: <BsSend color={COLOR} />,
         routes: [
           {
             path: 'multisend',
             name: '批量发送',
-            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <BsSend color={COLOR} />,
           },
           {
             path: 'collector',
             name: '批量归集',
-            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+            icon:<BiCollection color={COLOR} />,
           },
           {
             path: 'createwallet',
             name: '批量创建钱包',
-            icon: <BsHouseFill color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <BsWallet color={COLOR} style={{ marginRight: '6px' }} />,
           },
         ]
       },
