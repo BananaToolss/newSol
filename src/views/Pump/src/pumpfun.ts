@@ -15,7 +15,14 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 import { Program, Provider } from "@coral-xyz/anchor";
 import base58 from "bs58";
 import axios from 'axios'
-// import { setGlobalDispatcher, Agent } from 'undici'
+import {
+  createAssociatedTokenAccountInstruction,
+  getAccount,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
+import { BN } from "bn.js";
+import { addPriorityFeesJito, addPriorityFees } from '@/utils'
+import { BANANATOOLS_ADDRESS, PUMP_CREATE_FEE } from '@/config'
 import { GlobalAccount } from "./globalAccount";
 import {
   CompleteEvent,
@@ -35,15 +42,7 @@ import {
   toSetParamsEvent,
   toTradeEvent,
 } from "./events";
-import {
-  createAssociatedTokenAccountInstruction,
-  getAccount,
-  getAssociatedTokenAddress,
-} from "@solana/spl-token";
 import { BondingCurveAccount } from "./bondingCurveAccount";
-import { BN } from "bn.js";
-import { addPriorityFeesJito, addPriorityFees } from '@/utils'
-import { BANANATOOLS_ADDRESS } from '@/config'
 import {
   DEFAULT_COMMITMENT,
   DEFAULT_FINALITY,
@@ -241,19 +240,25 @@ export class PumpFunSDK {
           buyTxs.push(buyTx);
         }
       }
+console.log(((buyers.length + 1) * PUMP_CREATE_FEE),'fee')
+      const fee = SystemProgram.transfer({
+        fromPubkey: wallet.publicKey,
+        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+        lamports: ((buyers.length + 1) * PUMP_CREATE_FEE) * LAMPORTS_PER_SOL,
+      })
+      walletTx.add(fee)
+
       if (buyers.length <= 1) { //只有有个小号钱包，直接购买
         console.log('只有有个小号钱包，直接购买', signers)
         const versionedTx = await addPriorityFees(this.connection, walletTx, wallet.publicKey);
         const _signature = await wallet.sendTransaction(versionedTx, this.connection, { signers })
+        const confirmed = await this.connection.confirmTransaction(
+          _signature,
+          "processed"
+        );
         return { type: 'success', message: 'success', url: _signature }
       }
 
-      const fee = SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: 0.03 * LAMPORTS_PER_SOL,
-      })
-      walletTx.add(fee)
       //捆绑买入 主钱包签名
       const versionedTx = await addPriorityFeesJito(
         this.connection, walletTx, wallet.publicKey,

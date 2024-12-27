@@ -9,7 +9,7 @@ import base58 from "bs58";
 import {
   Keypair, Commitment, LAMPORTS_PER_SOL
 } from '@solana/web3.js';
-import { Input_Style, Button_Style, CREATE_TOKEN_FEE } from '@/config'
+import { Input_Style, Button_Style, PUMP_CREATE_FEE } from '@/config'
 import type { TOKEN_TYPE, WalletConfigType } from '@/type'
 import { Vanity, UpdataImage, Header, Result, WalletInfo, JitoFee, Hint } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
@@ -32,11 +32,11 @@ function CreateToken() {
   const { connection } = useConnection();
 
   const [config, setConfig] = useState<TOKEN_TYPE>({
-    name: 'Bolt token',
-    symbol: 'Bolt2',
+    name: '',
+    symbol: '',
     decimals: '9',
     supply: '1000000',
-    description: 'Brave Veer & Bolt',
+    description: '',
     website: '',
     telegram: '',
     twitter: '',
@@ -80,6 +80,12 @@ function CreateToken() {
   //创建代币
   const createToken = async () => {
     try {
+      if (!wallet.publicKey) return messageApi.error(t('Please connect the wallet first'))
+      if (!config.name) return messageApi.error(t('Please fill in the name'))
+      if (!config.symbol) return messageApi.error(t('Please fill in the short name'))
+      if (!imageFile && !config.image) return messageApi.error(t('Please upload a picture logo'))
+
+
       setIscreating(true)
       setSignature('')
       setError('')
@@ -93,7 +99,7 @@ function CreateToken() {
 
       console.log(mint.publicKey.toString(), 'mint.publicKey')
       let metadata_url = await upLoadImage(config, imageFile, true)
-      // let metadata_url = '11'
+
       console.log(metadata_url, 'metadata_url')
       console.log(jitoRpc, jitoFee, 'jitoRpcjitoFee, ')
       const buysersAmounts = []
@@ -105,6 +111,12 @@ function CreateToken() {
           testAccount2.push(walletAddr)
           buysersAmounts.push(walletConfig[i].buySol)
         }
+      }
+
+      if (testAccount2.length !== buysersAmounts.length) {
+        messageApi.error(t('捆绑参数未填写完整'))
+        setIscreating(false)
+        return
       }
 
       let result = await sdk.oneCreateAndBuy(
@@ -165,53 +177,27 @@ function CreateToken() {
 
 
       <CreatePage className="my-6">
-        <div className='itemSwapper'>
-          <div className='item'>
-            <div className='mb-1 start'>Token名称</div>
-            <Input
-              type="text"
-              className={Input_Style}
-              placeholder='请输入Token名称'
-              value={config.name}
-              onChange={configChange}
-              name='name'
-            />
-          </div>
-          <div className='item'>
-            <div className='mb-1 start'>Token符号</div>
-            <Input
-              type="text"
-              className={Input_Style}
-              placeholder='请输入Token符号'
-              value={config.symbol}
-              onChange={configChange}
-              name='symbol'
-            />
-          </div>
-        </div>
-
+  
         <div className='itemSwapper'>
           <div className='item'>
             <div className='mb26 mb10'>
-              <div className='mb-1 start'>{t('Supply')}</div>
+              <div className='mb-1 start'>Token名称</div>
               <Input
-                type="number"
                 className={Input_Style}
-                placeholder='请输入Token总数'
-                value={config.supply}
+                placeholder='请输入Token名称'
+                value={config.name}
                 onChange={configChange}
-                name='supply'
+                name='name'
               />
             </div>
             <div>
-              <div className='mb-1 start'>Token精度</div>
+              <div className='mb-1 start'>Token符号</div>
               <Input
-                type="number"
                 className={Input_Style}
-                placeholder={t('Please enter a Decimals')}
-                value={config.decimals}
+                placeholder={t('请输入Token符号')}
+                value={config.symbol}
                 onChange={configChange}
-                name='decimals'
+                name='symbol'
               />
             </div>
           </div>
@@ -346,7 +332,7 @@ function CreateToken() {
               <span>{t('Token Creator')}</span>
             </Button>
           </div>
-          <div className='fee'>全网最低服务费: {CREATE_TOKEN_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: {PUMP_CREATE_FEE} SOL</div>
         </div>
 
         <Result tokenAddress={tokenAddress} signature={signature} error={error} />
