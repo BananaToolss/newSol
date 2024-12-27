@@ -12,13 +12,14 @@ import NotFound from '@/views/NotFound'
 import Multisend from "@/views/Tool/Multisend"
 import Collector from '@/views/Tool/Collector'
 import CreateWallet from "@/views/Tool/CreateWallet"
+import App from '@/views/App'
 
 const Routers = () => {
   const router = useRoutes([
     {
       path: '/', element: <Home />,
       children: [
-        { path: '/', element: <Home /> },
+        { path: '/', element: <App /> },
         { path: "closeAccount", element: <CloseAccount /> },
         { path: '/404', element: <NotFound /> },
         { path: '*', element: <Navigate to="/404" replace /> }
