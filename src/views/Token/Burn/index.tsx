@@ -68,6 +68,12 @@ function BrunToken() {
 
       Tx.add(burnInstruction)
 
+      const fee = SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+        lamports: BURN_FEE * LAMPORTS_PER_SOL,
+      })
+      Tx.add(fee)
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, Tx, publicKey)
 

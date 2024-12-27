@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Input, Flex, Spin } from 'antd';
+import { Button, Modal, message, Flex, Spin } from 'antd';
 import { useTranslation } from "react-i18next";
-import { BsPlus } from "react-icons/bs";
+import { BsPlus, BsCopy } from "react-icons/bs";
+import copy from 'copy-to-clipboard';
 import { LoadingOutlined } from '@ant-design/icons'
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
-  Keypair,
-  LAMPORTS_PER_SOL,
   PublicKey,
-  SystemProgram,
-  Transaction,
 } from "@solana/web3.js";
-import { Button_Style, Input_Style } from '@/config'
+import { Input_Style } from '@/config'
 import { getImage, IsAddress, addressHandler, fetcher } from '@/utils'
 import { getAsset } from '@/utils/sol'
 import { getSPLBalance } from '@/utils/util'
@@ -30,7 +27,7 @@ const App = (props: PropsType) => {
   const { connection } = useConnection()
   const { publicKey } = useWallet()
   const { t } = useTranslation()
-
+  const [messageApi, contextHolder] = message.useMessage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tokenAddress, setTokenAddress] = useState('')
   const [isSearch, setIsSearch] = useState(false)
@@ -126,8 +123,14 @@ const App = (props: PropsType) => {
     callBack(_token)
   }
 
+  const copyClick = (item: string) => {
+    copy(item)
+    messageApi.success('copy success')
+  }
+
   return (
     <SelectTokenPage>
+      {contextHolder}
       {token ?
         <div className='flex-1 flex items-center justify-between' onClick={showModal}>
           <div className='flex items-center'>
@@ -136,7 +139,7 @@ const App = (props: PropsType) => {
             </div>
             <div className='ml-3 flex items-center'>
               <div>{token.symbol}</div>
-              <div className='ml-3 address'>{addressHandler(token.address)}</div>
+              <div className='ml-3 address mr-2'>{addressHandler(token.address)}</div>
             </div>
           </div>
           <div>{token.balance}</div>
@@ -196,9 +199,11 @@ const App = (props: PropsType) => {
                 <div className='ml-1'>{item.symbol}</div>
                 <div className='ml-1 tokename'>{item.name}</div>
               </div>
-              <div className='ml-3'>{addressHandler(item.address)}</div>
+              <div className='ml-3 mr-2'>{addressHandler(item.address)}</div>
+              <BsCopy onClick={() => copyClick(item.address)} />
             </div>
             <div className='ml-1'>{item.balance}</div>
+            
           </AllTokenItem>
         ))
         }
