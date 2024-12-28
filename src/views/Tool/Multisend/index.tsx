@@ -25,7 +25,8 @@ import { Header } from '@/components'
 import { Button_Style, BANANATOOLS_ADDRESS, MULTISEND_FEE, Input_Style } from '@/config'
 import { IsAddress, getTxLink, numAdd } from '@/utils'
 import { Page } from '@/styles';
-import { Modal, Upload, Select } from '@/components'
+import type { Token_Type } from '@/type'
+import { Modal, Upload,  SelectToken } from '@/components'
 import type { TokenDeta_Type } from '@/components/Select'
 import { MultisendPage } from './style'
 
@@ -44,7 +45,6 @@ function Multisend() {
   const [messageApi, contextHolder] = message.useMessage()
   const { connection } = useConnection();
   const wallet = useWallet();
-  const umi = createUmi(connection);
 
   const [transferType, setTransferType] = useState<string | number>(`${t('Airdrop')}SOL`);
   const [textValue, setTextValue] = useState('')
@@ -61,6 +61,7 @@ function Multisend() {
   const [isFile, setIsFile] = useState(false)
 
   const [senderToken, setSenderToken] = useState<TokenDeta_Type>(null)
+  const [token, setToken] = useState<Token_Type>(null)
 
   useEffect(() => {
     if (wallet && wallet.publicKey) {
@@ -75,10 +76,6 @@ function Multisend() {
   const getBalance = async () => {
     const _balance = await connection.getBalance(wallet.publicKey)
     setBalance((_balance / 1e9).toFixed(3))
-  }
-
-  const callBack = (token: TokenDeta_Type) => {
-    setSenderToken(token)
   }
 
   // 自动添加数量
@@ -146,7 +143,6 @@ function Multisend() {
     }
   }
 
-
   const getAt = async (mintAccount: PublicKey, walletAccount: PublicKey) => {
     let at: PublicKey = await getAssociatedTokenAddress(
       mintAccount,
@@ -155,7 +151,6 @@ function Multisend() {
       TOKEN_PROGRAM_ID,
       ASSOCIATED_TOKEN_PROGRAM_ID
     );
-
     return at;
   };
 
@@ -311,33 +306,19 @@ function Multisend() {
     }
   }
 
+  const backClick = (_token: Token_Type) => {
+    setToken(_token)
+  }
+
   return (
     <Page>
       {contextHolder}
-      <Header title={t('Batch Sender')} />
+      <Header title={t('Batch Sender')} hint='同时向多个地址转账,节省Gas费,节省时间' />
+
       <MultisendPage>
-        <div className='segmentd'>
-          <Segmented options={[`${t('Airdrop')}SOL`, `${t('Airdrop')}Token`]}
-            value={transferType} onChange={setTransferType}
-            size='large' />
-        </div>
+        <div>请选择代币</div>
+        <SelectToken callBack={backClick} />
 
-        <div className='mt-5 mb-1'>{t('Number of slice addresses')}</div>
-        <input className={Input_Style}
-          value={nbPerTxAmount} onChange={(e) => setNbPerTxAmount(e.target.value)} />
-
-        <div className='mt-3'>👉{t('Enter the address you want to transfer in batches, one address per line, do not repeat the address, and separate the address and amount with a comma. (If the number of slice addresses is too large, it may exceed the limit length of Solana’s single transaction hash. If you cannot bring out the wallet, please reduce the number of slice addresses.)')}
-        </div>
-
-
-        {transferType === `${t('Airdrop')}Token` &&
-          <div className='mt-4'>
-            {/* <input className={Input_Style}
-              placeholder="请输入代币地址"
-            /> */}
-            <Select callBack={callBack} />
-          </div>
-        }
 
         <div className='flex items-center justify-between mt-5 mb-2' style={{ marginTop: '40px' }}>
           <div>{t('Payment address and quantity')}</div>
@@ -349,8 +330,7 @@ function Multisend() {
           <TextArea style={{ height: '300px' }}
             value={textValue}
             onChange={textValueChange}
-            placeholder={`example:
-Hs7tkctve2Ryotetpi5wYwDcSfYAbEbxsDaicbWsHusJ,0.1
+            placeholder={`Hs7tkctve2Ryotetpi5wYwDcSfYAbEbxsDaicbWsHusJ,0.1
 GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
         }
         {isFile ?

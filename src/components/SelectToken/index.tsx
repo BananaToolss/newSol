@@ -171,15 +171,15 @@ const App = (props: PropsType) => {
 
         <div className='flex mb-3'>
           <TOKEN_BOX onClick={() => maintokenItemClick(SOL)}>
-            <img src={getImage('sol.png')} width={26} height={26} />
+            <img src={getImage('sol.png')} className='img' />
             <div className='ml-1'>SOL</div>
           </TOKEN_BOX>
           <TOKEN_BOX onClick={() => maintokenItemClick(USDC)}>
-            <img src={getImage('usdc.png')} width={26} height={26} />
+            <img src={getImage('usdc.png')} className='img' />
             <div className='ml-1'>USDC</div>
           </TOKEN_BOX>
           <TOKEN_BOX onClick={() => maintokenItemClick(USDT)}>
-            <img src={getImage('usdt.svg')} width={26} height={26} />
+            <img src={getImage('usdt.svg')} className='img' />
             <div className='ml-1'>USDT</div>
           </TOKEN_BOX>
         </div>

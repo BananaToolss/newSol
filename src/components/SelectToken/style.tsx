@@ -20,6 +20,10 @@ export const SelectTokenPage = styled.div`
       font-size: 26px;
     }
   }
+  .img {
+    height: 26px;
+    width: 26px;
+  }
 `
 
 export const TOKEN_BOX = styled.div`
