@@ -86,9 +86,8 @@ function CreateToken() {
       if (!config.name) return messageApi.error(t('Please fill in the name'))
       if (!config.symbol) return messageApi.error(t('Please fill in the short name'))
       if (!imageFile && !config.image) return messageApi.error(t('Please upload a picture logo'))
+      if (walletConfig.length > 17) return messageApi.error(t('最多17个小号钱包地址'))
 
-      const balance = await connection.getBalance(wallet.publicKey)
-      console.log(balance, 'balance')
       setIscreating(true)
       setSignature('')
       setError('')
@@ -102,10 +101,7 @@ function CreateToken() {
 
       console.log(mint.publicKey.toString(), 'mint')
       let metadata_url = await upLoadImage(config, imageFile, true)
-      // let metadata_url = '1'
 
-      console.log(metadata_url, 'metadata_url')
-      console.log(jitoRpc, jitoFee, 'jitoRpcjitoFee, ')
       const buysersAmounts = []
       let testAccount2: Keypair[] = [];
 
