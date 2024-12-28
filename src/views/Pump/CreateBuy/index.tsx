@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import copy from 'copy-to-clipboard';
 import { AnchorProvider } from "@coral-xyz/anchor";
 import base58 from "bs58";
+import axios from 'axios'
 import {
   Keypair, Commitment, LAMPORTS_PER_SOL
 } from '@solana/web3.js';
@@ -80,6 +81,7 @@ function CreateToken() {
   //创建代币
   const createToken = async () => {
     try {
+
       if (!wallet.publicKey) return messageApi.error(t('Please connect the wallet first'))
       if (!config.name) return messageApi.error(t('Please fill in the name'))
       if (!config.symbol) return messageApi.error(t('Please fill in the short name'))
@@ -97,8 +99,9 @@ function CreateToken() {
       const sdk = new PumpFunSDK(provider);
       const mint = mintKeypair
 
-      console.log(mint.publicKey.toString(), 'mint.publicKey')
-      let metadata_url = await upLoadImage(config, imageFile, true)
+      console.log(mint.publicKey.toString(), 'mint')
+      // let metadata_url = await upLoadImage(config, imageFile, true)
+      let metadata_url = '1'
 
       console.log(metadata_url, 'metadata_url')
       console.log(jitoRpc, jitoFee, 'jitoRpcjitoFee, ')
@@ -132,16 +135,21 @@ function CreateToken() {
         jitoRpc,
         jitoFee,
       );
+
       console.log(result, 'result')
-      if (result.type == 'success') {
+      if (result.type == 'success') { //直接创建
         api.success({ message: '创建成功' })
         setTokenAddress(mint.publicKey.toBase58())
-        setSignature(result.url)
+        setSignature(result.message)
+
+      } else if (result.type == 'success1') { //捆绑
+        const bundleId = result.message
+        const explorerUrl = `https://explorer.jito.wtf/bundle/${bundleId}`;
+        setSignature(explorerUrl)
       } else {
         api.error({ message: result.message })
         setError(result.message)
       }
-
       setIscreating(false)
     } catch (error: any) {
       console.log(error, 'error')
@@ -150,6 +158,7 @@ function CreateToken() {
       setIscreating(false)
     }
   }
+
 
   const copyClickV = () => {
     copy(vanityAddress)
@@ -177,7 +186,7 @@ function CreateToken() {
 
 
       <CreatePage className="my-6">
-  
+
         <div className='itemSwapper'>
           <div className='item'>
             <div className='mb26 mb10'>

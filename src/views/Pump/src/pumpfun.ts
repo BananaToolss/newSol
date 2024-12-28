@@ -256,7 +256,7 @@ export class PumpFunSDK {
           _signature,
           "processed"
         );
-        return { type: 'success', message: 'success', url: _signature }
+        return { type: 'success', message: _signature }
       }
 
       //捆绑买入 主钱包签名
@@ -300,24 +300,9 @@ export class PumpFunSDK {
       })
       const bundleId = result?.data.result;
       console.log(bundleId, 'bundleId')
-      const explorerUrl = `${jito_url}/bundle/${bundleId}`;
-
-      const result1 = await axios.post(endpoints, {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'getBundleStatuses',
-        params: [[bundleId]],
-      })
-      console.log(result1, 'result1')
-      const value = result1.data.result.value
-      if (value[0] && value[0].confirmation_status) {
-        const state = value[0].confirmation_status
-        return { type: 'success', message: state, url: explorerUrl }
-      } else {
-        return { type: 'err', message: '提交错误', url: '' }
-      }
+      return { type: 'success1', message: bundleId}
     } catch (error: any) {
-      return { type: 'err', message: error.message ?? error.toString(), url: '' }
+      return { type: 'err', message: error.message ?? error.toString() }
     }
   }
 
