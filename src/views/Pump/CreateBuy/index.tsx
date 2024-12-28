@@ -148,9 +148,7 @@ function CreateToken() {
         const explorerUrl = `https://explorer.jito.wtf/bundle/${bundleId}`;
         console.log(explorerUrl)
         setSignature(explorerUrl)
-        setTimeout(() => {
-          getBundleStatuses(bundleId)
-        }, 3000);
+        getBundleStatuses(bundleId)
       } else {
         api.error({ message: result.message })
         setError(result.message)
@@ -166,16 +164,31 @@ function CreateToken() {
 
   const getBundleStatuses = async (bundleId: string) => {
     try {
-      const result1 = await axios.get(`https://bundles.jito.wtf/api/v1/bundles/bundle/${bundleId}`)
-      if (result1[0].bundleId) {
-        api.success({ message: '创建成功' })
+      const endpoints = `${jitoRpc}/api/v1/bundles`
+      const res = await axios.post(endpoints, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getInflightBundleStatuses',
+        params: [[bundleId]],
+      })
+      const result = res.data.result
+      console.log(result, 'result')
+      const state = result.value[0].status
+      console.log(state, 'state')
+
+      if (state === 'Pending') {
+        setTimeout(() => {
+          getBundleStatuses(bundleId)
+        }, 1000)
+      } else if (state === 'Failed') {
+        console.log('失败')
+      } else if (state === 'Landed') {
+        console.log('成功')
       } else {
-        api.error({ message: '创建失败' })
+        console.log('不在系统中')
       }
     } catch (error: any) {
-      api.error({ message: error.message })
-      setError(error.message)
-      setIscreating(false)
+      console.error('检查包状态时出错:', error);
     }
   }
 
