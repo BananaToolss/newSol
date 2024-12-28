@@ -10,7 +10,7 @@ import axios from 'axios'
 import {
   Keypair, Commitment, LAMPORTS_PER_SOL
 } from '@solana/web3.js';
-import { Input_Style, Button_Style, PUMP_CREATE_FEE } from '@/config'
+import { Input_Style, Button_Style, PUMP_CREATE_FEE, PUMP_CREATE_BIND_FEE } from '@/config'
 import type { TOKEN_TYPE, WalletConfigType } from '@/type'
 import { Vanity, UpdataImage, Header, Result, WalletInfo, JitoFee, Hint } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
@@ -138,7 +138,7 @@ function CreateToken() {
         api.success({ message: '创建成功' })
         setTokenAddress(mint.publicKey.toBase58())
         setSignature(result.message)
-
+        setIscreating(false)
       } else if (result.type == 'success1') { //捆绑
         const bundleId = result.message
         const explorerUrl = `https://explorer.jito.wtf/bundle/${bundleId}`;
@@ -148,8 +148,9 @@ function CreateToken() {
       } else {
         api.error({ message: result.message })
         setError(result.message)
+        setIscreating(false)
       }
-      setIscreating(false)
+
     } catch (error: any) {
       console.log(error, 'error')
       api.error({ message: error.message })
@@ -160,7 +161,11 @@ function CreateToken() {
 
   const getBundleStatuses = async (bundleId: string, time: number) => {
     try {
-      if (time > 120000) return api.error({ message: '请求超时' })
+      if (time > 120000) {
+        api.error({ message: '请求超时' })
+        setIscreating(false)
+        return
+      }
       const endpoints = `${jitoRpc}/api/v1/bundles`
       const res = await axios.post(endpoints, {
         jsonrpc: '2.0',
@@ -179,8 +184,10 @@ function CreateToken() {
       } else if (state === 'Failed') {
         api.error({ message: '发币失败' })
         setError('发币失败')
+        setIscreating(false)
       } else if (state === 'Landed') {
         api.success({ message: '发币成功' })
+        setIscreating(false)
       } else {
         api.info({ message: '捆绑包ID提交中，请稍等...' })
         setTimeout(() => {
@@ -188,6 +195,7 @@ function CreateToken() {
         }, 2000)
       }
     } catch (error: any) {
+      setIscreating(false)
       setError(error.toString())
       console.error('检查包状态时出错:', error);
     }
@@ -375,6 +383,7 @@ function CreateToken() {
             </Button>
           </div>
           <div className='fee'>全网最低服务费: {PUMP_CREATE_FEE} SOL</div>
+          <div className='fee'>捆绑买入每个地址收费: {PUMP_CREATE_BIND_FEE} SOL</div>
         </div>
 
         <Result tokenAddress={tokenAddress} signature={signature} error={error} />

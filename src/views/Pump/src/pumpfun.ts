@@ -22,7 +22,7 @@ import {
 } from "@solana/spl-token";
 import { BN } from "bn.js";
 import { addPriorityFeesJito, addPriorityFees } from '@/utils'
-import { BANANATOOLS_ADDRESS, PUMP_CREATE_FEE } from '@/config'
+import { BANANATOOLS_ADDRESS, PUMP_CREATE_FEE, PUMP_CREATE_BIND_FEE } from '@/config'
 import { GlobalAccount } from "./globalAccount";
 import {
   CompleteEvent,
@@ -240,11 +240,13 @@ export class PumpFunSDK {
           buyTxs.push(buyTx);
         }
       }
-      console.log(((buyers.length + 1) * PUMP_CREATE_FEE).toFixed(3), 'fee')
+
+      const _fee = (PUMP_CREATE_BIND_FEE * buyers.length) + PUMP_CREATE_FEE
+      console.log(_fee * LAMPORTS_PER_SOL, 'ffrr')
       const fee = SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
         toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: (PUMP_CREATE_FEE) * LAMPORTS_PER_SOL,
+        lamports: _fee * LAMPORTS_PER_SOL,
       })
       walletTx.add(fee)
 

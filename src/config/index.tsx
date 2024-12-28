@@ -35,6 +35,7 @@ export const MULTISEND_FEE = 0.01 //批量转账费用
 export const COLLECT_FEE = 0.01 //批量归集
 
 export const PUMP_CREATE_FEE = 0.05// pump创建代币
+export const PUMP_CREATE_BIND_FEE = 0.01 //捆绑买入
 export const SWAP_BOT_FEE = 0.003 //市值每笔收费
 export const PUMP_SWAP_BOT_FEE = 0.002 //pump市值收费
 
