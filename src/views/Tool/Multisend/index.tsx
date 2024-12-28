@@ -27,7 +27,6 @@ import { IsAddress, addPriorityFees, numAdd } from '@/utils'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
 import { Modal, Upload, SelectToken, ResultArr, Hint } from '@/components'
-import type { TokenDeta_Type } from '@/components/Select'
 import { MultisendPage } from './style'
 import { SOL } from '@/components/SelectToken/Token';
 

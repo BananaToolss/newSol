@@ -14,7 +14,6 @@ export { default as WalletInfo } from './WalletInfo'
 export { default as LoadingOut } from './LoadingOut'
 export { default as JitoFee } from './JitoFee'
 export { default as Modal } from './Modal'
-export { default as Select } from './Select'
 export { default as Upload } from './Upload'
 
 

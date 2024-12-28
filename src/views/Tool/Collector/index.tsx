@@ -33,7 +33,6 @@ import { IsAddress, getTxLink, addressHandler, fetcher, getImage, getCurrentTime
 import { fromSecretKey, printSOLBalance, getSPLBalance } from '@/utils/util'
 import { Header } from '@/components'
 import { CollectorPage } from './style'
-import { sendTokens } from './test'
 
 type walletInfo = {
   walletAddr: string;
