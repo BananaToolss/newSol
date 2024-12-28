@@ -87,7 +87,8 @@ function CreateToken() {
       if (!config.symbol) return messageApi.error(t('Please fill in the short name'))
       if (!imageFile && !config.image) return messageApi.error(t('Please upload a picture logo'))
 
-
+      const balance = await connection.getBalance(wallet.publicKey)
+      console.log(balance, 'balance')
       setIscreating(true)
       setSignature('')
       setError('')
@@ -145,7 +146,11 @@ function CreateToken() {
       } else if (result.type == 'success1') { //捆绑
         const bundleId = result.message
         const explorerUrl = `https://explorer.jito.wtf/bundle/${bundleId}`;
+        console.log(explorerUrl)
         setSignature(explorerUrl)
+        setTimeout(() => {
+          getBundleStatuses(bundleId)
+        }, 3000);
       } else {
         api.error({ message: result.message })
         setError(result.message)
@@ -159,6 +164,20 @@ function CreateToken() {
     }
   }
 
+  const getBundleStatuses = async (bundleId: string) => {
+    try {
+      const result1 = await axios.get(`https://bundles.jito.wtf/api/v1/bundles/bundle/${bundleId}`)
+      if (result1[0].bundleId) {
+        api.success({ message: '创建成功' })
+      } else {
+        api.error({ message: '创建失败' })
+      }
+    } catch (error: any) {
+      api.error({ message: error.message })
+      setError(error.message)
+      setIscreating(false)
+    }
+  }
 
   const copyClickV = () => {
     copy(vanityAddress)

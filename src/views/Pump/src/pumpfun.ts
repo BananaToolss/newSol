@@ -240,7 +240,7 @@ export class PumpFunSDK {
           buyTxs.push(buyTx);
         }
       }
-      console.log(((buyers.length + 1) * PUMP_CREATE_FEE), 'fee')
+      console.log(((buyers.length + 1) * PUMP_CREATE_FEE).toFixed(3), 'fee')
       const fee = SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
         toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
@@ -300,7 +300,7 @@ export class PumpFunSDK {
       })
       const bundleId = result?.data.result;
       console.log(bundleId, 'bundleId')
-      return { type: 'success1', message: bundleId}
+      return { type: 'success1', message: bundleId }
     } catch (error: any) {
       return { type: 'err', message: error.message ?? error.toString() }
     }

@@ -25,12 +25,23 @@ function Result(props: PropsType) {
     <div className="mt-5">
       {contextHolder}
       {signature &&
-        <div className="text-start">
-          ✅ {t('successfully!')}
-          <a target="_blank" href={getTxLink(signature)} rel="noreferrer">
-            <strong className="underline">{t('Click to view')}</strong>
-          </a>
-        </div>
+        <>
+          {signature.includes('bundle') ?
+            <div className="text-start">
+              <div style={{ wordBreak: 'break-all' }}>{signature}</div>
+              <a target="_blank" href={getTxLink(signature)} rel="noreferrer">
+                <strong className="underline">{t('点击查看捆绑结果')}</strong>
+              </a>
+            </div>
+            :
+            <div className="text-start">
+              ✅ {t('successfully!')}
+              <a target="_blank" href={getTxLink(signature)} rel="noreferrer">
+                <strong className="underline">{t('Click to view')}</strong>
+              </a>
+            </div>
+          }
+        </>
       }
       {tokenAddress &&
         <div className='flex'>
