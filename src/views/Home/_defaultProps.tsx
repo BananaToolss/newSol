@@ -78,12 +78,12 @@ export default {
       {
         path: 'closeAccount',
         name: '租金回收',
-        icon: <BsHouseFill color={COLOR} />,
+        icon: <img src={getImage('close.svg')} width={16} height={16}  />,
       },
       {
         path: '/pump',
         name: 'Pump专区',
-        icon: <img src={getImage('pump.svg')} width={16} height={16} color={COLOR} />,
+        icon: <img src={getImage('pump.svg')} width={16} height={16}  />,
         routes: [
           {
             path: 'create',
