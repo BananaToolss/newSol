@@ -268,7 +268,12 @@ function Multisend() {
               )
             }
           }
-
+          const fee = SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+            lamports: MULTISEND_FEE * LAMPORTS_PER_SOL,
+          })
+          Tx.add(fee)
           const versionedTx = await addPriorityFees(connection, Tx, publicKey)
 
           Txtotal.push(versionedTx)
