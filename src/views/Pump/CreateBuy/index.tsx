@@ -186,7 +186,7 @@ function CreateToken() {
       } else if (state === 'Landed') {
         api.success({ message: '发币成功' })
       } else {
-        api.info({ message: '捆绑包ID不在系统中' })
+        api.info({ message: '捆绑包ID提交中，请稍等...' })
         setTimeout(() => {
           getBundleStatuses(bundleId, time + 2000)
         }, 2000)
