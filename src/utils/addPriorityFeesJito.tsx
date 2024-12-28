@@ -13,6 +13,7 @@ const addPriorityFeesJito = (
   payerKey: PublicKey,
   jitoTipAccount: PublicKey,
   jito_Fee: number,
+  isMain: boolean
 ) => {
   return new Promise(async (resolve: (value: VersionedTransaction) => void, reject) => {
     try {
@@ -34,20 +35,22 @@ const addPriorityFeesJito = (
         tx.add(modifyComputeUnits);
         tx.add(addPriorityFee);
       }
-      tx.add(
-        SystemProgram.transfer({
-          fromPubkey: payerKey,
-          toPubkey: jitoTipAccount,
-          lamports: jito_Fee,
-        })
-      );
+      if (isMain) {
+        tx.add(
+          SystemProgram.transfer({
+            fromPubkey: payerKey,
+            toPubkey: jitoTipAccount,
+            lamports: jito_Fee,
+          })
+        );
+      }
       // Add memo instruction
-      const memoInstruction = new TransactionInstruction({
-        keys: [],
-        programId: memoProgramId,
-        data: Buffer.from("Hello, Jito!"),
-      });
-      tx.add(memoInstruction);
+      // const memoInstruction = new TransactionInstruction({
+      //   keys: [],
+      //   programId: memoProgramId,
+      //   data: Buffer.from("Hello, Jito!"),
+      // });
+      // tx.add(memoInstruction);
       const blockHash = (await connection.getLatestBlockhash(DEFAULT_COMMITMENT))
         .blockhash;
       let messageV0 = new TransactionMessage({

@@ -240,11 +240,11 @@ export class PumpFunSDK {
           buyTxs.push(buyTx);
         }
       }
-console.log(((buyers.length + 1) * PUMP_CREATE_FEE),'fee')
+      console.log(((buyers.length + 1) * PUMP_CREATE_FEE), 'fee')
       const fee = SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
         toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: ((buyers.length + 1) * PUMP_CREATE_FEE) * LAMPORTS_PER_SOL,
+        lamports: (PUMP_CREATE_FEE) * LAMPORTS_PER_SOL,
       })
       walletTx.add(fee)
 
@@ -262,7 +262,7 @@ console.log(((buyers.length + 1) * PUMP_CREATE_FEE),'fee')
       //捆绑买入 主钱包签名
       const versionedTx = await addPriorityFeesJito(
         this.connection, walletTx, wallet.publicKey,
-        jitoTipAccount, JITO_FEE)
+        jitoTipAccount, JITO_FEE, true)
       versionedTx.sign(signers);
 
       const signedTx = await wallet.signTransaction(versionedTx); // 使用钱包签名
@@ -275,7 +275,7 @@ console.log(((buyers.length + 1) * PUMP_CREATE_FEE),'fee')
       console.log(buyTxs.length, '小号个数')
       //3个小号一组
       const _buyers = buyers.slice(1)
-      const NUM = 3
+      const NUM = 4
       for (let j = 0; j < Math.ceil(buyTxs.length / NUM); j++) {
         const _tx = new Transaction();
         const _txs = buyTxs.slice(j * NUM, (j + 1) * NUM)
@@ -284,7 +284,7 @@ console.log(((buyers.length + 1) * PUMP_CREATE_FEE),'fee')
         })
         const versionedTx = await addPriorityFeesJito(
           this.connection, _tx, _buyers[j * NUM].publicKey,
-          jitoTipAccount, JITO_FEE)
+          jitoTipAccount, JITO_FEE, false)
         versionedTx.sign(_buyers.slice(j * NUM, (j + 1) * NUM));
         const serializedTransaction = base58.encode(versionedTx.serialize());
         transactions.push(serializedTransaction);
