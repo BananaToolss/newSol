@@ -13,13 +13,14 @@ import { getTxLink, addPriorityFees } from '@/utils'
 import { Page } from '@/styles';
 import { Header, SelectToken, Result } from '@/components'
 import { BurnPage } from './style'
+import { signAllTransactions } from '@metaplex-foundation/umi';
 
 function BrunToken() {
   const { t } = useTranslation()
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
-  const { publicKey, sendTransaction } = useWallet();
+  const { publicKey, sendTransaction, signAllTransactions } = useWallet();
   const [token, setToken] = useState<Token_Type>(null)
   const [burnAmount, setBurnAmount] = useState('')
 

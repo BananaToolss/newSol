@@ -6,6 +6,7 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
+  VersionedTransaction
 } from "@solana/web3.js";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -18,13 +19,14 @@ import {
   getMint,
   getTokenMetadata,
 } from "@solana/spl-token";
+import { ethers, BigNumber } from 'ethers'
 import { useTranslation } from "react-i18next";
 import { Header } from '@/components'
 import { Button_Style, BANANATOOLS_ADDRESS, MULTISEND_FEE, Input_Style } from '@/config'
-import { IsAddress, getTxLink, numAdd } from '@/utils'
+import { IsAddress, addPriorityFees, numAdd } from '@/utils'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
-import { Modal, Upload, SelectToken, Result } from '@/components'
+import { Modal, Upload, SelectToken, ResultArr, Hint } from '@/components'
 import type { TokenDeta_Type } from '@/components/Select'
 import { MultisendPage } from './style'
 import { SOL } from '@/components/SelectToken/Token';
@@ -44,7 +46,7 @@ function Multisend() {
   const [messageApi, contextHolder] = message.useMessage()
   const { connection } = useConnection();
   const wallet = useWallet();
-
+  const { publicKey, sendTransaction, signAllTransactions } = useWallet();
 
   const [textValue, setTextValue] = useState('')
   const [balance, setBalance] = useState('')
@@ -53,8 +55,7 @@ function Multisend() {
 
   const [isSending, setIsSending] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-  const [signature, setSignature] = useState<string>("");
-  const [nbPerTxAmount, setNbPerTxAmount] = useState('380')
+  const [signature, setSignature] = useState<string[]>([]);
 
   const [isFile, setIsFile] = useState(false)
 
@@ -117,31 +118,36 @@ function Multisend() {
   }
   //下一步
   const nextClick = () => {
-    const Receivers: Receiver_Type[] = [];
-    let totalAmount = 0
-    const _token = textValue.split(/[(\r\n)\r\n]+/)
-    _token.forEach((item, index) => {
-      const arr = item.split(/[,，]+/)
-      const obj = {
-        receiver: arr[0],
-        amount: arr[1],
-      }
-      if (!item) return
-      if (!IsAddress(obj.receiver)) {
-        messageApi.error(`第${index + 1}行 地址：${obj.receiver} 不是合法的地址，将跳过该地址转账`)
-      } else if (!obj.amount) {
-        messageApi.error(`第${index + 1}行 空投数量为空，将跳过该地址转账`)
-      } else {
-        Receivers.push(obj);
-        totalAmount = numAdd(totalAmount, obj.amount)
-      }
-    })
+    try {
+      setCurrentTx(0)
+      const Receivers: Receiver_Type[] = [];
+      let totalAmount = BigNumber.from('0')
+      const _token = textValue.split(/[(\r\n)\r\n]+/)
+      _token.forEach((item, index) => {
+        const arr = item.split(/[,，]+/)
+        const obj = {
+          receiver: arr[0],
+          amount: arr[1],
+        }
+        if (!item) return
+        if (!IsAddress(obj.receiver)) {
+          messageApi.error(`第${index + 1}行 地址：${obj.receiver} 不是合法的地址，将跳过该地址转账`)
+        } else if (!obj.amount) {
+          messageApi.error(`第${index + 1}行 空投数量为空，将跳过该地址转账`)
+        } else {
+          Receivers.push(obj);
+          totalAmount = totalAmount.add(ethers.utils.parseEther(obj.amount))
+        }
+      })
 
-    setTotalAccount(Receivers.length.toString())
-    setNeedAmount(totalAmount.toString())
-    setIsDetect(true)
-    if (Receivers.length == 0) {
-      return messageApi.error("Please enter at least one receiver and one amount!");
+      setTotalAccount(Receivers.length.toString())
+      setNeedAmount(ethers.utils.formatEther(totalAmount))
+      setIsDetect(true)
+      if (Receivers.length == 0) {
+        return messageApi.error("Please enter at least one receiver and one amount!");
+      }
+    } catch (error) {
+      messageApi.error("Please enter at least one receiver and one amount!");
     }
   }
 
@@ -174,9 +180,8 @@ function Multisend() {
   //发送
   const senderTransfer = async () => {
     try {
-      setSignature('');
+      setSignature([]);
       setError('')
-
       const Receivers: Receiver_Type[] = [];
       const _token = textValue.split(/[(\r\n)\r\n]+/)
       _token.forEach((item, index) => {
@@ -194,14 +199,14 @@ function Multisend() {
           Receivers.push(obj);
         }
       })
-
       if (Receivers.length == 0) {
         return messageApi.error("Please enter at least one receiver and one amount!");
       }
-
       setIsSending(true);
+      // console.log(Receivers, 'Receivers')
 
-      const nbPerTx = Number(nbPerTxAmount);
+      const nbPerTx = 100 //100个地址签名一次
+      const NUM = token.address === SOL.address ? 18 : 9
       let nbTx: number; // 总交易次数
       if (Receivers.length % nbPerTx == 0) {
         nbTx = Receivers.length / nbPerTx;
@@ -209,82 +214,69 @@ function Multisend() {
         nbTx = Math.floor(Receivers.length / nbPerTx) + 1;
       }
       setTotalTx(nbTx);
-      for (let i = 0; i < nbTx; i++) {
-        setCurrentTx(i + 1)
-        let Tx = new Transaction();
 
-        let bornSup: number;
+      const totalSiner: VersionedTransaction[][] = []
+      //比如201     nbtx = 3
+      for (let i = 0; i < nbTx; i++) { //全部地址按100地址分组
+        let Txtotal: VersionedTransaction[] = []
+        const newReceivers = Receivers.slice(i * nbPerTx, (i + 1) * nbPerTx)
 
-        if (i == nbTx - 1) {
-          bornSup = Receivers.length;
-        } else {
-          bornSup = nbPerTx * (i + 1);
-        }
+        for (let j = 0; j < newReceivers.length / NUM; j++) {
+          const _newReceivers = newReceivers.slice(j * NUM, (j + 1) * NUM)
 
-        for (let j = nbPerTx * i; j < bornSup; j++) {
-          const receiverPubkey = new PublicKey(Receivers[j].receiver);
-          const amount = Number(Receivers[j].amount);
-
-          if (token.address === SOL.address) {
-            Tx.add(
-              SystemProgram.transfer({
-                fromPubkey: wallet.publicKey,
-                toPubkey: receiverPubkey,
-                lamports: amount * LAMPORTS_PER_SOL,
-              })
-            );
-          } else {
-            let from = await getAt(new PublicKey(token.address), wallet.publicKey);
-            //获取at
-            let to = await getAt(new PublicKey(token.address), receiverPubkey);
-            //获取ata
-            let ata = await getAta(new PublicKey(token.address), receiverPubkey);
-            if (ata == undefined) {
-              //创建
+          let Tx = new Transaction();
+          for (let index = 0; index < _newReceivers.length; index++) {
+            const receiverPubkey = new PublicKey(_newReceivers[index].receiver);
+            const amount = Number(_newReceivers[index].amount);
+            if (token.address === SOL.address) {
               Tx.add(
-                createAssociatedTokenAccountInstruction(
-                  wallet.publicKey,
-                  to,
-                  new PublicKey(receiverPubkey),
-                  new PublicKey(token.address),
-                  TOKEN_PROGRAM_ID,
-                  ASSOCIATED_TOKEN_PROGRAM_ID
-                )
+                SystemProgram.transfer({
+                  fromPubkey: wallet.publicKey,
+                  toPubkey: receiverPubkey,
+                  lamports: amount * LAMPORTS_PER_SOL,
+                })
               );
-            }
-            //转账
-            Tx.add(
-              createTransferCheckedInstruction(
-                from,
-                new PublicKey(token.address),
-                to,
-                wallet.publicKey,
-                amount * 10 ** token.decimals,
-                token.decimals
+            } else {
+              let from = await getAt(new PublicKey(token.address), wallet.publicKey);
+              //获取at
+              let to = await getAt(new PublicKey(token.address), receiverPubkey);
+              //获取ata
+              let ata = await getAta(new PublicKey(token.address), receiverPubkey);
+              if (ata == undefined) {
+                //创建
+                Tx.add(
+                  createAssociatedTokenAccountInstruction(
+                    wallet.publicKey,
+                    to,
+                    new PublicKey(receiverPubkey),
+                    new PublicKey(token.address),
+                    TOKEN_PROGRAM_ID,
+                    ASSOCIATED_TOKEN_PROGRAM_ID
+                  )
+                );
+              }
+              //转账
+              Tx.add(
+                createTransferCheckedInstruction(
+                  from,
+                  new PublicKey(token.address),
+                  to,
+                  wallet.publicKey,
+                  amount * 10 ** token.decimals,
+                  token.decimals
+                )
               )
-            )
+            }
           }
+
+          const versionedTx = await addPriorityFees(connection, Tx, publicKey)
+
+          Txtotal.push(versionedTx)
         }
-
-        Tx.add(
-          SystemProgram.transfer({
-            fromPubkey: wallet.publicKey,
-            toPubkey: new PublicKey(
-              BANANATOOLS_ADDRESS
-            ),
-            lamports: MULTISEND_FEE * LAMPORTS_PER_SOL
-          }),
-        )
-        const signature = await wallet.sendTransaction(Tx, connection);
-        const confirmed = await connection.confirmTransaction(
-          signature,
-          "processed"
-        );
-        console.log("confirmation", signature);
-        setSignature(signature);
+        console.log(Txtotal, 'Txtotal')
+        totalSiner.push(Txtotal)
       }
-
-      setIsSending(false);
+      signAllTransactions1(totalSiner, 0)
     } catch (error) {
       console.log(error, 'error')
       setIsSending(false);
@@ -298,6 +290,37 @@ function Multisend() {
       } else {
         setError(err);
       }
+    }
+  }
+
+  const signAllTransactions1 = async (totalSiner: VersionedTransaction[][], index: number) => {
+    try {
+      setCurrentTx(index + 1)
+      const signedTransactions = await signAllTransactions(totalSiner[index])
+      for (const signedTx of signedTransactions) {
+        try {
+          const createAccountSignature = await connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: true })
+          console.log(createAccountSignature, 'createAccountSignature')
+          setSignature((item) => [...item, createAccountSignature])
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error("Transaction failed:", error);
+          console.log(error, 'error')
+          setIsSending(false);
+          const _err = (error as any)?.message;
+          setError(_err);
+        }
+      }
+      if (index < totalSiner.length - 1) {
+        signAllTransactions1(totalSiner, index + 1)
+      } else {
+        setIsSending(false);
+      }
+    } catch (error) {
+      console.log(error, 'error')
+      setIsSending(false);
+      const err = (error as any)?.message;
+      setError(err);
     }
   }
 
@@ -341,6 +364,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
           </div>
         }
 
+        <Hint title='给新钱包转SOL至少需要0.002SOL来支付账户租金,其他币种则自动扣除0.002SOL,查看SOLANA账户模型' showClose />
         <div className='buttonSwapper bw100 mt-5'>
           <Button className={Button_Style} onClick={nextClick}>{t('Next step')}</Button>
         </div>
@@ -376,7 +400,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
           )}
         </div>
 
-        <Result signature={signature} error={error} />
+        <ResultArr signature={signature} error={error} />
       </MultisendPage>
     </Page >
   )
