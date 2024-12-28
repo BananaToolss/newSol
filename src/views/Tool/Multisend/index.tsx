@@ -7,8 +7,6 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-import { fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
-import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -26,9 +24,10 @@ import { Button_Style, BANANATOOLS_ADDRESS, MULTISEND_FEE, Input_Style } from '@
 import { IsAddress, getTxLink, numAdd } from '@/utils'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
-import { Modal, Upload,  SelectToken } from '@/components'
+import { Modal, Upload, SelectToken, Result } from '@/components'
 import type { TokenDeta_Type } from '@/components/Select'
 import { MultisendPage } from './style'
+import { SOL } from '@/components/SelectToken/Token';
 
 
 const { TextArea } = Input
@@ -46,28 +45,30 @@ function Multisend() {
   const { connection } = useConnection();
   const wallet = useWallet();
 
-  const [transferType, setTransferType] = useState<string | number>(`${t('Airdrop')}SOL`);
+
   const [textValue, setTextValue] = useState('')
   const [balance, setBalance] = useState('')
   const [totalAccount, setTotalAccount] = useState('')
   const [needAmount, setNeedAmount] = useState('')
 
   const [isSending, setIsSending] = useState<boolean>(false);
-  const [success, setSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [signature, setSignature] = useState<string>("");
-  const [nbPerTxAmount, setNbPerTxAmount] = useState('10')
+  const [nbPerTxAmount, setNbPerTxAmount] = useState('380')
 
   const [isFile, setIsFile] = useState(false)
 
-  const [senderToken, setSenderToken] = useState<TokenDeta_Type>(null)
   const [token, setToken] = useState<Token_Type>(null)
+  const [isDetect, setIsDetect] = useState(false) //
 
   useEffect(() => {
     if (wallet && wallet.publicKey) {
       getBalance()
     }
   }, [wallet, connection])
+  useEffect(() => {
+    setIsDetect(false)
+  }, [textValue])
 
   const textValueChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTextValue(e.target.value)
@@ -114,7 +115,7 @@ function Multisend() {
     const inputValue_ = arr.join('\n')
     setTextValue(inputValue_)
   }
-
+  //下一步
   const nextClick = () => {
     const Receivers: Receiver_Type[] = [];
     let totalAmount = 0
@@ -138,6 +139,7 @@ function Multisend() {
 
     setTotalAccount(Receivers.length.toString())
     setNeedAmount(totalAmount.toString())
+    setIsDetect(true)
     if (Receivers.length == 0) {
       return messageApi.error("Please enter at least one receiver and one amount!");
     }
@@ -172,7 +174,6 @@ function Multisend() {
   //发送
   const senderTransfer = async () => {
     try {
-      setSuccess(false);
       setSignature('');
       setError('')
 
@@ -199,8 +200,6 @@ function Multisend() {
       }
 
       setIsSending(true);
-      let from = null
-      if (transferType === `${t('Airdrop')}Token`) from = await getAt(new PublicKey(senderToken.address), wallet.publicKey);
 
       const nbPerTx = Number(nbPerTxAmount);
       let nbTx: number; // 总交易次数
@@ -226,7 +225,7 @@ function Multisend() {
           const receiverPubkey = new PublicKey(Receivers[j].receiver);
           const amount = Number(Receivers[j].amount);
 
-          if (transferType === `${t('Airdrop')}SOL`) {
+          if (token.address === SOL.address) {
             Tx.add(
               SystemProgram.transfer({
                 fromPubkey: wallet.publicKey,
@@ -234,11 +233,12 @@ function Multisend() {
                 lamports: amount * LAMPORTS_PER_SOL,
               })
             );
-          } else if (transferType === `${t('Airdrop')}Token`) {
+          } else {
+            let from = await getAt(new PublicKey(token.address), wallet.publicKey);
             //获取at
-            let to = await getAt(new PublicKey(senderToken.address), receiverPubkey);
+            let to = await getAt(new PublicKey(token.address), receiverPubkey);
             //获取ata
-            let ata = await getAta(new PublicKey(senderToken.address), receiverPubkey);
+            let ata = await getAta(new PublicKey(token.address), receiverPubkey);
             if (ata == undefined) {
               //创建
               Tx.add(
@@ -246,7 +246,7 @@ function Multisend() {
                   wallet.publicKey,
                   to,
                   new PublicKey(receiverPubkey),
-                  new PublicKey(senderToken.address),
+                  new PublicKey(token.address),
                   TOKEN_PROGRAM_ID,
                   ASSOCIATED_TOKEN_PROGRAM_ID
                 )
@@ -256,15 +256,13 @@ function Multisend() {
             Tx.add(
               createTransferCheckedInstruction(
                 from,
-                new PublicKey(senderToken.address),
+                new PublicKey(token.address),
                 to,
                 wallet.publicKey,
-                amount * 10 ** senderToken.decimals,
-                senderToken.decimals
+                amount * 10 ** token.decimals,
+                token.decimals
               )
-            );
-          } else {
-
+            )
           }
         }
 
@@ -287,12 +285,9 @@ function Multisend() {
       }
 
       setIsSending(false);
-      setSuccess(true);
-
     } catch (error) {
       console.log(error, 'error')
       setIsSending(false);
-      setSuccess(false);
       const err = (error as any)?.message;
       if (
         err.includes(
@@ -350,17 +345,25 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
           <Button className={Button_Style} onClick={nextClick}>{t('Next step')}</Button>
         </div>
 
-        {totalAccount &&
+        {totalAccount && isDetect &&
           <div>
-            <div>{t('The total number of legal addresses for this batch transfer is')}{totalAccount}个</div>
-            <div>{t('Total needed')}：{needAmount} {transferType === `${t('Airdrop')}SOL` ? 'SOL' : (senderToken && senderToken.symbol)}</div>
-            <div>SOL{t('Balance')}：{balance}</div>
+            <div>{t('The total number of legal addresses for this batch transfer is')} {totalAccount} 个</div>
+            <div>{t('Total needed')}：{needAmount} {token.symbol}</div>
+            {token.address === SOL.address ?
+              <div>SOL{t('Balance')}：{balance}</div> :
+              <>
+                <div>{token.symbol}余额：{token.balance} </div>
+                <div>SOL{t('Balance')}：{balance}</div>
+              </>
+            }
           </div>
         }
 
-        <div className='buttonSwapper bw100'>
-          <Button className={Button_Style} onClick={senderTransfer} loading={isSending}>{t('Send transaction')}</Button>
-        </div>
+        {isDetect &&
+          <div className='buttonSwapper bw100'>
+            <Button className={Button_Style} onClick={senderTransfer} loading={isSending}>{t('Send transaction')}</Button>
+          </div>
+        }
 
 
         <div className="my-2">
@@ -373,23 +376,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
           )}
         </div>
 
-        {success && (
-          <div className="font-semibold text-xl mt-4">
-            ✅ 发送成功!
-            <a
-              target="_blank"
-              rel="noreferrer"
-              href={getTxLink(signature)}
-            >
-              <strong className="underline">点击查看</strong>
-            </a>
-          </div>
-        )}
-
-        {error != "" && (
-          <div className="mt-4 font-semibold text-xl">❌ {error}</div>
-        )}
-
+        <Result signature={signature} error={error} />
       </MultisendPage>
     </Page >
   )
