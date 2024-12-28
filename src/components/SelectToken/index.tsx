@@ -11,7 +11,7 @@ import {
 import { Input_Style } from '@/config'
 import { getImage, IsAddress, addressHandler, fetcher } from '@/utils'
 import { getAsset } from '@/utils/sol'
-import { getSPLBalance } from '@/utils/util'
+import { getSPLBalance, printSOLBalance } from '@/utils/util'
 import { getAllToken } from '@/utils/newSol'
 import { SOL, USDC, USDT } from './Token'
 import type { Token_Type } from '@/type'
@@ -110,11 +110,20 @@ const App = (props: PropsType) => {
       setNotFound(true)
     }
   }
-
+  //展示的代币
   const maintokenItemClick = async (_token: Token_Type) => {
-    setToken(_token)
     setIsModalOpen(false)
-    callBack(_token)
+    //获取代币余额
+    let balance = 0
+    if (_token.address === SOL.address) {
+      balance = await printSOLBalance(connection, publicKey)
+    } else {
+      balance = await getSPLBalance(connection, new PublicKey(_token.address), publicKey)
+    }
+    const token_ = { ..._token }
+    token_.balance = balance.toString()
+    setToken(token_)
+    callBack(token_)
   }
 
   const tokenItemClick = async (_token: Token_Type) => {
@@ -132,7 +141,7 @@ const App = (props: PropsType) => {
     <SelectTokenPage>
       {contextHolder}
       {token ?
-        <div className='flex-1 flex items-center justify-between' onClick={showModal}>
+        <div className='flex-1 flex items-center justify-between pointer' onClick={showModal}>
           <div className='flex items-center'>
             <div>
               <img src={token.image} width={40} height={40} />
@@ -196,14 +205,14 @@ const App = (props: PropsType) => {
             <div className='allleft'>
               <img src={item.image} width={26} height={26} />
               <div className='ml-2'>
-                <div className='ml-1'>{item.symbol}</div>
+                <div className='ml-1 font-bold'>{item.symbol}</div>
                 <div className='ml-1 tokename'>{item.name}</div>
               </div>
               <div className='ml-3 mr-2'>{addressHandler(item.address)}</div>
               <BsCopy onClick={() => copyClick(item.address)} />
             </div>
             <div className='ml-1'>{item.balance}</div>
-            
+
           </AllTokenItem>
         ))
         }
