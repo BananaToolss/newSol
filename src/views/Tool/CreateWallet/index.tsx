@@ -66,8 +66,8 @@ function CreateWallet() {
       {contextHolder}
       <Header title={t('Create wallets in batches')} />
       <CreateWalletPage>
-        <div className='flex items-center'>
-          <div className='titlea'>{t('Enter quantity')}：</div>
+        <div className=''>
+          <div className='titlea'>{t('输入创建的钱包数量')}：</div>
           <input
             type="text"
             className={Input_Style}

@@ -29,6 +29,6 @@ export const USDT: Token_Type = {
   name: 'USDT',
   symbol: 'USDT',
   decimals: 9,
-  image: getImage('usdt.png'),
+  image: getImage('usdt.svg'),
   balance: ''
 }
