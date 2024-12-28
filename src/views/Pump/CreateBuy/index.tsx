@@ -148,7 +148,7 @@ function CreateToken() {
         const explorerUrl = `https://explorer.jito.wtf/bundle/${bundleId}`;
         console.log(explorerUrl)
         setSignature(explorerUrl)
-        getBundleStatuses(bundleId)
+        getBundleStatuses(bundleId, 0)
       } else {
         api.error({ message: result.message })
         setError(result.message)
@@ -162,8 +162,9 @@ function CreateToken() {
     }
   }
 
-  const getBundleStatuses = async (bundleId: string) => {
+  const getBundleStatuses = async (bundleId: string, time: number) => {
     try {
+      if (time > 120000) return api.error({ message: '请求超时' })
       const endpoints = `${jitoRpc}/api/v1/bundles`
       const res = await axios.post(endpoints, {
         jsonrpc: '2.0',
@@ -172,22 +173,26 @@ function CreateToken() {
         params: [[bundleId]],
       })
       const result = res.data.result
-      console.log(result, 'result')
       const state = result.value[0].status
-      console.log(state, 'state')
 
       if (state === 'Pending') {
+        api.warning({ message: '捆绑包ID等待执行中' })
         setTimeout(() => {
-          getBundleStatuses(bundleId)
-        }, 1000)
+          getBundleStatuses(bundleId, time + 2000)
+        }, 2000)
       } else if (state === 'Failed') {
-        console.log('失败')
+        api.error({ message: '发币失败' })
+        setError('发币失败')
       } else if (state === 'Landed') {
-        console.log('成功')
+        api.success({ message: '发币成功' })
       } else {
-        console.log('不在系统中')
+        api.info({ message: '捆绑包ID不在系统中' })
+        setTimeout(() => {
+          getBundleStatuses(bundleId, time + 2000)
+        }, 2000)
       }
     } catch (error: any) {
+      setError(error.toString())
       console.error('检查包状态时出错:', error);
     }
   }
