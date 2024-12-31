@@ -11,6 +11,7 @@ export { default as Result } from './Result'
 export { default as ResultArr } from './ResultArr'
 
 export { default as WalletInfo } from './WalletInfo'
+export { default as WalletInfoCollection } from './WalletInfoCollection'
 
 
 export { default as LoadingOut } from './LoadingOut'
