@@ -29,10 +29,11 @@ import bs58 from "bs58";
 import { useTranslation } from "react-i18next";
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
+import type { TOKEN_TYPE, WalletConfigType } from '@/type'
 import { Input_Style, Button_Style1 as Button_Style, AUTHORITY_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { IsAddress, getTxLink, addressHandler, fetcher, getImage, getCurrentTimestamp, getLink } from '@/utils'
 import { fromSecretKey, printSOLBalance, getSPLBalance } from '@/utils/util'
-import { Header, SelectToken } from '@/components'
+import { Header, SelectToken, WalletInfoCollecter } from '@/components'
 import { CollectorPage } from './style'
 
 type walletInfo = {
@@ -77,7 +78,7 @@ function Authority() {
   const [logsArr, setLogsArr] = useState<any[]>([]);
   const newArr = useRef<Test[]>([])
   const [signatureArr, setSignatureArr] = useState([])
-
+  const [walletConfig, setWalletConfig] = useState<WalletConfigType[]>([])
 
   useEffect(() => {
     getAddressArr()
@@ -97,9 +98,7 @@ function Authority() {
     }
   }, [signatureArr])
 
-  const tokenAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTokenAddress(e.target.value)
-  }
+
   const modeTypeChange = (e: RadioChangeEvent) => {
     setModeType(Number(e.target.value))
   }
@@ -118,35 +117,9 @@ function Authority() {
   };
 
   const getTokenInfo = async () => {
-    // try {
-    //   const pad = await programs.metadata.Metadata.getPDA(new PublicKey(tokenAddress))
-    //   const metadata = await programs.metadata.Metadata.load(connection, pad)
-    //   const mintInfo = await getMint(connection, new PublicKey(tokenAddress))
-    //   // const result = await connection.getParsedAccountInfo(new PublicKey('EChH97ge4vsVTjcT4hVtozPNz7y1uWt41tu6VgE3CM3j'))
-    //   // console.log(result, 'result')
-    //   let uri = metadata.data.data.uri
-    //   if (uri) {
-    //     const data = await fetcher(uri)
-    //     if (data.image) {
-    //       uri = data.image
-    //     }
-    //   }
 
-    //   setTokenSymbol(metadata.data.data.symbol)
-    //   setTokenDecimals(mintInfo.decimals)
-    //   setTokenImage(uri)
-    // } catch (error) {
-    //   console.log(error)
-    // }
   }
 
-  //**钱包私钥数组 */
-  const privateKeyCallBack = (keys: string) => {
-    const resultArr = keys.split(/[(\r\n)\r\n]+/)
-    const _privateKeys = resultArr.filter((item: string) => item !== '')
-    setPrivateKeys(_privateKeys)
-    setSignatureArr([])
-  }
   //**钱包地址 */
   const getAddressArr = () => {
     if (privateKeys.length === 0) return setAddressArr([])
@@ -400,46 +373,10 @@ function Authority() {
         <input className={Input_Style} placeholder={t('Please enter the wallet address to receive pooled tokens')}
           value={collectorAddr} onChange={(e) => setColletorAddr(e.target.value)} />
 
-        <div className='buttonSwapper mt-3 flex'>
-
-          <Button className={Button_Style} onClick={updataWallet} >{t('Refresh wallet')}</Button>
-        </div>
-        <div className='flex mt-3 wallet_item'>
-          <div className='w-1/5 text-center'>{t('Address')}</div>
-          <div className='w-1/5 text-center'>sol{t('Balance')}</div>
-          <div className='w-1/5 text-center'>{t('Collect tokens')}{tokenSymbol}</div>
-          <div className='w-1/5 text-center'>{t('Execution result')}</div>
-          <div className='w-1/5 text-center'>{t('operate')}</div>
-        </div>
-
-        <div className='swap_wallet'>
-          {addressArr.map((item, index) => (
-            <div className='flex wallet_item' key={index}>
-              <div className='w-1/5 text-center'>{addressHandler(item)}</div>
-              <div className='w-1/5 text-center'>{walletsArrInfo[index] && walletsArrInfo[index].solBalance || '0'}</div>
-              <div className='w-1/5 text-center'>{walletsArrInfo[index] && walletsArrInfo[index].baseTokenBlance || '0'}</div>
-              {signatureArr[index] ?
-                (signatureArr[index] === 'over' || signatureArr[index] === 'error') ?
-                  <div className='w-1/5 text-center' style={{ color: `${signatureArr[index] === 'over' ? "#ffcb00" : "#e31919"}` }}>
-                    {signatureArr[index] === 'over' ? '跳过执行' : '执行失败'}
-                  </div> :
-                  <div className='w-1/5 text-center cursor-pointer underline' style={{ color: '#63e2bd' }}>
-                    <a target='_blank' href={getTxLink(signatureArr[index])}>执行完成</a>
-                  </div> :
-                <div className='w-1/5 text-center' style={{ color: '#9ca3c1' }}>
-                  等待执行
-                </div>
-              }
-              <div className='w-1/5 text-center flex justify-center cursor-pointer'>
-                <div className='one_btn' onClick={() => startCollector(index, true)}>执行</div>
-                <DeleteOutlined onClick={() => deleteClick(index)} />
-              </div>
-            </div>
-          ))}
-        </div>
+        <WalletInfoCollecter config={walletConfig} setConfig={setWalletConfig} />
 
         <div className=''>
-          <div className='font-bold mb-2'>{t('Select collection method')}</div>
+          <div className='mb-2'>{t('Select collection method')}</div>
           <Radio.Group onChange={modeTypeChange} value={modeType}>
             <Radio value={1}>{t('send all')}</Radio>
             <Radio value={2}>{t('fixed quantity')}</Radio>

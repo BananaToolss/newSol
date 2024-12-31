@@ -11,6 +11,8 @@ export { default as Result } from './Result'
 export { default as ResultArr } from './ResultArr'
 
 export { default as WalletInfo } from './WalletInfo'
+export { default as WalletInfoCollecter } from './WalletInfoCollecter'
+
 export { default as LoadingOut } from './LoadingOut'
 export { default as JitoFee } from './JitoFee'
 export { default as Modal } from './Modal'
