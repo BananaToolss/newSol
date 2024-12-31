@@ -33,7 +33,7 @@ import type { TOKEN_TYPE, WalletConfigType } from '@/type'
 import { Input_Style, Button_Style1 as Button_Style, AUTHORITY_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { IsAddress, getTxLink, addressHandler, fetcher, getImage, getCurrentTimestamp, getLink } from '@/utils'
 import { fromSecretKey, printSOLBalance, getSPLBalance } from '@/utils/util'
-import { Header, SelectToken, WalletInfoCollecter } from '@/components'
+import { Header, SelectToken } from '@/components'
 import { CollectorPage } from './style'
 
 type walletInfo = {
@@ -373,7 +373,7 @@ function Authority() {
         <input className={Input_Style} placeholder={t('Please enter the wallet address to receive pooled tokens')}
           value={collectorAddr} onChange={(e) => setColletorAddr(e.target.value)} />
 
-        <WalletInfoCollecter config={walletConfig} setConfig={setWalletConfig} />
+
 
         <div className=''>
           <div className='mb-2'>{t('Select collection method')}</div>
