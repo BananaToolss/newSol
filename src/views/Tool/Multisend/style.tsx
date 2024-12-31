@@ -30,3 +30,29 @@ export const MultisendPage = styled.div`
     }
   }
 `
+
+export const SENDINFO = styled.div`
+  display: flex;
+  justify-content: space-between;
+   .item {
+     width: 23%;
+     background-color: #fff5e8;
+     padding: 20px;
+     border-radius: 6px;
+     display: flex;
+     flex-direction: column;
+     justify-content: space-between;
+     align-items: center;
+
+     .t1 {
+      font-size: 13px;
+      color: #85807a;
+     }
+     .t2 {
+      font-size: 22px;
+     }
+     .fee {
+      
+     }
+   }
+`

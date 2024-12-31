@@ -27,7 +27,7 @@ import { IsAddress, addPriorityFees, numAdd } from '@/utils'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
 import { Modal, Upload, SelectToken, ResultArr, Hint } from '@/components'
-import { MultisendPage } from './style'
+import { MultisendPage, SENDINFO } from './style'
 import { SOL } from '@/components/SelectToken/Token';
 
 
@@ -118,6 +118,7 @@ function Multisend() {
   //下一步
   const nextClick = () => {
     try {
+      if (!token) return messageApi.error('请选择代币')
       setCurrentTx(0)
       const Receivers: Receiver_Type[] = [];
       let totalAmount = BigNumber.from('0')
@@ -205,7 +206,7 @@ function Multisend() {
       // console.log(Receivers, 'Receivers')
 
       const nbPerTx = 100 //100个地址签名一次
-      const NUM = token.address === SOL.address ? 18 : 9
+      const NUM = token.address === SOL.address ? 19 : 9
       let nbTx: number; // 总交易次数
       if (Receivers.length % nbPerTx == 0) {
         nbTx = Receivers.length / nbPerTx;
@@ -369,9 +370,31 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
         }
 
         <Hint title='给新钱包转SOL至少需要0.002SOL来支付账户租金,其他币种则自动扣除0.002SOL,查看SOLANA账户模型' showClose />
-        <div className='buttonSwapper bw100 mt-5'>
+        <div className='buttonSwapper bw100 mt-5 text-center'>
           <Button className={Button_Style} onClick={nextClick}>{t('Next step')}</Button>
+          <div className='fee'>全网最低，每批次交易只需要0.008SOL</div>
         </div>
+
+
+        <SENDINFO>
+          <div className='item'>
+            <div className='t2'>{totalAccount}</div>
+            <div className='t1'>地址总数</div>
+          </div>
+          <div className='item'>
+            <div className='t2'>{needAmount}</div>
+            <div className='fee'>服务费0.001 SOL</div>
+            <div className='t1'>代币发送总数</div>
+          </div>
+          <div className='item'>
+            <div className='t2'>101</div>
+            <div className='t1'>交易总数</div>
+          </div>
+          <div className='item'>
+            <div className='t2'>{token.balance}</div>
+            <div className='t1'>代币余额</div>
+          </div>
+        </SENDINFO>
 
         {totalAccount && isDetect &&
           <div>
