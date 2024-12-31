@@ -68,6 +68,9 @@ function Multisend() {
       getBalance()
     }
   }, [wallet, connection])
+  useEffect(() => {
+    setErrorText([])
+  }, [textValue])
 
   const textValueChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTextValue(e.target.value)
@@ -356,10 +359,15 @@ function Multisend() {
   ];
 
   const removeClick = (index: number) => {
+    console.log(index, 'index')
     const token = textValue.split(/[(\r\n)\r\n]+/)
     token.splice(index, 1)
     const inputValue_ = token.join('\n')
     setTextValue(inputValue_)
+
+    const _senderConfig = [...senderConfig]
+    _senderConfig.splice(index, 1)
+    setSenderConfig(_senderConfig)
   }
 
 
@@ -373,7 +381,7 @@ function Multisend() {
         {currentIndex === 0 ?
           <>
             <div>请选择代币</div>
-            <SelectToken callBack={backClick} />
+            <SelectToken callBack={backClick} selecToken={token} />
             <div className='flex items-center justify-between mt-5 mb-2' style={{ marginTop: '40px' }}>
               <div>{t('Payment address and quantity')}</div>
               <Modal updata={(_value) => autoAmountHandler(_value)} />
@@ -405,7 +413,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
             {errorText.length > 0 &&
               <ERROR_PAGE>
                 {errorText.map((item, index) => (
-                  <div>{item}</div>
+                  <div key={index}>{item}</div>
                 ))}
               </ERROR_PAGE>
             }
@@ -450,7 +458,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
                 </div>
                 <div className='bw100'>
                   <Button className={Button_Style}
-                    onClick={nextClick}>
+                    onClick={senderTransfer}>
                     <span>{t('发送')}</span>
                   </Button>
                 </div>

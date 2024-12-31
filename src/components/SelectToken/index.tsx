@@ -18,12 +18,12 @@ import type { Token_Type } from '@/type'
 import { TOKEN_BOX, SelectTokenPage, AllTokenItem } from './style'
 
 interface PropsType {
-
+  selecToken: Token_Type
   callBack: (token: Token_Type) => void
 }
 
 const App = (props: PropsType) => {
-  const { callBack } = props
+  const { selecToken, callBack } = props
   const { connection } = useConnection()
   const { publicKey } = useWallet()
   const { t } = useTranslation()
@@ -37,7 +37,9 @@ const App = (props: PropsType) => {
   const [allTokenArr, setAllTokenArr] = useState<Token_Type[]>([])
   const [notFound, setNotFound] = useState(false)
 
-
+  useEffect(() => {
+    if (selecToken) setToken(selecToken)
+  }, [selecToken])
   useEffect(() => {
     if (IsAddress(tokenAddress)) {
       getQuoteInfo()

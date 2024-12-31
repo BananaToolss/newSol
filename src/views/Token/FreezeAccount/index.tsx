@@ -108,7 +108,7 @@ function BrunToken() {
       <BurnPage>
         <div >
           <div className='title'>请选择代币</div>
-          <SelectToken callBack={backClick} />
+          <SelectToken callBack={backClick} selecToken={token}/>
         </div>
         <div className='mt-5 '>
           <div className='title'>冻结地址</div>
