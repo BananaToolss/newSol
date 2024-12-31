@@ -477,7 +477,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
                 </div>
                 <div className='bw100'>
                   <Button className={Button_Style}
-                    onClick={senderTransfer}>
+                    onClick={senderTransfer} loading={isSending}>
                     <span>{t('发送')}</span>
                   </Button>
                 </div>
@@ -513,7 +513,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
         <div className="my-2">
           {isSending && currentTx != null && totalTx != null ? (
             <div className="font-semibold text-xl mt-4 text-teal-500">
-              Please confirm Tx: {currentTx}/{totalTx}
+              总共需要钱包签名次数: {currentTx}/{totalTx}
             </div>
           ) : (
             <div className="h-[27px]"></div>
