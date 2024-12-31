@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Segmented, Input, Button, message, Flex } from 'antd';
+import { useState, useEffect, useMemo } from 'react';
+import { Segmented, Input, Button, message, Table, TableProps } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons'
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   LAMPORTS_PER_SOL,
@@ -22,12 +23,13 @@ import {
 import { ethers, BigNumber } from 'ethers'
 import { useTranslation } from "react-i18next";
 import { Header } from '@/components'
+import { useIsMobile } from '@/hooks';
 import { Button_Style, BANANATOOLS_ADDRESS, MULTISEND_FEE, Input_Style } from '@/config'
-import { IsAddress, addPriorityFees, numAdd } from '@/utils'
+import { IsAddress, addPriorityFees, addressHandler } from '@/utils'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
 import { Modal, Upload, SelectToken, ResultArr, Hint } from '@/components'
-import { MultisendPage, SENDINFO } from './style'
+import { MultisendPage, SENDINFO, ERROR_PAGE } from './style'
 import { SOL } from '@/components/SelectToken/Token';
 
 
@@ -36,6 +38,8 @@ const { TextArea } = Input
 interface Receiver_Type {
   receiver: string
   amount: string
+  remove: number,
+  key: number
 }
 
 
@@ -46,29 +50,24 @@ function Multisend() {
   const { connection } = useConnection();
   const wallet = useWallet();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
-
+  const isMobile = useIsMobile()
   const [textValue, setTextValue] = useState('')
   const [balance, setBalance] = useState('')
-  const [totalAccount, setTotalAccount] = useState('')
   const [needAmount, setNeedAmount] = useState('')
-
   const [isSending, setIsSending] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [signature, setSignature] = useState<string[]>([]);
-
   const [isFile, setIsFile] = useState(false)
-
   const [token, setToken] = useState<Token_Type>(null)
-  const [isDetect, setIsDetect] = useState(false) //
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [senderConfig, setSenderConfig] = useState<Receiver_Type[]>([])
+  const [errorText, setErrorText] = useState([])
 
   useEffect(() => {
     if (wallet && wallet.publicKey) {
       getBalance()
     }
   }, [wallet, connection])
-  useEffect(() => {
-    setIsDetect(false)
-  }, [textValue])
 
   const textValueChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTextValue(e.target.value)
@@ -115,38 +114,57 @@ function Multisend() {
     const inputValue_ = arr.join('\n')
     setTextValue(inputValue_)
   }
+
   //下一步
   const nextClick = () => {
     try {
       if (!token) return messageApi.error('请选择代币')
       setCurrentTx(0)
+
       const Receivers: Receiver_Type[] = [];
+      const tokenInfo = []
       let totalAmount = BigNumber.from('0')
       const _token = textValue.split(/[(\r\n)\r\n]+/)
+
+      const addressArray = []
+      _token.forEach(item => {
+        if (item) addressArray.push(item.split(/[,，]+/)[0])
+      })
+
       _token.forEach((item, index) => {
         const arr = item.split(/[,，]+/)
         const obj = {
           receiver: arr[0],
-          amount: arr[1],
+          amount: arr.length > 1 ? arr[1] : '0',
+          remove: index,
+          key: index
         }
-        if (!item) return
-        if (!IsAddress(obj.receiver)) {
-          messageApi.error(`第${index + 1}行 地址：${obj.receiver} 不是合法的地址，将跳过该地址转账`)
-        } else if (!obj.amount) {
-          messageApi.error(`第${index + 1}行 空投数量为空，将跳过该地址转账`)
-        } else {
-          Receivers.push(obj);
-          totalAmount = totalAmount.add(ethers.utils.parseEther(obj.amount))
+        // if (!item) return
+        Receivers.push(obj);
+        totalAmount = totalAmount.add(ethers.utils.parseEther(obj.amount))
+
+        let fundNum = 0
+        addressArray.forEach(item => {
+          if (item === arr[0]) fundNum += 1
+        })
+        if (arr[0] && (!IsAddress(arr[0].trim()) || !arr[1])) {
+          tokenInfo.push(`第${index + 1}行：${item} 请输入正确的格式，地址和数量以逗号分隔。例：address,number`)
+        } else if (fundNum > 1) {
+          tokenInfo.push(`第${index + 1}行：${item} 重复的地址${fundNum}`)
         }
       })
 
-      setTotalAccount(Receivers.length.toString())
-      setNeedAmount(ethers.utils.formatEther(totalAmount))
-      setIsDetect(true)
       if (Receivers.length == 0) {
         return messageApi.error("Please enter at least one receiver and one amount!");
       }
+      setErrorText(tokenInfo)
+      if (tokenInfo.length == 0) {
+        setSenderConfig(Receivers)
+        setCurrentIndex(1)
+        setNeedAmount(ethers.utils.formatEther(totalAmount))
+      }
     } catch (error) {
+      console.log(error, 'error')
       messageApi.error("Please enter at least one receiver and one amount!");
     }
   }
@@ -182,26 +200,8 @@ function Multisend() {
     try {
       setSignature([]);
       setError('')
-      const Receivers: Receiver_Type[] = [];
-      const _token = textValue.split(/[(\r\n)\r\n]+/)
-      _token.forEach((item, index) => {
-        const arr = item.split(/[,，]+/)
-        const obj = {
-          receiver: arr[0],
-          amount: arr[1],
-        }
-        if (!item) return
-        if (!IsAddress(obj.receiver)) {
-          messageApi.error(`第${index + 1}行 地址：${obj.receiver} 不是合法的地址，将跳过该地址转账`)
-        } else if (!obj.amount) {
-          messageApi.error(`第${index + 1}行 空投数量为空，将跳过该地址转账`)
-        } else {
-          Receivers.push(obj);
-        }
-      })
-      if (Receivers.length == 0) {
-        return messageApi.error("Please enter at least one receiver and one amount!");
-      }
+      const Receivers: Receiver_Type[] = senderConfig;
+
       setIsSending(true);
       // console.log(Receivers, 'Receivers')
 
@@ -333,70 +333,136 @@ function Multisend() {
     setToken(_token)
   }
 
+  const columns: TableProps['columns'] = [
+    {
+      title: '钱包地址',
+      dataIndex: 'receiver',
+      key: 'receiver',
+      render: (text) => <div>{isMobile ? addressHandler(text) : text}</div>
+    },
+    {
+      title: '数量',
+      dataIndex: 'amount',
+      key: 'amount',
+    },
+    {
+      title: '操作',
+      dataIndex: 'remove',
+      key: 'remove',
+      render: (text) => <a>
+        <Button onClick={() => removeClick(Number(text))}>移除</Button>
+      </a>
+    },
+  ];
+
+  const removeClick = (index: number) => {
+    const token = textValue.split(/[(\r\n)\r\n]+/)
+    token.splice(index, 1)
+    const inputValue_ = token.join('\n')
+    setTextValue(inputValue_)
+  }
+
+
+
   return (
     <Page>
       {contextHolder}
       <Header title={t('Batch Sender')} hint='同时向多个地址转账,节省Gas费,节省时间' />
 
       <MultisendPage>
-        <div>请选择代币</div>
-        <SelectToken callBack={backClick} />
-
-
-        <div className='flex items-center justify-between mt-5 mb-2' style={{ marginTop: '40px' }}>
-          <div>{t('Payment address and quantity')}</div>
-          <Modal updata={(_value) => autoAmountHandler(_value)} />
-          <div className='auto_color' onClick={() => setIsFile(!isFile)}>{isFile ? t('Manual entry') : t('Upload files')}</div>
-        </div>
-        {isFile ?
-          <Upload uploadFileHandler={uploadFileHandler} /> :
-          <TextArea style={{ height: '300px' }}
-            value={textValue}
-            onChange={textValueChange}
-            placeholder={`Hs7tkctve2Ryotetpi5wYwDcSfYAbEbxsDaicbWsHusJ,0.1
+        {currentIndex === 0 ?
+          <>
+            <div>请选择代币</div>
+            <SelectToken callBack={backClick} />
+            <div className='flex items-center justify-between mt-5 mb-2' style={{ marginTop: '40px' }}>
+              <div>{t('Payment address and quantity')}</div>
+              <Modal updata={(_value) => autoAmountHandler(_value)} />
+              <div className='auto_color' onClick={() => setIsFile(!isFile)}>{isFile ? t('Manual entry') : t('Upload files')}</div>
+            </div>
+            {isFile ?
+              <Upload uploadFileHandler={uploadFileHandler} /> :
+              <TextArea style={{ height: '300px' }}
+                value={textValue}
+                onChange={textValueChange}
+                placeholder={`Hs7tkctve2Ryotetpi5wYwDcSfYAbEbxsDaicbWsHusJ,0.1
 GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
+            }
+            {isFile ?
+              <div className='flex justify-between mt-2'>
+                <div>{t('Supported file types')}：CSV / Excel / Txt</div>
+                <a download href='src/assets/wallets.csv'>
+                  <div className='auto_color'>{t('Download example')}</div>
+                </a>
+              </div> :
+              <div className='flex justify-between mt-2'>
+                <div>{t('Each line includes address and quantity, separated by commas')}</div>
+                <div className='auto_color' onClick={viewCases}>{t('View examples')}</div>
+              </div>
+            }
+
+            <Hint title='给新钱包转SOL至少需要0.002SOL来支付账户租金,其他币种则自动扣除0.002SOL,查看SOLANA账户模型' showClose />
+
+            {errorText.length > 0 &&
+              <ERROR_PAGE>
+                {errorText.map((item, index) => (
+                  <div>{item}</div>
+                ))}
+              </ERROR_PAGE>
+            }
+
+
+            <div className='btn mt-6'>
+              <div className='buttonSwapper'>
+                <Button className={Button_Style}
+                  onClick={nextClick}>
+                  <span>{t('Next step')}</span>
+                </Button>
+              </div>
+              <div className='fee'>全网最低，每批次交易只需要0.008SOL</div>
+            </div>
+          </> :
+          <>
+            <SENDINFO>
+              <div className='item'>
+                <div className='t2'>{senderConfig.length}</div>
+                <div className='t1'>地址总数</div>
+              </div>
+              <div className='item'>
+                <div className='t2'>{needAmount}</div>
+                <div className='fee'>服务费0.001 SOL</div>
+                <div className='t1'>代币发送总数</div>
+              </div>
+              <div className='item'>
+                <div className='t2'>101</div>
+                <div className='t1'>交易总数</div>
+              </div>
+              <div className='item'>
+                <div className='t2'>{token.balance ?? ''}</div>
+                <div className='t1'>代币余额</div>
+              </div>
+            </SENDINFO>
+            <Table columns={columns} dataSource={senderConfig} bordered />
+
+            <div className='btn mt-6'>
+              <div className='buttonSwapper flex items-center justify-center'>
+                <div className='back pointer' onClick={() => setCurrentIndex(0)}>
+                  <ArrowLeftOutlined />
+                </div>
+                <div className='bw100'>
+                  <Button className={Button_Style}
+                    onClick={nextClick}>
+                    <span>{t('发送')}</span>
+                  </Button>
+                </div>
+              </div>
+              <div className='fee'>全网最低，每批次交易只需要0.008SOL</div>
+            </div>
+          </>
         }
-        {isFile ?
-          <div className='flex justify-between mt-2'>
-            <div>{t('Supported file types')}：CSV / Excel / Txt</div>
-            <a download href='src/assets/wallets.csv'>
-              <div className='auto_color'>{t('Download example')}</div>
-            </a>
-          </div> :
-          <div className='flex justify-between mt-2'>
-            <div>{t('Each line includes address and quantity, separated by commas')}</div>
-            <div className='auto_color' onClick={viewCases}>{t('View examples')}</div>
-          </div>
-        }
-
-        <Hint title='给新钱包转SOL至少需要0.002SOL来支付账户租金,其他币种则自动扣除0.002SOL,查看SOLANA账户模型' showClose />
-        <div className='buttonSwapper bw100 mt-5 text-center'>
-          <Button className={Button_Style} onClick={nextClick}>{t('Next step')}</Button>
-          <div className='fee'>全网最低，每批次交易只需要0.008SOL</div>
-        </div>
 
 
-        <SENDINFO>
-          <div className='item'>
-            <div className='t2'>{totalAccount}</div>
-            <div className='t1'>地址总数</div>
-          </div>
-          <div className='item'>
-            <div className='t2'>{needAmount}</div>
-            <div className='fee'>服务费0.001 SOL</div>
-            <div className='t1'>代币发送总数</div>
-          </div>
-          <div className='item'>
-            <div className='t2'>101</div>
-            <div className='t1'>交易总数</div>
-          </div>
-          <div className='item'>
-            <div className='t2'>{token.balance}</div>
-            <div className='t1'>代币余额</div>
-          </div>
-        </SENDINFO>
 
-        {totalAccount && isDetect &&
+        {/* {totalAccount  &&
           <div>
             <div>{t('The total number of legal addresses for this batch transfer is')} {totalAccount} 个</div>
             <div>{t('Total needed')}：{needAmount} {token.symbol}</div>
@@ -408,13 +474,13 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
               </>
             }
           </div>
-        }
+        } */}
 
-        {isDetect &&
+        {/* { &&
           <div className='buttonSwapper bw100'>
             <Button className={Button_Style} onClick={senderTransfer} loading={isSending}>{t('Send transaction')}</Button>
           </div>
-        }
+        } */}
 
 
         <div className="my-2">

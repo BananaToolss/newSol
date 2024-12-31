@@ -5,7 +5,7 @@ export const MultisendPage = styled.div`
   .segmentd {
     margin-top: 30px;
     text-align: center;
-    
+
     .ant-segmented.ant-segmented-lg {
       width: 100%;
     }
@@ -23,10 +23,24 @@ export const MultisendPage = styled.div`
   }
   }
   .bw100 {
+    flex: 1;
     button {
       width: 100%;
       margin-left: 0 !important;
       margin-right: 0 !important;
+    }
+  }
+  .back {
+    border: 1px solid #7475e1;
+    padding: 0 40px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+    margin-right: 10px;
+
+    svg {
+      fill: #7475e1;
     }
   }
 `
@@ -34,6 +48,7 @@ export const MultisendPage = styled.div`
 export const SENDINFO = styled.div`
   display: flex;
   justify-content: space-between;
+  margin-bottom: 20px;
    .item {
      width: 23%;
      background-color: #fff5e8;
@@ -49,10 +64,17 @@ export const SENDINFO = styled.div`
       color: #85807a;
      }
      .t2 {
-      font-size: 22px;
+      font-size: 24px;
+      font-weight: 600;
      }
      .fee {
-      
+
      }
    }
+`
+export const ERROR_PAGE = styled.div`
+border: 1px solid red;
+padding: 10px ;
+border-radius: 6px;
+  font-size: 14px;
 `
