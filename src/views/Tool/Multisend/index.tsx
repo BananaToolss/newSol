@@ -62,6 +62,10 @@ function Multisend() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [senderConfig, setSenderConfig] = useState<Receiver_Type[]>([])
   const [errorText, setErrorText] = useState([])
+  const nbPerTx = 100 //100个地址签名一次
+  const [currentTx, setCurrentTx] = useState<number | null>(null);
+  const [totalTx, setTotalTx] = useState<number | null>(null);
+  const [totalSender, setTotalSender] = useState(0)
 
   useEffect(() => {
     if (wallet && wallet.publicKey) {
@@ -166,6 +170,24 @@ function Multisend() {
         setCurrentIndex(1)
         setNeedAmount(ethers.utils.formatEther(totalAmount))
       }
+
+      const NUM = token.address === SOL.address ? 19 : 9
+      let nbTx: number; // 总签名次数
+      let totalTrans = 0
+      if (Receivers.length % nbPerTx == 0) {
+        nbTx = Receivers.length / nbPerTx;
+      } else {
+        nbTx = Math.floor(Receivers.length / nbPerTx) + 1;
+      }
+      setTotalTx(nbTx);
+      //比如201     nbtx = 3
+      for (let i = 0; i < nbTx; i++) { //全部地址按100地址分组
+        const newReceivers = Receivers.slice(i * nbPerTx, (i + 1) * nbPerTx)
+        for (let j = 0; j < newReceivers.length / NUM; j++) {
+          totalTrans += 1
+        }
+      }
+      setTotalSender(totalTrans)
     } catch (error) {
       console.log(error, 'error')
       messageApi.error("Please enter at least one receiver and one amount!");
@@ -196,8 +218,7 @@ function Multisend() {
     }
   };
 
-  const [currentTx, setCurrentTx] = useState<number | null>(null);
-  const [totalTx, setTotalTx] = useState<number | null>(null);
+
   //发送
   const senderTransfer = async () => {
     try {
@@ -207,10 +228,8 @@ function Multisend() {
 
       setIsSending(true);
       // console.log(Receivers, 'Receivers')
-
-      const nbPerTx = 100 //100个地址签名一次
       const NUM = token.address === SOL.address ? 19 : 9
-      let nbTx: number; // 总交易次数
+      let nbTx: number; // 总签名次数
       if (Receivers.length % nbPerTx == 0) {
         nbTx = Receivers.length / nbPerTx;
       } else {
@@ -225,7 +244,7 @@ function Multisend() {
         const newReceivers = Receivers.slice(i * nbPerTx, (i + 1) * nbPerTx)
 
         for (let j = 0; j < newReceivers.length / NUM; j++) {
-          const _newReceivers = newReceivers.slice(j * NUM, (j + 1) * NUM)
+          const _newReceivers = newReceivers.slice(j * NUM, (j + 1) * NUM) //总交易次数
 
           let Tx = new Transaction();
           for (let index = 0; index < _newReceivers.length; index++) {
@@ -437,11 +456,11 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
               </div>
               <div className='item'>
                 <div className='t2'>{needAmount}</div>
-                <div className='fee'>服务费0.001 SOL</div>
+                <div className='fee'>服务费{(MULTISEND_FEE * totalSender).toFixed(4)} SOL</div>
                 <div className='t1'>代币发送总数</div>
               </div>
               <div className='item'>
-                <div className='t2'>101</div>
+                <div className='t2'>{totalSender}</div>
                 <div className='t1'>交易总数</div>
               </div>
               <div className='item'>
@@ -463,7 +482,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
                   </Button>
                 </div>
               </div>
-              <div className='fee'>全网最低，每批次交易只需要0.008SOL</div>
+              <div className='fee'>全网最低，每批次交易只需要{MULTISEND_FEE}SOL</div>
             </div>
           </>
         }

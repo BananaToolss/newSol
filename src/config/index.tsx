@@ -31,7 +31,7 @@ export const MINT_TOKEN_FEE = 0.05 // 代币增发
 export const FREE_TOKEN_FEE = 0.08 //冻结账户
 export const BURN_FEE = 0.05 //烧烧代币
 export const MARKET_FEE = 0.02 //市场 --没用
-export const MULTISEND_FEE = 0.01 //批量转账费用
+export const MULTISEND_FEE = 0.008 //批量转账费用
 export const COLLECT_FEE = 0.01 //批量归集
 
 export const PUMP_CREATE_FEE = 0.05// pump创建代币
