@@ -28,10 +28,11 @@ import {
 import bs58 from "bs58";
 import { useTranslation } from "react-i18next";
 import { Page } from '@/styles';
+import type { Token_Type } from '@/type'
 import { Input_Style, Button_Style1 as Button_Style, AUTHORITY_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { IsAddress, getTxLink, addressHandler, fetcher, getImage, getCurrentTimestamp, getLink } from '@/utils'
 import { fromSecretKey, printSOLBalance, getSPLBalance } from '@/utils/util'
-import { Header } from '@/components'
+import { Header, SelectToken } from '@/components'
 import { CollectorPage } from './style'
 
 type walletInfo = {
@@ -65,7 +66,7 @@ function Authority() {
   const [tokenAddress, setTokenAddress] = useState('')
   const [tokenSymbol, setTokenSymbol] = useState('SOL')
   const [tokenDecimals, setTokenDecimals] = useState(9)
-  const [tokenImage, setTokenImage] = useState('')
+  const [token, setToken] = useState<Token_Type>(null)
 
   const [modeType, setModeType] = useState(1)
   const [colleAmount, setColleAmount] = useState('')
@@ -382,48 +383,20 @@ function Authority() {
     }
   }
 
-  const transferTypeChange = (e: any) => {
-    setTransferType(e)
-    if (e === t('Collection SOL')) {
-      setTokenDecimals(9)
-      setTokenSymbol('SOL')
-      setTokenImage('')
-    } else {
-      if (tokenAddress) getTokenInfo()
-    }
+  const backClick = (_token: Token_Type) => {
+    setToken(_token)
   }
 
   return (
     <Page>
       {contextHolder}
-      <Header title={t('Batch Collection')} />
+      <Header title={t('Batch Collection')} hint='方便快捷地将分散在多个账户中的代币统一归集到一个主账户，提高资金管理的效率，同时减少交易成本和时间。' />
 
       <CollectorPage className='mt-10 text-center'>
+        <div>请选择代币</div>
+        <SelectToken callBack={backClick} selecToken={token} />
 
-        <div className='segmentd'>
-          <Segmented options={[t('Collection SOL'), t('Collection Token')]}
-            value={transferType} onChange={transferTypeChange}
-            size='large' />
-        </div>
-        {transferType !== t('Collection SOL') &&
-          <>
-            <div className='flex items-center mb-1 mt-5'>
-              <div className='font-bold'>{t('Collect tokens')}</div>
-            </div>
-            <input className={Input_Style} placeholder={t('Please enter the contract address of the pooled tokens')}
-              value={tokenAddress} onChange={tokenAddressChange} />
-          </>
-        }
-
-        <div className='flex items-center mt-2'>
-          <div>
-            <img src={tokenImage ? tokenImage : getImage('sol.png')} width={40} height={40} />
-          </div>
-          <div className='ml-2 mr-2'>{t('Token Symbol')}:{tokenSymbol}</div>
-          <div>{t('Token Decimals')}:{tokenDecimals}</div>
-        </div>
-
-        <div className='mb-1 font-bold mt-5'>{t('Collection receiving address')}</div>
+        <div className='mb-1 mt-5'>{t('Collection receiving address')}</div>
         <input className={Input_Style} placeholder={t('Please enter the wallet address to receive pooled tokens')}
           value={collectorAddr} onChange={(e) => setColletorAddr(e.target.value)} />
 

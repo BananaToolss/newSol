@@ -487,29 +487,6 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
           </>
         }
 
-
-
-        {/* {totalAccount  &&
-          <div>
-            <div>{t('The total number of legal addresses for this batch transfer is')} {totalAccount} 个</div>
-            <div>{t('Total needed')}：{needAmount} {token.symbol}</div>
-            {token.address === SOL.address ?
-              <div>SOL{t('Balance')}：{balance}</div> :
-              <>
-                <div>{token.symbol}余额：{token.balance} </div>
-                <div>SOL{t('Balance')}：{balance}</div>
-              </>
-            }
-          </div>
-        } */}
-
-        {/* { &&
-          <div className='buttonSwapper bw100'>
-            <Button className={Button_Style} onClick={senderTransfer} loading={isSending}>{t('Send transaction')}</Button>
-          </div>
-        } */}
-
-
         <div className="my-2">
           {isSending && currentTx != null && totalTx != null ? (
             <div className="font-semibold text-xl mt-4 text-teal-500">
