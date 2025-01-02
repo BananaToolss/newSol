@@ -29,7 +29,7 @@ import bs58 from "bs58";
 import { useTranslation } from "react-i18next";
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
-import type { TOKEN_TYPE, WalletConfigType } from '@/type'
+import type { TOKEN_TYPE, CollocetionType } from '@/type'
 import { Input_Style, Button_Style1 as Button_Style, AUTHORITY_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { IsAddress, getTxLink, addressHandler, fetcher, getImage, getCurrentTimestamp, getLink } from '@/utils'
 import { fromSecretKey, printSOLBalance, getSPLBalance } from '@/utils/util'
@@ -78,7 +78,7 @@ function Authority() {
   const [logsArr, setLogsArr] = useState<any[]>([]);
   const newArr = useRef<Test[]>([])
   const [signatureArr, setSignatureArr] = useState([])
-  const [walletConfig, setWalletConfig] = useState<WalletConfigType[]>([])
+  const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([])
 
   useEffect(() => {
     getAddressArr()
@@ -138,15 +138,6 @@ function Authority() {
   //*更新钱包信息*/
   const updataWallet = () => {
     if (privateKeys.length > 0) getWalletInfo(0)
-  }
-  const deleteClick = (index: number) => {
-    const _keys = [...privateKeys]
-    _keys.splice(index, 1)
-    setPrivateKeys(_keys)
-
-    const _signatureArr = [...signatureArr]
-    _signatureArr.splice(index, 1)
-    setSignatureArr(_signatureArr)
   }
 
   //**获取钱包代币信息 */
@@ -390,7 +381,7 @@ function Authority() {
           }
         </div>
 
-        <WalletInfoCollection config={walletConfig} setConfig={setWalletConfig} />
+        <WalletInfoCollection tokenAddr={token ? token.address : null} config={walletConfig} setConfig={setWalletConfig} />
 
         <div className='flex buttonSwapper mt-5'>
           <Button className={Button_Style} onClick={collectorClick} loading={isSending}>{t('Start Collect')}</Button>

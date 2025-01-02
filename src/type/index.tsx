@@ -35,3 +35,10 @@ export interface WalletConfigType {
   balance: string,
   buySol: string,
 }
+
+export interface CollocetionType {
+  privateKey: string,
+  walletAddr: string,
+  balance: number,
+  tokenBalance: number,
+}

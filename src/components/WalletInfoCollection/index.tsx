@@ -5,16 +5,26 @@ import {
   PublicKey,
   Connection,
   LAMPORTS_PER_SOL,
+
 } from "@solana/web3.js";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { BsCopy } from "react-icons/bs";
 import { LoadingOutlined } from '@ant-design/icons';
 import { DeleteOutlined, ArrowRightOutlined } from '@ant-design/icons'
+import {
+  getMint,
+  getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  AccountLayout
+} from "@solana/spl-token";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { addressHandler } from '@/utils'
 import { getMultipleAccounts } from '@/utils/sol'
 import { LoadingOut } from '@/components'
 import { Button_Style1 } from '@/config'
-import type { WalletConfigType } from '@/type'
+import { SOL_TOKEN } from '../SelectToken/Token';
+import type { CollocetionType } from '@/type'
 import PrivateKeyPage from './PrivateKeyPage'
 import {
   WalletInfoPage
@@ -22,17 +32,21 @@ import {
 
 
 interface PropsType {
-  config: WalletConfigType[]
-  setConfig: Dispatch<SetStateAction<WalletConfigType[]>>
+  tokenAddr: string | null
+  config: CollocetionType[]
+  setConfig: Dispatch<SetStateAction<CollocetionType[]>>
 }
 
 function WalletInfo(props: PropsType) {
-  const { config, setConfig } = props
+  const { tokenAddr, config, setConfig } = props
 
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
-  const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction, signAllTransactions } = useWallet();
 
+
+  const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
   const [isLoading, setIsLoading] = useState(false)
 
 
@@ -44,46 +58,100 @@ function WalletInfo(props: PropsType) {
     getWalletsInfo(_privateKeys)
   }
 
+
+  const getAt = async (mintAccount: PublicKey, walletAccount: PublicKey) => {
+    let at: PublicKey = await getAssociatedTokenAddress(
+      mintAccount,
+      walletAccount,
+      true,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+
+    return at;
+  };
+
   const getWalletsInfo = async (keys?: string[]) => {
     try {
       const _privateKeys = keys ? keys : privateKeys
       if (_privateKeys.length === 0) return setConfig([])
       setIsLoading(true)
-      const _addressArr = []
+
+      const accountsArr: PublicKey[] = [] //钱包地址
       _privateKeys.forEach(async (item, index) => {
         try {
           const wallet = Keypair.fromSecretKey(bs58.decode(item))
-          const address = wallet.publicKey.toBase58()
-          _addressArr.push(address)
+          const address = wallet.publicKey
+          accountsArr.push(address)
         } catch (error) {
           api.error({ message: `第${index + 1}个私钥格式错误，跳过该钱包` })
         }
       })
 
-      const balances = await getMultipleAccounts(_addressArr)
-      const _config: WalletConfigType[] = []
-      _addressArr.forEach((item, index) => {
-        const wallet: WalletConfigType = {
-          privateKey: _privateKeys[index],
-          walletAddr: item,
-          balance: balances[index].toString(),
-          buySol: '',
+      let decimals = 9 //代币信息
+      let associaArr = []; //目标代币数组
+      if (tokenAddr && tokenAddr !== SOL_TOKEN) {
+        const mintInfo = await getMint(connection, new PublicKey(tokenAddr));
+        decimals = mintInfo.decimals
+        for (const account of accountsArr) {
+          const to = await getAt(new PublicKey(tokenAddr), account);
+          associaArr.push(to)
         }
-        _config.push(wallet)
-      })
-      setConfig(_config)
+      }
+
+      let accountsArrSlice = []
+      let associaArrSlice = []
+      for (let i = 0; i < accountsArr.length; i += 100) {
+        accountsArrSlice.push(accountsArr.slice(i, i + 100))
+        associaArrSlice.push(associaArr.slice(i, i + 100))
+      }
+      let accountsSOL: any[] = []
+      let associaBalace: any[] = []
+
+      for (let i = 0; i < accountsArrSlice.length; i++) {
+        const _accountSol = await connection.getMultipleAccountsInfo(accountsArrSlice[i], "processed")
+        accountsSOL = [...accountsSOL, ..._accountSol]
+        if (associaArrSlice[i]) {
+          const _associaBalace = await connection.getMultipleAccountsInfo(associaArrSlice[i], "processed")
+          associaBalace = [...associaBalace, ..._associaBalace]
+        }
+      }
+
+      let accountInfoList: CollocetionType[] = []
+
+      for (let i = 0; i < accountsSOL.length; i++) {
+        let solBalance = 0
+        if (accountsSOL[i] != undefined) {
+          solBalance = accountsSOL[i].lamports / 10 ** 9
+        }
+        let tokenBalance = 0
+        if (tokenAddr === SOL_TOKEN) {
+          tokenBalance = solBalance
+        }else if (associaBalace[i] != undefined) {
+          const accountData = AccountLayout.decode(associaBalace[i].data);
+          tokenBalance = Number(accountData.amount) / 10 ** decimals
+        }
+        accountInfoList.push(
+          {
+            privateKey: _privateKeys[i],
+            walletAddr: accountsArr[i].toBase58(),
+            balance: solBalance ? solBalance : 0,
+            tokenBalance: tokenBalance ? tokenBalance : 0
+          }
+        )
+      }
+      console.log(accountInfoList, 'accountInfoList')
+      setConfig(accountInfoList)
+
       setIsLoading(false)
     } catch (error) {
+      console.log(error, 'error')
       api.error({ message: error.toString() })
       setIsLoading(false)
     }
   }
 
-  const buySolChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const _config = [...config]
-    _config[index].buySol = e.target.value
-    setConfig(_config)
-  }
+
   const deleteClick = (account: string, index: number) => {
     const _config = config.filter(item => item.walletAddr !== account)
     setConfig(_config)
@@ -107,7 +175,7 @@ function WalletInfo(props: PropsType) {
         <div className='walletHeader'>
           <div>地址</div>
           <div>SOL余额</div>
-          <div>购买数量(SOL)</div>
+          <div>所选代币余额</div>
           <div>移除数量</div>
         </div>
         {isLoading && <LoadingOut title='钱包信息加载中...' />}
@@ -121,9 +189,7 @@ function WalletInfo(props: PropsType) {
                   <BsCopy className='ml-2' />
                 </div>
                 <div>{item.balance}</div>
-                <div>
-                  <Input value={item.buySol} onChange={(e) => buySolChange(e, index)} placeholder='请输入购买sol数量' />
-                </div>
+                <div>{item.tokenBalance}</div>
                 <div><DeleteOutlined onClick={() => deleteClick(item.walletAddr, index)} /></div>
               </div>
             ))}
