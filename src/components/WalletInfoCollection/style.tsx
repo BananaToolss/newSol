@@ -24,14 +24,14 @@ export const WalletInfoPage = styled.div`
     font-weight: bold;
     border-radius: 10px 10px 0 0;
     overflow: hidden;
-    div:not(:last-child) {
-      width: 29%;
+    div:not(:last-child), div:not(:first-child) {
+      width: 20%;
       text-align: center;
       padding: 10px 0;
       border-right: 1px solid #e2e8f0;
     }
-    div:last-child {
-      width: 13%;
+    div:last-child, div:first-child  {
+      width: 10%;
       text-align: center;
       padding: 10px;
     }
@@ -41,12 +41,12 @@ export const WalletInfoPage = styled.div`
     display: flex;
     justify-content: space-between;
     border-bottom: 1px solid #e2e8f0;
-    div:not(:last-child) {
-      width: 29%;
+    div:not(:last-child), div:not(:first-child) {
+      width: 20%;
       padding: 10px;
     }
-    div:last-child {
-      width: 13%;
+    div:last-child, div:first-child {
+      width: 10%;
       text-align: center;
       padding: 10px;
     }

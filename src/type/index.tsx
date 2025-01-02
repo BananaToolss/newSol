@@ -37,6 +37,7 @@ export interface WalletConfigType {
 }
 
 export interface CollocetionType {
+  isCheck: boolean
   privateKey: string,
   walletAddr: string,
   balance: number,

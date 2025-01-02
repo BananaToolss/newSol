@@ -1,5 +1,5 @@
 import { useState, SetStateAction, Dispatch } from 'react'
-import { Button, message, notification, Input, Flex, Spin } from 'antd'
+import { Button, message, notification, Input, Checkbox, Spin } from 'antd'
 import {
   Keypair,
   PublicKey,
@@ -127,12 +127,13 @@ function WalletInfo(props: PropsType) {
         let tokenBalance = 0
         if (tokenAddr === SOL_TOKEN) {
           tokenBalance = solBalance
-        }else if (associaBalace[i] != undefined) {
+        } else if (associaBalace[i] != undefined) {
           const accountData = AccountLayout.decode(associaBalace[i].data);
           tokenBalance = Number(accountData.amount) / 10 ** decimals
         }
         accountInfoList.push(
           {
+            isCheck: false,
             privateKey: _privateKeys[i],
             walletAddr: accountsArr[i].toBase58(),
             balance: solBalance ? solBalance : 0,
@@ -173,9 +174,11 @@ function WalletInfo(props: PropsType) {
 
       <div className='wallet'>
         <div className='walletHeader'>
+          <div><Checkbox /></div>
           <div>地址</div>
           <div>SOL余额</div>
           <div>所选代币余额</div>
+          <div>状态</div>
           <div>移除数量</div>
         </div>
         {isLoading && <LoadingOut title='钱包信息加载中...' />}
@@ -183,13 +186,16 @@ function WalletInfo(props: PropsType) {
           <>
             {config.map((item, index) => (
               <div className='walletInfo' key={item.walletAddr}>
+                <div>
+                  <span><Checkbox className='mr-2' />{index + 1}</span>
+                </div>
                 <div className='flex items-center'>
-                  <span>钱包{index + 1}：</span>
                   <span>{addressHandler(item.walletAddr)} </span>
                   <BsCopy className='ml-2' />
                 </div>
                 <div>{item.balance}</div>
                 <div>{item.tokenBalance}</div>
+                <div><Button>未执行</Button></div>
                 <div><DeleteOutlined onClick={() => deleteClick(item.walletAddr, index)} /></div>
               </div>
             ))}
