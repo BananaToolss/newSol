@@ -116,13 +116,6 @@ function WalletInfo(props: PropsType) {
         <Button className={`${Button_Style1}`} onClick={() => getWalletsInfo()}>获取余额</Button>
       </div>
 
-      <div className='autoInput'>
-        <div className='mr-2'>
-          <Input placeholder='买入SOL数量' value={fixedAmount} onChange={fixedAmountChange} />
-        </div>
-        <Button onClick={autoClick}>一键填写</Button>
-      </div>
-
       <div className='wallet'>
         <div className='walletHeader'>
           <div>地址</div>
