@@ -107,7 +107,7 @@ input:disabled {
   border-width: var(--border-btn, 1px);
   --tw-text-opacity: 1;
   color: #fff;
-  margin: 0.5rem;
+  /* margin: 0.5rem; */
 
   background-image: linear-gradient(to right, var(--tw-gradient-stops));
   padding-left: 2rem;
@@ -143,20 +143,6 @@ input:disabled {
 }
 
 
-/* .ant-select-outlined:not(.ant-select-customize-input) .ant-select-selector {
-  height: 50px;
-  display: flex;
-  align-items: center;
-}
-
-.ant-select .ant-select-arrow {
-  margin-top: 3px;
-}
-.ant-select-dropdown .ant-select-item-option {
-  height: 50px;
-  display: flex;
-  align-items: center;
-} */
 
 .ant-flex {
   color: #000;

@@ -2,18 +2,28 @@ import styled from "styled-components";
 
 export const WalletInfoPage = styled.div`
   margin: 20px 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   .header {
     margin: 10px 0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 20px;
   }
   
   .wallet {
     font-size: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .waletSwapper {
     max-height: 400px;
     overflow-y: scroll;
   }
-  .buttonSwapper button {
-    background-color: #63e2bd;
+  .btns {
+    padding: 20px 20px 0;
+    justify-content: space-between;
   }
+
   .walletHeader {
     display: flex;
     justify-content: space-between;
@@ -26,9 +36,7 @@ export const WalletInfoPage = styled.div`
     overflow: hidden;
     div:not(:last-child), div:not(:first-child) {
       width: 20%;
-      text-align: center;
       padding: 10px 0;
-      border-right: 1px solid #e2e8f0;
     }
     div:last-child, div:first-child  {
       width: 10%;

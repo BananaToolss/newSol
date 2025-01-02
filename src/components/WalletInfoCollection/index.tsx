@@ -1,5 +1,6 @@
 import { useState, SetStateAction, Dispatch } from 'react'
 import { Button, message, notification, Input, Checkbox, Spin } from 'antd'
+import type { CheckboxChangeEvent } from 'antd'
 import {
   Keypair,
   PublicKey,
@@ -36,7 +37,7 @@ interface PropsType {
   config: CollocetionType[]
   setConfig: Dispatch<SetStateAction<CollocetionType[]>>
 }
-
+1
 function WalletInfo(props: PropsType) {
   const { tokenAddr, config, setConfig } = props
 
@@ -162,19 +163,55 @@ function WalletInfo(props: PropsType) {
     setPrivateKeys(_privateKeys)
   }
 
+  const [checkAll, setCheckAll] = useState(false);
+  const [indeterminate, setIndeterminate] = useState(false);
+  const onCheckAllChange = (e: CheckboxChangeEvent) => {
+    setIndeterminate(false);
+    setCheckAll(e.target.checked);
+
+    const _config = [...config]
+    _config.map(item => item.isCheck = e.target.checked)
+    setConfig(_config)
+  };
+  const itemOnCheckChange = (e: CheckboxChangeEvent) => {
+    const _config = [...config]
+    _config[Number(e.target.name)].isCheck = e.target.checked
+    const checkArr = _config.filter(item => item.isCheck)
+    setConfig(_config)
+    if (checkArr.length === 0) {
+      setIndeterminate(false);
+      setCheckAll(false)
+    } else if (checkArr.length === _config.length) {
+      setIndeterminate(false);
+      setCheckAll(true)
+    } else {
+      setIndeterminate(true);
+    }
+  }
+
   return (
     <WalletInfoPage>
       {contextHolder}
       {contextHolder1}
-      {/* <div className='header'>钱包信息</div> */}
-      <div className='buttonSwapper'>
-        <PrivateKeyPage privateKeys={privateKeys} callBack={privateKeyCallBack} title='导入钱包' />
-        <Button className={`${Button_Style1}`} onClick={() => getWalletsInfo()}>获取余额</Button>
+      <div className='header'>钱包信息</div>
+
+      <div className='flex items-center btns'>
+        <div className='buttonSwapper'>
+          <PrivateKeyPage privateKeys={privateKeys} callBack={privateKeyCallBack} title='导入钱包' />
+          <Button className={`${Button_Style1} ml-2`} onClick={() => getWalletsInfo()}>获取余额</Button>
+        </div>
+        <div className='flex items-center h-100'>
+          <Button>选择余额为0</Button>
+          <Button className='ml-2'>选择余额大于0</Button>
+          <Button className='ml-2'>反选</Button>
+          <Button className='ml-2'>选择失败</Button>
+          <Button className='ml-2'><DeleteOutlined /></Button>
+        </div>
       </div>
 
       <div className='wallet'>
         <div className='walletHeader'>
-          <div><Checkbox /></div>
+          <div><Checkbox indeterminate={indeterminate} checked={checkAll} onChange={onCheckAllChange} /></div>
           <div>地址</div>
           <div>SOL余额</div>
           <div>所选代币余额</div>
@@ -183,11 +220,14 @@ function WalletInfo(props: PropsType) {
         </div>
         {isLoading && <LoadingOut title='钱包信息加载中...' />}
         {!isLoading &&
-          <>
+          <div className='waletSwapper'>
             {config.map((item, index) => (
               <div className='walletInfo' key={item.walletAddr}>
                 <div>
-                  <span><Checkbox className='mr-2' />{index + 1}</span>
+                  <span>
+                    <Checkbox className='mr-2' checked={item.isCheck} onChange={itemOnCheckChange} name={`${index}`} />
+                    {index + 1}
+                  </span>
                 </div>
                 <div className='flex items-center'>
                   <span>{addressHandler(item.walletAddr)} </span>
@@ -199,7 +239,7 @@ function WalletInfo(props: PropsType) {
                 <div><DeleteOutlined onClick={() => deleteClick(item.walletAddr, index)} /></div>
               </div>
             ))}
-          </>
+          </div>
         }
       </div>
     </WalletInfoPage>
