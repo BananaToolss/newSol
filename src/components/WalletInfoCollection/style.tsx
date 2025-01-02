@@ -8,6 +8,8 @@ export const WalletInfoPage = styled.div`
   
   .wallet {
     font-size: 14px;
+    max-height: 400px;
+    overflow-y: scroll;
   }
   .buttonSwapper button {
     background-color: #63e2bd;
