@@ -34,7 +34,6 @@ function WalletInfo(props: PropsType) {
   const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
 
   const [isLoading, setIsLoading] = useState(false)
-  const [fixedAmount, setFixedAmount] = useState('')
 
 
   //**钱包私钥数组 */
@@ -92,18 +91,6 @@ function WalletInfo(props: PropsType) {
     const _privateKeys = [...privateKeys]
     _privateKeys.splice(index, 1)
     setPrivateKeys(_privateKeys)
-  }
-  const fixedAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFixedAmount(e.target.value)
-  }
-
-  const autoClick = () => {
-    const amount = fixedAmount
-    const _config = config.map(item => {
-      item.buySol = amount
-      return item
-    })
-    setConfig(_config)
   }
 
   return (
