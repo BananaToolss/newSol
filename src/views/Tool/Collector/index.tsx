@@ -33,7 +33,7 @@ import type { TOKEN_TYPE, WalletConfigType } from '@/type'
 import { Input_Style, Button_Style1 as Button_Style, AUTHORITY_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { IsAddress, getTxLink, addressHandler, fetcher, getImage, getCurrentTimestamp, getLink } from '@/utils'
 import { fromSecretKey, printSOLBalance, getSPLBalance } from '@/utils/util'
-import { Header, SelectToken } from '@/components'
+import { Header, SelectToken, WalletInfoCollection } from '@/components'
 import { CollectorPage } from './style'
 
 type walletInfo = {
@@ -373,8 +373,6 @@ function Authority() {
         <input className={Input_Style} placeholder={t('Please enter the wallet address to receive pooled tokens')}
           value={collectorAddr} onChange={(e) => setColletorAddr(e.target.value)} />
 
-
-
         <div className=''>
           <div className='mb-2'>{t('Select collection method')}</div>
           <Radio.Group onChange={modeTypeChange} value={modeType}>
@@ -391,6 +389,8 @@ function Authority() {
               value={colleAmount} onChange={(e) => setColleAmount(e.target.value)} />
           }
         </div>
+
+        <WalletInfoCollection config={walletConfig} setConfig={setWalletConfig} />
 
         <div className='flex buttonSwapper mt-5'>
           <Button className={Button_Style} onClick={collectorClick} loading={isSending}>{t('Start Collect')}</Button>

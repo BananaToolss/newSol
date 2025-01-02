@@ -13,6 +13,7 @@ import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { addressHandler } from '@/utils'
 import { getMultipleAccounts } from '@/utils/sol'
 import { LoadingOut } from '@/components'
+import { Button_Style1 } from '@/config'
 import type { WalletConfigType } from '@/type'
 import PrivateKeyPage from './PrivateKeyPage'
 import {
@@ -110,9 +111,9 @@ function WalletInfo(props: PropsType) {
       {contextHolder}
       {contextHolder1}
       {/* <div className='header'>钱包信息</div> */}
-      <div>
+      <div className='buttonSwapper'>
         <PrivateKeyPage privateKeys={privateKeys} callBack={privateKeyCallBack} title='导入钱包' />
-        <Button className='ml-3' onClick={() => getWalletsInfo()}>获取余额</Button>
+        <Button className={`${Button_Style1}`} onClick={() => getWalletsInfo()}>获取余额</Button>
       </div>
 
       <div className='autoInput'>
@@ -137,7 +138,7 @@ function WalletInfo(props: PropsType) {
                 <div className='flex items-center'>
                   <span>钱包{index + 1}：</span>
                   <span>{addressHandler(item.walletAddr)} </span>
-                  <BsCopy className='ml-2'/>
+                  <BsCopy className='ml-2' />
                 </div>
                 <div>{item.balance}</div>
                 <div>

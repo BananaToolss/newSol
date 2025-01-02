@@ -9,6 +9,9 @@ export const WalletInfoPage = styled.div`
   .wallet {
     font-size: 14px;
   }
+  .buttonSwapper button {
+    background-color: #63e2bd;
+  }
   .walletHeader {
     display: flex;
     justify-content: space-between;

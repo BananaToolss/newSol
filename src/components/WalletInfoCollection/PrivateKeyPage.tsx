@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Input } from 'antd';
 import { useTranslation } from "react-i18next";
-
+import { Button_Style1 } from '@/config'
 
 const { TextArea } = Input
 
@@ -46,7 +46,7 @@ const App = (props: PropsType) => {
 
   return (
     <>
-      <Button onClick={showModal} type='primary'>
+      <Button onClick={showModal}  className={Button_Style1}>
         {title ? title : t('Import brush wallet')}
       </Button>
       <Modal title={title ? title : t('Import brush wallet')} open={isModalOpen}
