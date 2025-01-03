@@ -24,9 +24,7 @@ export const CollectorPage = styled.div`
   }
   }
 
-   .buttonSwapper button {
-    background-color: #63e2bd;
-  }
+ 
   .bb {
     border: 1px solid red;
   }

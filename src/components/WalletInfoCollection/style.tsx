@@ -9,7 +9,9 @@ export const WalletInfoPage = styled.div`
     border-bottom: 1px solid #e2e8f0;
     padding: 20px;
   }
-  
+  .buttonSwapper button {
+    background-color: #63e2bd;
+  }
   .wallet {
     font-size: 14px;
     padding: 20px;
