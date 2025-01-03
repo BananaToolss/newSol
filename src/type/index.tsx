@@ -1,3 +1,6 @@
+import { PublicKey,} from "@solana/web3.js";
+
+
 export interface TOKEN_TYPE {
   name: string
   symbol: string
@@ -42,5 +45,5 @@ export interface CollocetionType {
   walletAddr: string,
   balance: number,
   tokenBalance: number,
-  assiciaAccount: string,
+  assiciaAccount: PublicKey,
 }

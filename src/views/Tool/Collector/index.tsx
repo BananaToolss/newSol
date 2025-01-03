@@ -18,7 +18,8 @@ import {
   getAssociatedTokenAddress,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
-  createTransferInstruction
+  createTransferInstruction,
+  createTransferCheckedInstruction
 } from "@solana/spl-token";
 import bs58 from "bs58";
 import { useTranslation } from "react-i18next";
@@ -105,7 +106,7 @@ function Authority() {
 
       const accounts: Keypair[] = [];
       const sendAmounts: number[] = []
-      const assiciaAccounts: string[] = []
+      const assiciaAccounts: PublicKey[] = []
       walletConfig.forEach((item, index) => {
         const account = Keypair.fromSecretKey(base58.decode(item.privateKey))
         accounts.push(account)
@@ -128,6 +129,7 @@ function Authority() {
 
       const toPubkey = new PublicKey(collectorAddr)
       const SOLNUM = 8
+      const TOKENNUM = 6
       const signerTrueArr: string[] = []
 
       if (token.address === SOL_TOKEN) {
@@ -176,21 +178,21 @@ function Authority() {
           const singerTrue = await sendAndConfirmTransaction(connection, Tx, [accounts[0]], { commitment: 'processed', skipPreflight: true });
           console.log(`sig: ${singerTrue}`);
         }
-        for (let i = 0; i < Math.ceil(accounts.length / 6); i++) {
+        for (let i = 0; i < Math.ceil(accounts.length / TOKENNUM); i++) {
           const tx = new Transaction();
           const sigers: Keypair[] = [];
           let fee = 0
-          const _accounts = accounts.slice(i * 6, (i + 1) * 6)
-          const _sendAmounts = sendAmounts.slice(i * 6, (i + 1) * 6)
-          const _assiciaAccounts = assiciaAccounts.slice(i * 6, (i + 1) * 6)
+          const _accounts = accounts.slice(i * TOKENNUM, (i + 1) * TOKENNUM)
+          const _sendAmounts = sendAmounts.slice(i * TOKENNUM, (i + 1) * TOKENNUM)
+          const _assiciaAccounts = assiciaAccounts.slice(i * TOKENNUM, (i + 1) * TOKENNUM)
 
           _accounts.forEach((item, index) => {
             if (_sendAmounts[index] > 0) {
               tx.add(createTransferInstruction(
-                new PublicKey(_assiciaAccounts[index]),
+                _assiciaAccounts[index],
                 to,
                 item.publicKey,
-                _sendAmounts[i] * 10 ** token.decimals,
+                _sendAmounts[i],
               ))
               sigers.push(item)
               fee += 1

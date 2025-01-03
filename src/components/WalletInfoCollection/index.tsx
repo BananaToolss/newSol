@@ -90,7 +90,7 @@ function WalletInfo(props: PropsType) {
       })
 
       let decimals = 9 //代币信息
-      let associaArr = []; //目标代币数组
+      let associaArr: PublicKey[] = []; //目标代币数组
       if (tokenAddr && tokenAddr !== SOL_TOKEN) {
         const mintInfo = await getMint(connection, new PublicKey(tokenAddr));
         decimals = mintInfo.decimals
@@ -141,7 +141,7 @@ function WalletInfo(props: PropsType) {
             walletAddr: accountsArr[i].toBase58(),
             balance: solBalance ? solBalance : 0,
             tokenBalance: tokenBalance ? tokenBalance : 0,
-            assiciaAccount: associaArr[i] ? associaArr[i] : ''
+            assiciaAccount: associaArr[i] ? associaArr[i] : null
           }
         )
         _totalSol += solBalance ? solBalance : 0
