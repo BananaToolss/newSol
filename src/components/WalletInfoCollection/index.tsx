@@ -44,11 +44,11 @@ function WalletInfo(props: PropsType) {
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
-  const { publicKey, sendTransaction, signAllTransactions } = useWallet();
-
 
   const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
   const [isLoading, setIsLoading] = useState(false)
+  const [totalSol, setTotalSol] = useState('')
+  const [totalToken, stTotalToken] = useState('')
 
 
   //**钱包私钥数组 */
@@ -119,6 +119,8 @@ function WalletInfo(props: PropsType) {
       }
 
       let accountInfoList: CollocetionType[] = []
+      let _totalSol = 0
+      let _tokenToken = 0
 
       for (let i = 0; i < accountsSOL.length; i++) {
         let solBalance = 0
@@ -141,9 +143,13 @@ function WalletInfo(props: PropsType) {
             tokenBalance: tokenBalance ? tokenBalance : 0
           }
         )
+        _totalSol += solBalance ? solBalance : 0
+        _tokenToken += tokenBalance ? tokenBalance : 0
       }
       console.log(accountInfoList, 'accountInfoList')
       setConfig(accountInfoList)
+      setTotalSol(_totalSol.toString())
+      stTotalToken(_tokenToken.toString())
 
       setIsLoading(false)
     } catch (error) {
@@ -200,7 +206,7 @@ function WalletInfo(props: PropsType) {
           <PrivateKeyPage privateKeys={privateKeys} callBack={privateKeyCallBack} title='导入钱包' />
           <Button className={`${Button_Style1} ml-2`} onClick={() => getWalletsInfo()}>获取余额</Button>
         </div>
-        <div className='flex items-center h-100'>
+        <div className='flex items-center h-100 flex-wrap'>
           <Button>选择余额为0</Button>
           <Button className='ml-2'>选择余额大于0</Button>
           <Button className='ml-2'>反选</Button>
@@ -241,6 +247,14 @@ function WalletInfo(props: PropsType) {
             ))}
           </div>
         }
+
+        <div className='mt-5'>
+          <div>
+            <div className='font-bold'>地址数量：{config.length}</div>
+            <div className='font-bold'>SOL余额：{totalSol}</div>
+            <div className='font-bold'>所选代币余额：{totalToken}</div>
+          </div>
+        </div>
       </div>
     </WalletInfoPage>
   )
