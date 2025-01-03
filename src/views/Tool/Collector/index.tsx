@@ -125,16 +125,19 @@ function Authority() {
         }
         sendAmounts.push(amount)
       })
+
       const toPubkey = new PublicKey(collectorAddr)
+      const SOLNUM = 8
+      const signerTrueArr: string[] = []
 
       if (token.address === SOL_TOKEN) {
-        for (let i = 0; i < Math.ceil(accounts.length / 8); i++) {
+        for (let i = 0; i < Math.ceil(accounts.length / SOLNUM); i++) {
           const tx = new Transaction();
           const sigers: Keypair[] = [];
           let fee = 0
 
-          const _accounts = accounts.slice(i * 8, (i + 1) * 8)
-          const _sendAmounts = sendAmounts.slice(i * 8, (i + 1) * 8)
+          const _accounts = accounts.slice(i * SOLNUM, (i + 1) * SOLNUM)
+          const _sendAmounts = sendAmounts.slice(i * SOLNUM, (i + 1) * SOLNUM)
 
           _accounts.forEach((item, index) => {
             if (_sendAmounts[index] > 0) {
@@ -151,14 +154,13 @@ function Authority() {
 
           tx.feePayer = accounts[0].publicKey
           sigers.push(accounts[0])
-          console.log('ssssss')
           const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed", skipPreflight: true })
           console.log(signerTrue, 'signerTrue')
+          signerTrueArr.push(signerTrue)
         }
       } else {
         let to = await getAt(new PublicKey(token.address), toPubkey);
         let ata = await getAta(new PublicKey(token.address), toPubkey);
-        console.log(ata, 'ata')
         if (ata == undefined) {  //创建
           const Tx = new Transaction();
           Tx.add(
@@ -198,12 +200,13 @@ function Authority() {
           tx.feePayer = accounts[0].publicKey
           sigers.push(accounts[0])
 
-          console.log('ssssss')
           const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed", skipPreflight: true })
           console.log(signerTrue, 'signerTrue')
+          signerTrueArr.push(signerTrue)
         }
 
       }
+
       setIsSending(false)
     } catch (error) {
       console.log(error, 'error')

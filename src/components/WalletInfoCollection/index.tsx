@@ -149,8 +149,8 @@ function WalletInfo(props: PropsType) {
       }
       console.log(accountInfoList, 'accountInfoList')
       setConfig(accountInfoList)
-      setTotalSol(_totalSol.toString())
-      stTotalToken(_tokenToken.toString())
+      setTotalSol(_totalSol.toFixed(6))
+      stTotalToken(_tokenToken.toFixed(6))
 
       setIsLoading(false)
     } catch (error) {
