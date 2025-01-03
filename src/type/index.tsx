@@ -46,4 +46,5 @@ export interface CollocetionType {
   balance: number,
   tokenBalance: number,
   assiciaAccount: PublicKey,
+  state: number // 0 未执行，1 执行成功，2 执行失败
 }

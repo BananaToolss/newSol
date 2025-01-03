@@ -74,6 +74,7 @@ function WalletInfo(props: PropsType) {
 
   const getWalletsInfo = async (keys?: string[]) => {
     try {
+      if(isLoading) return
       const _privateKeys = keys ? keys : privateKeys
       if (_privateKeys.length === 0) return setConfig([])
       setIsLoading(true)
@@ -141,7 +142,8 @@ function WalletInfo(props: PropsType) {
             walletAddr: accountsArr[i].toBase58(),
             balance: solBalance ? solBalance : 0,
             tokenBalance: tokenBalance ? tokenBalance : 0,
-            assiciaAccount: associaArr[i] ? associaArr[i] : null
+            assiciaAccount: associaArr[i] ? associaArr[i] : null,
+            state: 0
           }
         )
         _totalSol += solBalance ? solBalance : 0

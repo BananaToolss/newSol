@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Button, Radio, Segmented, message } from 'antd'
+import { Button, Radio, notification, message } from 'antd'
 import type { RadioChangeEvent } from 'antd';
 import { DeleteOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
@@ -54,6 +54,7 @@ const HASH_COLOR = '#63e2bd'
 
 function Authority() {
 
+  const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
   const { t } = useTranslation()
@@ -103,7 +104,6 @@ function Authority() {
 
   const startCollector = async () => {
     try {
-
       const accounts: Keypair[] = [];
       const sendAmounts: number[] = []
       const assiciaAccounts: PublicKey[] = []
@@ -206,16 +206,16 @@ function Authority() {
           console.log(signerTrue, 'signerTrue')
           signerTrueArr.push(signerTrue)
         }
-
       }
-
       setIsSending(false)
     } catch (error) {
       console.log(error, 'error')
       setIsSending(false)
+      api.error({ message: error.toString() })
     }
-
   }
+
+  
 
   const backClick = (_token: Token_Type) => {
     setToken(_token)
@@ -224,6 +224,7 @@ function Authority() {
   return (
     <Page>
       {contextHolder}
+      {contextHolder1}
       <Header title={t('Batch Collection')} hint='方便快捷地将分散在多个账户中的代币统一归集到一个主账户，提高资金管理的效率，同时减少交易成本和时间。' />
 
       <CollectorPage className='mt-10 text-center'>
