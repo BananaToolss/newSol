@@ -30,6 +30,8 @@ import { IsAddress, getTxLink, addressHandler, fetcher, getImage, getCurrentTime
 import { fromSecretKey, printSOLBalance, getSPLBalance } from '@/utils/util'
 import { Header, SelectToken, WalletInfoCollection } from '@/components'
 import { CollectorPage } from './style'
+import base58 from 'bs58';
+import { SOL_TOKEN } from '@/components/SelectToken/Token';
 
 type walletInfo = {
   walletAddr: string;
@@ -95,143 +97,119 @@ function Authority() {
     if (!token) return messageApi.error('请选择归集代币')
     if (modeType !== 1 && !colleAmount) return messageApi.error('请输入数量')
     setIsSending(true)
-    startCollector(0)
+    startCollector()
   }
 
-  const startCollector = async (walletIndex: number, isOne?: boolean) => {
-    // try {
-  
-      
-    //   let Tx = new Transaction()
+  const startCollector = async () => {
+    try {
 
-    //   const from = Keypair.fromSecretKey(bs58.decode(privateKeys[walletIndex]))
-    //   const colleAddr = new PublicKey(collectorAddr)
+      const accounts: Keypair[] = [];
+      const sendAmounts: number[] = []
+      const assiciaAccounts: string[] = []
+      walletConfig.forEach((item, index) => {
+        const account = Keypair.fromSecretKey(base58.decode(item.privateKey))
+        accounts.push(account)
+        assiciaAccounts.push(item.assiciaAccount)
+        let balance = walletConfig[index].balance
+        if (token.address !== SOL_TOKEN) {
+          balance = walletConfig[index].tokenBalance
+        }
 
-    //   setLogHandler(`钱包(${addressHandler(from.publicKey.toBase58())}) 开始归集`)
+        let amount = balance
+        if (modeType === 2) {
+          const _amount = Number(colleAmount) * (10 ** token.decimals)
+          amount = balance >= Number(colleAmount) ? _amount : 0
+        } else if (modeType === 3) {
+          const _amount = balance - Number(colleAmount)
+          amount = _amount > 0 ? _amount : 0
+        }
+        sendAmounts.push(amount)
+      })
+      const toPubkey = new PublicKey(collectorAddr)
 
-    //   let token: PublicKey = null
-    //   if (transferType !== t('Collection SOL') && IsAddress(tokenAddress)) {
-    //     token = new PublicKey(tokenAddress)
-    //   }
+      if (token.address === SOL_TOKEN) {
+        for (let i = 0; i < Math.ceil(accounts.length / 8); i++) {
+          const tx = new Transaction();
+          const sigers: Keypair[] = [];
+          let fee = 0
 
-    //   let amount = 0
-    //   let tokenAmount = 0
-    //   if (transferType === t('Collection SOL')) {
-    //     tokenAmount = await printSOLBalance(connection, from.publicKey)
-    //   } else {
-    //     tokenAmount = await getSPLBalance(connection, token, from.publicKey)
-    //   }
+          const _accounts = accounts.slice(i * 8, (i + 1) * 8)
+          const _sendAmounts = sendAmounts.slice(i * 8, (i + 1) * 8)
 
-    //   //数量判断
-    //   if (modeType === 1) { // 归集全部
-    //     if (transferType === t('Collection SOL')) {
-    //       amount = tokenAmount - 0.000005
-    //     } else {
-    //       amount = tokenAmount
-    //     }
-    //   } else if (modeType === 2) { // 归集固定
-    //     if (transferType === t('Collection SOL')) {
-    //       amount = (0.000005 + Number(colleAmount)) <= tokenAmount ? Number(colleAmount) : 0
-    //     } else {
-    //       amount = Number(colleAmount) <= tokenAmount ? Number(colleAmount) : 0
-    //     }
-    //   } else { // 保留余额
-    //     if (transferType === t('Collection SOL')) {
-    //       amount = tokenAmount - (0.000005 + Number(colleAmount))
-    //     } else {
-    //       amount = tokenAmount - Number(colleAmount)
-    //     }
-    //   }
-    //   setLogHandler(`归集数量 ${amount} ${transferType === t('Collection SOL') ? 'SOL' : tokenSymbol}`)
-    //   //数量判断 跳过钱包
-    //   if (amount <= 0) {
-    //     if (isOne) {
-    //       const _signatureArr = [...signatureArr]
-    //       _signatureArr[walletIndex] = 'over'
-    //       setSignatureArr(_signatureArr)
-    //       setLogHandler('归集执行完成2', END_COLOR)
-    //     } else {
-    //       setSignatureArr([...signatureArr, 'over'])
-    //       setLogHandler('余额不足 跳过改钱包执行')
-    //     }
-    //     return
-    //   }
+          _accounts.forEach((item, index) => {
+            if (_sendAmounts[index] > 0) {
+              const transfer = SystemProgram.transfer({
+                fromPubkey: item.publicKey,
+                toPubkey: toPubkey,
+                lamports: _sendAmounts[index]
+              })
+              tx.add(transfer)
+              sigers.push(item)
+              fee += 1
+            }
+          })
 
-    //   if (transferType === t('Collection SOL')) { // sol归集
-    //     Tx.add(
-    //       SystemProgram.transfer({
-    //         fromPubkey: from.publicKey,
-    //         toPubkey: colleAddr,
-    //         lamports: Math.floor(amount * LAMPORTS_PER_SOL),
-    //       })
-    //     )
-    //   } else { // 代币归集
-    //     const _from = await getAt(token, from.publicKey);
-    //     //获取at
-    //     let to = await getAt(token, colleAddr);
-    //     //获取ata
-    //     let ata = await getAta(token, colleAddr);
-    //     if (ata == undefined) {  //创建
-    //       Tx.add(
-    //         createAssociatedTokenAccountInstruction(
-    //           from.publicKey,
-    //           to,
-    //           colleAddr,
-    //           token,
-    //           TOKEN_PROGRAM_ID,
-    //           ASSOCIATED_TOKEN_PROGRAM_ID
-    //         )
-    //       );
-    //     }
-    //     //转账
-    //     Tx.add(createTransferInstruction(
-    //       _from,
-    //       to,
-    //       from.publicKey,
-    //       amount * 10 ** 9,
-    //     ))
-    //   }
+          tx.feePayer = accounts[0].publicKey
+          sigers.push(accounts[0])
+          console.log('ssssss')
+          const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed", skipPreflight: true })
+          console.log(signerTrue, 'signerTrue')
+        }
+      } else {
+        let to = await getAt(new PublicKey(token.address), toPubkey);
+        let ata = await getAta(new PublicKey(token.address), toPubkey);
+        console.log(ata, 'ata')
+        if (ata == undefined) {  //创建
+          const Tx = new Transaction();
+          Tx.add(
+            createAssociatedTokenAccountInstruction(
+              accounts[0].publicKey,
+              to,
+              toPubkey,
+              new PublicKey(token.address),
+              TOKEN_PROGRAM_ID,
+              ASSOCIATED_TOKEN_PROGRAM_ID
+            )
+          );
+          const singerTrue = await sendAndConfirmTransaction(connection, Tx, [accounts[0]], { commitment: 'processed', skipPreflight: true });
+          console.log(`sig: ${singerTrue}`);
+        }
+        for (let i = 0; i < Math.ceil(accounts.length / 6); i++) {
+          const tx = new Transaction();
+          const sigers: Keypair[] = [];
+          let fee = 0
+          const _accounts = accounts.slice(i * 6, (i + 1) * 6)
+          const _sendAmounts = sendAmounts.slice(i * 6, (i + 1) * 6)
+          const _assiciaAccounts = assiciaAccounts.slice(i * 6, (i + 1) * 6)
 
-    //   const signature = await sendAndConfirmTransaction(connection, Tx, [from])
-    //   const confirmed = await connection.confirmTransaction(
-    //     signature,
-    //     "processed"
-    //   );
-    //   setLogHandler(`归集成功hash ${signature}`, HASH_COLOR, signature)
-    //   console.log("confirmation", signature);
-    //   if (isOne) {
-    //     const _signatureArr = [...signatureArr]
-    //     _signatureArr[walletIndex] = signature
-    //     setSignatureArr(_signatureArr)
-    //     setLogHandler('归集执行完成3', END_COLOR)
-    //     updataWallet()
-    //   } else {
-    //     walletIndex === 0 ? setSignatureArr([signature]) : setSignatureArr([...signatureArr, signature])
-    //   }
-    // } catch (error) {
-    //   console.log(error, 'error')
-    //   const err = (error as any)?.message;
+          _accounts.forEach((item, index) => {
+            if (_sendAmounts[index] > 0) {
+              tx.add(createTransferInstruction(
+                new PublicKey(_assiciaAccounts[index]),
+                to,
+                item.publicKey,
+                _sendAmounts[i] * 10 ** token.decimals,
+              ))
+              sigers.push(item)
+              fee += 1
+            }
+          })
 
+          tx.feePayer = accounts[0].publicKey
+          sigers.push(accounts[0])
 
-    //   if (isOne) {
-    //     const _signatureArr = [...signatureArr]
-    //     _signatureArr[walletIndex] = 'error'
-    //     setSignatureArr(_signatureArr)
-    //     setLogHandler('归集执行完成4', END_COLOR)
-    //   } else {
-    //     walletIndex === 0 ? setSignatureArr(['error']) : setSignatureArr([...signatureArr, 'error'])
-    //   }
+          console.log('ssssss')
+          const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed", skipPreflight: true })
+          console.log(signerTrue, 'signerTrue')
+        }
 
-    //   if (
-    //     err.includes(
-    //       "Cannot read properties of undefined (reading 'public_keys')"
-    //     )
-    //   ) {
-    //     setLogHandler("It is not a valid Backpack username", ERROR_COLOR)
-    //   } else {
-    //     setLogHandler(`归集报错${err}`, ERROR_COLOR)
-    //   }
-    // }
+      }
+      setIsSending(false)
+    } catch (error) {
+      console.log(error, 'error')
+      setIsSending(false)
+    }
+
   }
 
   const backClick = (_token: Token_Type) => {

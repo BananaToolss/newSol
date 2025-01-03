@@ -140,7 +140,8 @@ function WalletInfo(props: PropsType) {
             privateKey: _privateKeys[i],
             walletAddr: accountsArr[i].toBase58(),
             balance: solBalance ? solBalance : 0,
-            tokenBalance: tokenBalance ? tokenBalance : 0
+            tokenBalance: tokenBalance ? tokenBalance : 0,
+            assiciaAccount: associaArr[i] ? associaArr[i] : ''
           }
         )
         _totalSol += solBalance ? solBalance : 0

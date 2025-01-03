@@ -42,4 +42,5 @@ export interface CollocetionType {
   walletAddr: string,
   balance: number,
   tokenBalance: number,
+  assiciaAccount: string,
 }
