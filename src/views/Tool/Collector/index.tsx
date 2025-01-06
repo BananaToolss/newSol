@@ -120,7 +120,7 @@ function Authority() {
           balance = walletConfig[index].tokenBalance
         }
 
-        let amount = balance 
+        let amount = balance
         if (modeType === 2) {
           amount = balance >= Number(colleAmount) ? Number(colleAmount) : 0
         } else if (modeType === 3) {
@@ -130,7 +130,7 @@ function Authority() {
         }
         sendAmounts.push(amount * (10 ** token.decimals))
       })
-console.log(sendAmounts,'sendAmounts')
+      console.log(sendAmounts, 'sendAmounts')
       const toPubkey = new PublicKey(collectorAddr)
       const signerTrueArr: string[] = []
 
@@ -144,11 +144,15 @@ console.log(sendAmounts,'sendAmounts')
           const _sendAmounts = sendAmounts.slice(i * SOLNUM, (i + 1) * SOLNUM)
 
           _accounts.forEach((item, index) => {
+            let amount = Number(_sendAmounts[index].toFixed(0))
+            if (modeType === 1 && index == 0) {
+              amount -= _accounts.length * 0.000005 * 10 ** 9
+            }
             if (_sendAmounts[index] > 0) {
               const transfer = SystemProgram.transfer({
                 fromPubkey: item.publicKey,
                 toPubkey: toPubkey,
-                lamports: Number(_sendAmounts[index].toFixed(0))
+                lamports: amount
               })
               tx.add(transfer)
               sigers.push(item)
@@ -156,8 +160,8 @@ console.log(sendAmounts,'sendAmounts')
             }
           })
 
-          tx.feePayer = accounts[0].publicKey
-          sigers.push(accounts[0])
+          tx.feePayer = _accounts[0].publicKey
+          // sigers.push(accounts[0])
           const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed" })
           console.log(signerTrue, 'signerTrue')
           signerTrueArr.push(signerTrue)
@@ -187,7 +191,7 @@ console.log(sendAmounts,'sendAmounts')
           const _accounts = accounts.slice(i * TOKENNUM, (i + 1) * TOKENNUM)
           const _sendAmounts = sendAmounts.slice(i * TOKENNUM, (i + 1) * TOKENNUM)
           const _assiciaAccounts = assiciaAccounts.slice(i * TOKENNUM, (i + 1) * TOKENNUM)
-    
+
           _accounts.forEach((item, index) => {
             if (_sendAmounts[index] > 0) {
               tx.add(createTransferInstruction(
@@ -201,10 +205,10 @@ console.log(sendAmounts,'sendAmounts')
             }
           })
 
-          tx.feePayer = accounts[0].publicKey
-          sigers.push(accounts[0])
+          tx.feePayer = _accounts[0].publicKey
+          // sigers.push(accounts[0])
 
-          const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed"})
+          const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed" })
           console.log(signerTrue, 'signerTrue')
           signerTrueArr.push(signerTrue)
         }
@@ -221,13 +225,13 @@ console.log(sendAmounts,'sendAmounts')
   const getSignatureState = async (signatures: string[]) => {
     try {
       const result = await connection.getSignatureStatuses(signatures)
-      console.log(result,'result')
+      console.log(result, 'result')
       let isAll = true
       const state = []
       result.value.forEach(item => {
         if (!item) isAll = false
       })
-      if(isAll) {
+      if (isAll) {
         result.value.forEach(item => {
           state.push(item.err ? 2 : 1)
         })
