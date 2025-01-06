@@ -226,8 +226,12 @@ function Authority() {
       const state = []
       result.value.forEach(item => {
         if (!item) isAll = false
-        state.push(item.err ? 2 : 1)
       })
+      if(isAll) {
+        result.value.forEach(item => {
+          state.push(item.err ? 2 : 1)
+        })
+      }
       if (result.value.length !== signatures.length || !isAll) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         getSignatureState(signatures)

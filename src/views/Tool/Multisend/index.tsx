@@ -359,8 +359,12 @@ function Multisend() {
       const state = []
       result.value.forEach(item => {
         if (!item) isAll = false
-        state.push(item.err ? 0 : 1)
       })
+      if(isAll) {
+        result.value.forEach(item => {
+          state.push(item.err ? 0 : 1)
+        })
+      }
       if (result.value.length !== signature.length || !isAll) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         getSignatureState()
