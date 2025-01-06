@@ -5,7 +5,7 @@ import {
   BsHouseFill,
   BsDatabaseFill,
   BsRobot,
-  BsCopy,
+  BsUnlock ,
   BsSend,
   BsPersonLock,
   BsGraphUp,
@@ -64,11 +64,18 @@ export default {
             path: 'burn',
             name: '燃烧代币',
             icon: <AiOutlineFire color={COLOR} style={{ marginRight: '6px' }} />,
-          }, {
+          },
+          {
             path: 'freezeAccount',
             name: '冻结账户',
             icon: <BsPersonLock color={COLOR} style={{ marginRight: '6px' }} />,
-          }, {
+          },
+          {
+            path: 'unfreezeAccount',
+            name: '解冻账户',
+            icon: <BsUnlock  color={COLOR} style={{ marginRight: '6px' }} />,
+          },
+          {
             path: 'mint',
             name: '代币增发',
             icon: <BsGraphUp color={COLOR} style={{ marginRight: '6px' }} />,
@@ -78,12 +85,12 @@ export default {
       {
         path: 'closeAccount',
         name: '租金回收',
-        icon: <img src={getImage('close.svg')} width={16} height={16}  />,
+        icon: <img src={getImage('close.svg')} width={16} height={16} />,
       },
       {
         path: '/pump',
         name: 'Pump专区',
-        icon: <img src={getImage('pump.svg')} width={16} height={16}  />,
+        icon: <img src={getImage('pump.svg')} width={16} height={16} />,
         routes: [
           {
             path: 'create',

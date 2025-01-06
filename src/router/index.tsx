@@ -13,6 +13,7 @@ import Multisend from "@/views/Tool/Multisend"
 import Collector from '@/views/Tool/Collector'
 import CreateWallet from "@/views/Tool/CreateWallet"
 import App from '@/views/App'
+import UnfreezeAccount from '@/views/Token/UnFreezeAccount'
 
 const Routers = () => {
   const router = useRoutes([
@@ -36,8 +37,8 @@ const Routers = () => {
         { path: "revokeAuthority", element: <RevokeAuthority /> },
         { path: "burn", element: <BurnToken /> },
         { path: "freezeAccount", element: <FreezeAccount /> },
+        { path: "unfreezeAccount", element: <UnfreezeAccount /> },
         { path: "mint", element: <MintToken /> },
-
       ]
     },
     {
