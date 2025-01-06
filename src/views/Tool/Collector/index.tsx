@@ -301,7 +301,7 @@ function Authority() {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={collectorClick} loading={isSending}>{t('Start Collect')}</Button>
           </div>
-          <div className='fee'>全网最低服务费: {AUTHORITY_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: 0 SOL</div>
         </div>
 
       </CollectorPage>
