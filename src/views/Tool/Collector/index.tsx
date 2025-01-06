@@ -12,6 +12,7 @@ import {
   SystemProgram,
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
+import { BigNumber, ethers } from 'ethers';
 import {
   TOKEN_PROGRAM_ID,
   getAccount,
@@ -119,15 +120,15 @@ function Authority() {
           balance = walletConfig[index].tokenBalance
         }
 
-        let amount = balance
+        let amount = balance 
         if (modeType === 2) {
-          const _amount = Number(colleAmount) * (10 ** token.decimals)
-          amount = balance >= Number(colleAmount) ? _amount : 0
+          amount = balance >= Number(colleAmount) ? Number(colleAmount) : 0
         } else if (modeType === 3) {
-          const _amount = balance - Number(colleAmount)
-          amount = _amount > 0 ? _amount : 0
+          const _amount = ethers.utils.parseEther(balance.toString()).sub(ethers.utils.parseEther(colleAmount))
+          const amount1 = ethers.utils.formatEther(_amount)
+          amount = Number(_amount) > 0 ? Number(amount1) : 0
         }
-        sendAmounts.push(amount)
+        sendAmounts.push(amount * (10 ** token.decimals))
       })
 
       const toPubkey = new PublicKey(collectorAddr)
@@ -186,14 +187,14 @@ function Authority() {
           const _accounts = accounts.slice(i * TOKENNUM, (i + 1) * TOKENNUM)
           const _sendAmounts = sendAmounts.slice(i * TOKENNUM, (i + 1) * TOKENNUM)
           const _assiciaAccounts = assiciaAccounts.slice(i * TOKENNUM, (i + 1) * TOKENNUM)
-
+    
           _accounts.forEach((item, index) => {
             if (_sendAmounts[index] > 0) {
               tx.add(createTransferInstruction(
                 _assiciaAccounts[index],
                 to,
                 item.publicKey,
-                _sendAmounts[i],
+                _sendAmounts[index],
               ))
               sigers.push(item)
               fee += 1
@@ -220,11 +221,12 @@ function Authority() {
   const getSignatureState = async (signatures: string[]) => {
     try {
       const result = await connection.getSignatureStatuses(signatures)
+      console.log(result,'result')
       let isAll = true
       const state = []
       result.value.forEach(item => {
         if (!item) isAll = false
-        state.push(item.err ? 0 : 1)
+        state.push(item.err ? 2 : 1)
       })
       if (result.value.length !== signatures.length || !isAll) {
         await new Promise(resolve => setTimeout(resolve, 1000));

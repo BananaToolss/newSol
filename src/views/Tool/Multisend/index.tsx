@@ -354,6 +354,7 @@ function Multisend() {
   const getSignatureState = async () => {
     try {
       const result = await connection.getSignatureStatuses(signature)
+      console.log(result,'result')
       let isAll = true
       const state = []
       result.value.forEach(item => {

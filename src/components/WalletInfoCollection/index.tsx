@@ -19,6 +19,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   AccountLayout
 } from "@solana/spl-token";
+import copy from 'copy-to-clipboard';
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { addressHandler } from '@/utils'
 import { getMultipleAccounts } from '@/utils/sol'
@@ -198,6 +199,11 @@ function WalletInfo(props: PropsType) {
     }
   }
 
+  const copyClick = (value: string)=> {
+    copy(value)
+    messageApi.success('copy success')
+  }
+
   return (
     <WalletInfoPage>
       {contextHolder}
@@ -240,7 +246,7 @@ function WalletInfo(props: PropsType) {
                 </div>
                 <div className='flex items-center'>
                   <span>{addressHandler(item.walletAddr)} </span>
-                  <BsCopy className='ml-2' />
+                  <BsCopy className='ml-2' onClick={()=>copyClick(item.walletAddr)}/>
                 </div>
                 <div>{item.balance}</div>
                 <div>{item.tokenBalance}</div>
