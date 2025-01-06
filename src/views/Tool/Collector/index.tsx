@@ -130,7 +130,7 @@ function Authority() {
         }
         sendAmounts.push(amount * (10 ** token.decimals))
       })
-
+console.log(sendAmounts,'sendAmounts')
       const toPubkey = new PublicKey(collectorAddr)
       const signerTrueArr: string[] = []
 
@@ -148,7 +148,7 @@ function Authority() {
               const transfer = SystemProgram.transfer({
                 fromPubkey: item.publicKey,
                 toPubkey: toPubkey,
-                lamports: _sendAmounts[index]
+                lamports: Number(_sendAmounts[index].toFixed(0))
               })
               tx.add(transfer)
               sigers.push(item)
@@ -158,7 +158,7 @@ function Authority() {
 
           tx.feePayer = accounts[0].publicKey
           sigers.push(accounts[0])
-          const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed", skipPreflight: true })
+          const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed" })
           console.log(signerTrue, 'signerTrue')
           signerTrueArr.push(signerTrue)
         }
@@ -194,7 +194,7 @@ function Authority() {
                 _assiciaAccounts[index],
                 to,
                 item.publicKey,
-                _sendAmounts[index],
+                Number(_sendAmounts[index].toFixed(0)),
               ))
               sigers.push(item)
               fee += 1
@@ -204,7 +204,7 @@ function Authority() {
           tx.feePayer = accounts[0].publicKey
           sigers.push(accounts[0])
 
-          const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed", skipPreflight: true })
+          const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed"})
           console.log(signerTrue, 'signerTrue')
           signerTrueArr.push(signerTrue)
         }
