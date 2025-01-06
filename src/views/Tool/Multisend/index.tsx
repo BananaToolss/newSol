@@ -376,6 +376,7 @@ function Multisend() {
         setSenderConfig(_config)
         setIsSendEnd(true)
         setIsSending(false);
+        api.success({message:"执行完成"})
       }
     } catch (error) {
       console.log(error, 'error')
