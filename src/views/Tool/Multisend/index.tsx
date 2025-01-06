@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Segmented, Input, Button, message, Table, TableProps } from 'antd';
+import { Tag, Input, Button, message, Table, TableProps, notification } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons'
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
@@ -9,6 +9,7 @@ import {
   Transaction,
   VersionedTransaction
 } from "@solana/web3.js";
+import copy from 'copy-to-clipboard';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -39,13 +40,17 @@ interface Receiver_Type {
   receiver: string
   amount: string
   remove: number,
+  state: number //0失败 1成功
   key: number
 }
 
-
+const nbPerTx = 100 //100个地址签名一次
+const SendSolNum = 19
+const SendTokenNum = 9
 
 function Multisend() {
   const { t } = useTranslation()
+  const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage()
   const { connection } = useConnection();
   const wallet = useWallet();
@@ -55,17 +60,18 @@ function Multisend() {
   const [balance, setBalance] = useState('')
   const [needAmount, setNeedAmount] = useState('')
   const [isSending, setIsSending] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+
   const [signature, setSignature] = useState<string[]>([]);
   const [isFile, setIsFile] = useState(false)
   const [token, setToken] = useState<Token_Type>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [senderConfig, setSenderConfig] = useState<Receiver_Type[]>([])
   const [errorText, setErrorText] = useState([])
-  const nbPerTx = 100 //100个地址签名一次
+
   const [currentTx, setCurrentTx] = useState<number | null>(null);
   const [totalTx, setTotalTx] = useState<number | null>(null);
   const [totalSender, setTotalSender] = useState(0)
+  const [isSendEnd, setIsSendEnd] = useState(false) //是否全部完成
 
   useEffect(() => {
     if (wallet && wallet.publicKey) {
@@ -75,6 +81,11 @@ function Multisend() {
   useEffect(() => {
     setErrorText([])
   }, [textValue])
+  useEffect(() => {
+    if (signature.length > 0 && signature.length === totalSender) {
+      getSignatureState()
+    }
+  }, [signature])
 
   const textValueChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTextValue(e.target.value)
@@ -144,6 +155,7 @@ function Multisend() {
           receiver: arr[0],
           amount: arr.length > 1 ? arr[1] : '0',
           remove: index,
+          state: 1,
           key: index
         }
         // if (!item) return
@@ -171,7 +183,7 @@ function Multisend() {
         setNeedAmount(ethers.utils.formatEther(totalAmount))
       }
 
-      const NUM = token.address === SOL.address ? 19 : 9
+      const NUM = token.address === SOL.address ? SendSolNum : SendTokenNum
       let nbTx: number; // 总签名次数
       let totalTrans = 0
       if (Receivers.length % nbPerTx == 0) {
@@ -222,13 +234,12 @@ function Multisend() {
   //发送
   const senderTransfer = async () => {
     try {
+      if (Number(needAmount) > Number(token.balance)) return api.error({ message: "代币余额不足" })
+      setIsSendEnd(false)
       setSignature([]);
-      setError('')
       const Receivers: Receiver_Type[] = senderConfig;
-
       setIsSending(true);
-      // console.log(Receivers, 'Receivers')
-      const NUM = token.address === SOL.address ? 19 : 9
+      const NUM = token.address === SOL.address ? SendSolNum : SendTokenNum
       let nbTx: number; // 总签名次数
       if (Receivers.length % nbPerTx == 0) {
         nbTx = Receivers.length / nbPerTx;
@@ -308,15 +319,7 @@ function Multisend() {
       console.log(error, 'error')
       setIsSending(false);
       const err = (error as any)?.message;
-      if (
-        err.includes(
-          "Cannot read properties of undefined (reading 'public_keys')"
-        )
-      ) {
-        setError("It is not a valid Backpack username");
-      } else {
-        setError(err);
-      }
+      api.error({ message: err })
     }
   }
 
@@ -329,25 +332,55 @@ function Multisend() {
           const createAccountSignature = await connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: true })
           console.log(createAccountSignature, 'createAccountSignature')
           setSignature((item) => [...item, createAccountSignature])
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 200));
         } catch (error) {
           console.error("Transaction failed:", error);
-          console.log(error, 'error')
           setIsSending(false);
           const _err = (error as any)?.message;
-          setError(_err);
+          api.error({ message: _err })
         }
       }
       if (index < totalSiner.length - 1) {
         signAllTransactions1(totalSiner, index + 1)
+      }
+    } catch (error) {
+      console.log(error, 'error')
+      setIsSending(false);
+      const err = (error as any)?.message;
+      api.error({ message: err })
+    }
+  }
+  // 最终结果
+  const getSignatureState = async () => {
+    try {
+      const result = await connection.getSignatureStatuses(signature)
+      let isAll = true
+      const state = []
+      result.value.forEach(item => {
+        if (!item) isAll = false
+        state.push(item.err ? 0 : 1)
+      })
+      if (result.value.length !== signature.length || !isAll) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        getSignatureState()
       } else {
+
+        const NUM = token.address === SOL.address ? SendSolNum : SendTokenNum
+        const _config = [...senderConfig]
+        state.forEach((item, index) => {
+          for (let i = 0; i < NUM; i++) {
+            if (_config[i + index * NUM]) _config[i + index * NUM].state = item
+          }
+        })
+        setSenderConfig(_config)
+        setIsSendEnd(true)
         setIsSending(false);
       }
     } catch (error) {
       console.log(error, 'error')
       setIsSending(false);
       const err = (error as any)?.message;
-      setError(err);
+      api.error({ message: err })
     }
   }
 
@@ -355,27 +388,42 @@ function Multisend() {
     setToken(_token)
   }
 
-  const columns: TableProps['columns'] = [
-    {
-      title: '钱包地址',
-      dataIndex: 'receiver',
-      key: 'receiver',
-      render: (text) => <div>{isMobile ? addressHandler(text) : text}</div>
-    },
-    {
-      title: '数量',
-      dataIndex: 'amount',
-      key: 'amount',
-    },
-    {
+  const columns = useMemo(() => {
+    const _columns: TableProps['columns'] = [
+      {
+        title: '钱包地址',
+        dataIndex: 'receiver',
+        key: 'receiver',
+        render: (text) => <div>{isMobile ? addressHandler(text) : text}</div>
+      },
+      {
+        title: '数量',
+        dataIndex: 'amount',
+        key: 'amount',
+      },
+
+    ];
+
+    const _remove = {
       title: '操作',
       dataIndex: 'remove',
       key: 'remove',
       render: (text) => <a>
         <Button onClick={() => removeClick(Number(text))}>移除</Button>
       </a>
-    },
-  ];
+    }
+    const _state = {
+      title: '状态',
+      dataIndex: 'state',
+      key: 'state',
+      render: (text) => (
+        text === 1 ? <Tag color="#568ee6">成功</Tag> : <Tag color="red">失败</Tag>
+      )
+    }
+    isSendEnd ? _columns.push(_state) : _columns.push(_remove)
+
+    return _columns
+  }, [isSendEnd])
 
   const removeClick = (index: number) => {
     console.log(index, 'index')
@@ -389,11 +437,33 @@ function Multisend() {
     setSenderConfig(_senderConfig)
   }
 
+  const backNext = () => {
+    setIsSendEnd(false)
+    setCurrentIndex(0)
+  }
 
+  const isError = useMemo(() => {
+    let isError = false
+    senderConfig.forEach((item) => {
+      if (item.state === 0) isError = true
+    })
+    return isError
+  }, [senderConfig])
+
+  const copyErrClick = () => {
+    const errAddr = []
+    senderConfig.forEach(item => {
+      if (item.state === 0) errAddr.push(item.receiver)
+    })
+    const _value = errAddr.join('\n')
+    copy(_value)
+    messageApi.success('copy success')
+  }
 
   return (
     <Page>
       {contextHolder}
+      {contextHolder1}
       <Header title={t('Batch Sender')} hint='同时向多个地址转账,节省Gas费,节省时间' />
 
       <MultisendPage>
@@ -456,7 +526,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
               </div>
               <div className='item'>
                 <div className='t2'>{needAmount}</div>
-                <div className='fee'>服务费{(MULTISEND_FEE * totalSender).toFixed(4)} SOL</div>
+                <div className='fee'>服务费{(MULTISEND_FEE * totalSender)} SOL</div>
                 <div className='t1'>代币发送总数</div>
               </div>
               <div className='item'>
@@ -469,10 +539,11 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
               </div>
             </SENDINFO>
             <Table columns={columns} dataSource={senderConfig} bordered />
+           { isError &&  <Button className='errBtn' onClick={copyErrClick}>复制失败地址</Button>}
 
             <div className='btn mt-6'>
               <div className='buttonSwapper flex items-center justify-center'>
-                <div className='back pointer' onClick={() => setCurrentIndex(0)}>
+                <div className='back pointer' onClick={backNext}>
                   <ArrowLeftOutlined />
                 </div>
                 <div className='bw100'>
@@ -496,8 +567,6 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
             <div className="h-[27px]"></div>
           )}
         </div>
-
-        <ResultArr signature={signature} error={error} />
       </MultisendPage>
     </Page >
   )

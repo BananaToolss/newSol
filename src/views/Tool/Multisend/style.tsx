@@ -1,7 +1,10 @@
 import styled from "styled-components";
 
 export const MultisendPage = styled.div`
-
+  .errBtn {
+    color: #fff !important;
+    background-color: #fe9814 !important;
+  }
   .segmentd {
     margin-top: 30px;
     text-align: center;
