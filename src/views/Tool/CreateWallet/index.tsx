@@ -79,7 +79,7 @@ function CreateWallet() {
 
         <div className='text-center mt-3 buttonSwapper'>
           <Button className={Button_Style} onClick={CreateWallet}>{t('Generate wallet')}</Button>
-          <Button className={Button_Style} onClick={downCSV}>{t('Export CSV')}</Button>
+          <Button className={`${Button_Style} ml-3`} onClick={downCSV}>{t('Export CSV')}</Button>
         </div>
 
         <div className='wallets wallet_bt mt-3'>
