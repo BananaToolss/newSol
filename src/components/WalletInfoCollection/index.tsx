@@ -1,5 +1,5 @@
 import { useState, SetStateAction, Dispatch } from 'react'
-import { Button, message, notification, Input, Checkbox, Spin } from 'antd'
+import { Button, message, notification, Tag, Checkbox, Spin } from 'antd'
 import type { CheckboxChangeEvent } from 'antd'
 import {
   Keypair,
@@ -74,7 +74,7 @@ function WalletInfo(props: PropsType) {
 
   const getWalletsInfo = async (keys?: string[]) => {
     try {
-      if(isLoading) return
+      if (isLoading) return
       const _privateKeys = keys ? keys : privateKeys
       if (_privateKeys.length === 0) return setConfig([])
       setIsLoading(true)
@@ -209,13 +209,13 @@ function WalletInfo(props: PropsType) {
           <PrivateKeyPage privateKeys={privateKeys} callBack={privateKeyCallBack} title='导入钱包' />
           <Button className={`${Button_Style1} ml-2`} onClick={() => getWalletsInfo()}>获取余额</Button>
         </div>
-        <div className='flex items-center h-100 flex-wrap'>
+        {/* <div className='flex items-center h-100 flex-wrap'>
           <Button>选择余额为0</Button>
           <Button className='ml-2'>选择余额大于0</Button>
           <Button className='ml-2'>反选</Button>
           <Button className='ml-2'>选择失败</Button>
           <Button className='ml-2'><DeleteOutlined /></Button>
-        </div>
+        </div> */}
       </div>
 
       <div className='wallet'>
@@ -244,7 +244,12 @@ function WalletInfo(props: PropsType) {
                 </div>
                 <div>{item.balance}</div>
                 <div>{item.tokenBalance}</div>
-                <div><Button>未执行</Button></div>
+                <div>{
+                  item.state === 0 ? <Button>未执行</Button> :
+                    item.state === 1 ? <Tag color="#568ee6">成功</Tag> :
+                      <Tag color="red">失败</Tag>
+                }
+                </div>
                 <div><DeleteOutlined onClick={() => deleteClick(item.walletAddr, index)} /></div>
               </div>
             ))}

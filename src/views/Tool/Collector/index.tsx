@@ -52,6 +52,9 @@ const ERROR_COLOR = '#ff004d'
 const END_COLOR = '#2014cf'
 const HASH_COLOR = '#63e2bd'
 
+const SOLNUM = 8
+const TOKENNUM = 6
+
 function Authority() {
 
   const [api, contextHolder1] = notification.useNotification();
@@ -128,8 +131,6 @@ function Authority() {
       })
 
       const toPubkey = new PublicKey(collectorAddr)
-      const SOLNUM = 8
-      const TOKENNUM = 6
       const signerTrueArr: string[] = []
 
       if (token.address === SOL_TOKEN) {
@@ -207,7 +208,7 @@ function Authority() {
           signerTrueArr.push(signerTrue)
         }
       }
-      setIsSending(false)
+      getSignatureState(signerTrueArr)
     } catch (error) {
       console.log(error, 'error')
       setIsSending(false)
@@ -215,7 +216,38 @@ function Authority() {
     }
   }
 
-  
+  // 最终结果
+  const getSignatureState = async (signatures: string[]) => {
+    try {
+      const result = await connection.getSignatureStatuses(signatures)
+      let isAll = true
+      const state = []
+      result.value.forEach(item => {
+        if (!item) isAll = false
+        state.push(item.err ? 0 : 1)
+      })
+      if (result.value.length !== signatures.length || !isAll) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        getSignatureState(signatures)
+      } else {
+        const NUM = token.address === SOL_TOKEN ? SOLNUM : TOKENNUM
+        const _config = [...walletConfig]
+        state.forEach((item, index) => {
+          for (let i = 0; i < NUM; i++) {
+            if (_config[i + index * NUM]) _config[i + index * NUM].state = item
+          }
+        })
+        setWalletConfig(_config)
+        setIsSending(false)
+        api.success({ message: "执行完成" })
+      }
+    } catch (error) {
+      console.log(error, 'error')
+      setIsSending(false);
+      const err = (error as any)?.message;
+      api.error({ message: err })
+    }
+  }
 
   const backClick = (_token: Token_Type) => {
     setToken(_token)
