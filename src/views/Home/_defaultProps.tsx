@@ -126,6 +126,11 @@ export default {
           },
         ]
       },
+      {
+        path: 'swapbot',
+        name: '市值管理',
+        icon: <img src={getImage('close.svg')} width={16} height={16} />,
+      },
     ],
   },
   location: {

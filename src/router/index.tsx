@@ -14,6 +14,7 @@ import Collector from '@/views/Tool/Collector'
 import CreateWallet from "@/views/Tool/CreateWallet"
 import App from '@/views/App'
 import UnfreezeAccount from '@/views/Token/UnFreezeAccount'
+import SwapBot from '@/views/SwapBot'
 
 const Routers = () => {
   const router = useRoutes([
@@ -23,7 +24,8 @@ const Routers = () => {
         { path: '/', element: <App /> },
         { path: "closeAccount", element: <CloseAccount /> },
         { path: '/404', element: <NotFound /> },
-        { path: '*', element: <Navigate to="/404" replace /> }
+        { path: '*', element: <Navigate to="/404" replace /> },
+        { path: '/swapbot', element: <SwapBot />, },
       ]
     },
     {
@@ -60,6 +62,7 @@ const Routers = () => {
         { path: "createwallet", element: <CreateWallet /> },
       ]
     },
+
   ])
 
   return router
