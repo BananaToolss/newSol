@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Header, SelectToken } from '@/components'
-import type { Token_Type } from '@/type'
+import { Header, SelectToken, Segmentd, WalletInfoCollection } from '@/components'
+import type { Token_Type, CollocetionType } from '@/type'
 import { SOL, USDC } from '@/config/Token'
 import {
   SwapBotPage,
@@ -12,6 +12,9 @@ function SwapBot() {
 
   const [baseToken, setBseToken] = useState<Token_Type>(SOL)
   const [token, setToken] = useState<Token_Type>(USDC)
+  const [dexCount, setDexCount] = useState(1) // 1raydium 2pump
+  const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
+
   const baseTokenClick = (_token: Token_Type) => {
     setBseToken(_token)
   }
@@ -48,7 +51,10 @@ function SwapBot() {
           </div>
 
           <div className='box mt-3'>
-            <div className='header'>兑换设置</div>
+            <div className='header'>
+              <div>兑换设置</div>
+              <Segmentd count={dexCount} setCount={setDexCount} />
+            </div>
             <div className='flex justify-between mt-4'>
               <div className='flex-1 mr-4'>
                 <div>价值代币</div>
@@ -63,7 +69,7 @@ function SwapBot() {
 
         </LeftPage>
         <RightPage>
-
+          <WalletInfoCollection tokenAddr={null} config={walletConfig} setConfig={setWalletConfig} />
         </RightPage>
       </div>
     </SwapBotPage>

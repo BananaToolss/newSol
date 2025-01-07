@@ -18,6 +18,8 @@ export { default as LoadingOut } from './LoadingOut'
 export { default as JitoFee } from './JitoFee'
 export { default as Modal } from './Modal'
 export { default as Upload } from './Upload'
+export { default as Segmentd } from './Segmentd'
+
 
 
 

@@ -1,8 +1,8 @@
 import styled from "styled-components";
 
 export const WalletInfoPage = styled.div`
-  margin: 20px 0;
-  border: 1px solid #e2e8f0;
+
+  border: 1px solid #cccccc;
   border-radius: 10px;
   .header {
     margin: 10px 0;

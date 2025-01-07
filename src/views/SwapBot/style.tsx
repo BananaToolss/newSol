@@ -15,6 +15,8 @@ export const LeftPage = styled.div`
   .header {
     font-size: 16px;
     font-weight: 400;
+    display: flex;
+    justify-content: space-between;
   }
   .box1 {
     flex: 1;
@@ -30,4 +32,5 @@ export const LeftPage = styled.div`
 
 export const RightPage = styled.div`
    flex: 1;
+   margin-left: 10px;
 `
