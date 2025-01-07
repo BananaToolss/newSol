@@ -147,7 +147,7 @@ const App = (props: PropsType) => {
       {token ?
         <div className='flex-1 flex items-center justify-between pointer' onClick={showModal}>
           <div className='flex items-center'>
-            <div>
+            <div className='img'>
               <img src={token.image} width={40} height={40} />
             </div>
             <div className='ml-3 flex items-center'>
