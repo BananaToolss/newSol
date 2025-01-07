@@ -1,17 +1,17 @@
 import { useState } from 'react'
-import {
-  Header, SelectToken, Segmentd,
-  WalletInfoCollection, JitoFee
-} from '@/components'
+import { Radio, Input, Select, Switch, Button } from 'antd'
+import type { RadioChangeEvent } from 'antd';
+import { Header, SelectToken, Segmentd, WalletInfoCollection, JitoFee } from '@/components'
 import type { Token_Type, CollocetionType } from '@/type'
 import { SOL, USDC } from '@/config/Token'
-import { Input_Style } from '@/config'
+import { Input_Style, Button_Style } from '@/config'
 import {
   SwapBotPage,
   LeftPage,
-  RightPage
+  RightPage,
+  Card
 } from './style'
-import { Input, Select, Switch } from 'antd'
+
 
 
 
@@ -21,14 +21,31 @@ function SwapBot() {
   const [token, setToken] = useState<Token_Type>(USDC)
   const [dexCount, setDexCount] = useState(1) // 1raydium 2pump
   const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
-  const [thread, setThread] = useState(1)
-  const [spaceTime, setSpaceTime] = useState(1)
-  const [slippage, setSlippage] = useState(3)
+
+
   const [isJito, setIsJito] = useState(false)
   const [jitoBindNum, setJitoBindNum] = useState(1)
   const [jitoFee, setJitoFee] = useState<number>(0)
   const [jitoRpc, setJitoRpc] = useState('')
 
+  const [config, setConfig] = useState({
+    modeType: 1, //模式 1拉盘 2砸盘 3刷量
+    thread: '1', //线程数
+    spaceTime: '1', //间隔时间
+    slippage: '1', //滑点
+    amountType: 1, //1固定 2百分比 3随机
+    minAmount: '',
+    maxAmount: ''
+  })
+  const configChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfig({ ...config, [e.target.name]: e.target.value })
+  }
+  const modeTypeChange = (e: RadioChangeEvent) => {
+    setConfig({ ...config, modeType: Number(e.target.value) })
+  }
+  const amountTypeChange = (e: RadioChangeEvent) => {
+    setConfig({ ...config, amountType: Number(e.target.value) })
+  }
   const baseTokenClick = (_token: Token_Type) => {
     setBseToken(_token)
   }
@@ -103,18 +120,18 @@ function SwapBot() {
               <div className='flex-1 mr-4'>
                 <div>多线程(多笔交易同时进行)</div>
                 <Input type='number' className={Input_Style}
-                  value={thread} onChange={(e) => setThread(Number(e.target.value))} />
+                  value={config.thread} onChange={configChange} name='thread' />
               </div>
               <div className='flex-1'>
                 <div>任务执行间隔(秒)</div>
                 <Input type='number' className={Input_Style}
-                  value={spaceTime} onChange={(e) => setSpaceTime(Number(e.target.value))} />
+                  value={config.spaceTime} onChange={configChange} name='spaceTime' />
               </div>
             </div>
             <div className='flex items-center mt-4'>
               <div className='mr-3'>滑点(%)</div>
               <div>
-                <Input value={slippage} onChange={(e) => setSlippage(Number(e.target.value))} />
+                <Input value={config.slippage} onChange={configChange} name='slippage' />
               </div>
             </div>
             <div className='flex mt-5'>
@@ -131,6 +148,48 @@ function SwapBot() {
                 <JitoFee callBack={jitoCallBack} />
               </div>
             }
+          </div>
+
+          <div className='box mt-3'>
+            <div className='header'>机器人管理</div>
+
+            <div className='flex mt-5'>
+              <div className='font-semibold'>模式：</div>
+              <Radio.Group onChange={modeTypeChange} value={config.modeType}>
+                <Radio value={1}>拉盘</Radio>
+                <Radio value={2}>砸盘</Radio>
+                <Radio value={3}>防夹刷量</Radio>
+              </Radio.Group>
+            </div>
+
+            <div className='mt-5 flex items-center'>
+              <div className='font-semibold'>{config.modeType == 2 ? '数量' : '金额'}： </div>
+              <Radio.Group onChange={amountTypeChange} value={config.amountType}>
+                <Radio value={1}>固定</Radio>
+                <Radio value={2}>百分比</Radio>
+                <Radio value={3}>随机</Radio>
+              </Radio.Group>
+              <div className='flex items-center'>
+                <div className='w-32'>
+                  <Input value={config.minAmount} onChange={configChange} name='minAmount' />
+                </div>
+                {config.amountType === 3 &&
+                  <>
+                    <div className='mx-2 font-bold'>~</div>
+                    <div className='w-32'>
+                      <Input value={config.maxAmount} onChange={configChange} name='maxAmount' />
+                    </div>
+                  </>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div className='btn mt-5'>
+            <div className='buttonSwapper mt-4'>
+              <Button className={Button_Style}>开始执行</Button>
+            </div>
+            <div className='fee'>全网最低服务费0.002SOL每笔交易</div>
           </div>
 
         </LeftPage>

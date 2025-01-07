@@ -4,6 +4,13 @@ export const SwapBotPage = styled.div`
    .swap {
      display: flex;
    }
+   .btn {
+    text-align: center;
+    button  {
+      width: 30%;
+      box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+    }
+}
 `
 export const LeftPage = styled.div`
   width: 45%;
@@ -48,4 +55,35 @@ export const RightPage = styled.div`
       font-weight: 600;
      }
    }
+`
+export const Card = styled.div`
+    margin: 20px 0;
+    background-color: #162127;
+    color: #fff;
+    border-radius: 6px;
+    width: 33%;
+    border: 2px solid #51d38e;
+   
+    .cardh {
+      padding: 10px;
+      border-bottom: 1px solid #283238;
+      padding-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      .title {
+        font-weight: 600;
+      }
+    }
+    .cardItem {
+      padding: 0 10px;
+      margin: 12px 0;
+    }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      background-color: #1a2830;
+      padding: 10px;
+      border-radius: 0 0 6px 6px;
+    }
 `
