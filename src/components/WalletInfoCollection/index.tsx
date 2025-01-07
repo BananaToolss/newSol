@@ -32,10 +32,11 @@ interface PropsType {
   tokenAddr: string | null
   config: CollocetionType[]
   setConfig: Dispatch<SetStateAction<CollocetionType[]>>
+  isBot?: boolean
 }
-1
+
 function WalletInfo(props: PropsType) {
-  const { tokenAddr, config, setConfig } = props
+  const { tokenAddr, config, setConfig, isBot } = props
 
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
@@ -263,19 +264,19 @@ function WalletInfo(props: PropsType) {
           <Button onClick={selectZero}>选择余额为0</Button>
           <Button className='ml-2' onClick={selectmoreZero}>选择余额大于0</Button>
           <Button className='ml-2' onClick={selectOther}>反选</Button>
-          <Button className='ml-2' onClick={selectError}>选择失败</Button>
-          <Button className='ml-2'><DeleteOutlined onClick={deleteCheck}/></Button>
+          {!isBot && <Button className='ml-2' onClick={selectError}>选择失败</Button>}
+          <Button className='ml-2'><DeleteOutlined onClick={deleteCheck} /></Button>
         </div>
       </div>
 
       <div className='wallet'>
         <div className='walletHeader'>
-          <div><Checkbox indeterminate={indeterminate} checked={checkAll} onChange={onCheckAllChange} /></div>
-          <div>地址</div>
-          <div>SOL余额</div>
-          <div>所选代币余额</div>
-          <div>状态</div>
-          <div>移除数量</div>
+          <div className='flex items-center'><Checkbox indeterminate={indeterminate} checked={checkAll} onChange={onCheckAllChange} /></div>
+          <div className='flex items-center'>地址</div>
+          <div className='flex items-center'>SOL余额</div>
+          <div className='flex items-center'>所选代币余额</div>
+          <div className='flex items-center'>状态</div>
+          <div className='flex items-center'>移除数量</div>
         </div>
         {isLoading && <LoadingOut title='钱包信息加载中...' />}
         {!isLoading &&

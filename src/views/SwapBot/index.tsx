@@ -69,7 +69,10 @@ function SwapBot() {
 
         </LeftPage>
         <RightPage>
-          <WalletInfoCollection tokenAddr={null} config={walletConfig} setConfig={setWalletConfig} />
+          <WalletInfoCollection tokenAddr={token ? token.address : null} config={walletConfig} setConfig={setWalletConfig} isBot />
+          <div className='logs'>
+             <div className='header'>交易日志</div>
+          </div>
         </RightPage>
       </div>
     </SwapBotPage>

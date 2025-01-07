@@ -6,7 +6,7 @@ export const SwapBotPage = styled.div`
    }
 `
 export const LeftPage = styled.div`
-  width: 40%;
+  width: 45%;
   .box {
     border: 1px solid #cccccc;
     padding: 20px;
@@ -33,4 +33,19 @@ export const LeftPage = styled.div`
 export const RightPage = styled.div`
    flex: 1;
    margin-left: 10px;
+   display: flex;
+   flex-direction: column;
+
+   .logs {
+     flex: 1;
+     border: 1px solid #cccccc;
+     margin-top: 10px;
+     border-radius: 6px;
+     padding: 20px 10px;
+     .header {
+      padding-bottom: 10px;
+      border-bottom: 1px solid #cccccc;
+      font-weight: 600;
+     }
+   }
 `
