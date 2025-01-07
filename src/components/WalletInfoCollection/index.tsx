@@ -44,9 +44,20 @@ function WalletInfo(props: PropsType) {
   const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
   const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(()=> {
-    if(tokenAddr) getWalletsInfo()
-  },[tokenAddr])
+  useEffect(() => {
+    if (tokenAddr) getWalletsInfo()
+  }, [tokenAddr])
+  useEffect(() => {
+    privateChange()
+  }, [config])
+
+  const privateChange = () => {
+    const _privateKeys = []
+    config.forEach(item => {
+      _privateKeys.push(item.privateKey)
+    })
+    setPrivateKeys(_privateKeys)
+  }
 
   //**钱包私钥数组 */
   const privateKeyCallBack = async (keys: string) => {
@@ -155,10 +166,6 @@ function WalletInfo(props: PropsType) {
   const deleteClick = (account: string, index: number) => {
     const _config = config.filter(item => item.walletAddr !== account)
     setConfig(_config)
-
-    const _privateKeys = [...privateKeys]
-    _privateKeys.splice(index, 1)
-    setPrivateKeys(_privateKeys)
   }
 
   const [checkAll, setCheckAll] = useState(false);
@@ -236,6 +243,11 @@ function WalletInfo(props: PropsType) {
     setConfig(_config)
   }
 
+  const deleteCheck = () => {
+    const _config = config.filter(item => !item.isCheck)
+    setConfig(_config)
+  }
+
   return (
     <WalletInfoPage>
       {contextHolder}
@@ -252,7 +264,7 @@ function WalletInfo(props: PropsType) {
           <Button className='ml-2' onClick={selectmoreZero}>选择余额大于0</Button>
           <Button className='ml-2' onClick={selectOther}>反选</Button>
           <Button className='ml-2' onClick={selectError}>选择失败</Button>
-          <Button className='ml-2'><DeleteOutlined /></Button>
+          <Button className='ml-2'><DeleteOutlined onClick={deleteCheck}/></Button>
         </div>
       </div>
 
