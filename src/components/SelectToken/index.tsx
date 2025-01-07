@@ -8,6 +8,7 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   PublicKey,
 } from "@solana/web3.js";
+import { BsChevronDown } from "react-icons/bs";
 import { Input_Style } from '@/config'
 import { getImage, IsAddress, addressHandler, fetcher } from '@/utils'
 import { getAsset } from '@/utils/sol'
@@ -154,7 +155,7 @@ const App = (props: PropsType) => {
               <div className='ml-3 address mr-2'>{addressHandler(token.address)}</div>
             </div>
           </div>
-          {!isBot && <div>{token.balance}</div>}
+          {isBot ? <BsChevronDown /> : <div>{token.balance}</div>}
         </div> :
         <div className='addtoken' onClick={showModal}>
           <BsPlus />
