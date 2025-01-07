@@ -31,7 +31,7 @@ import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
 import { Modal, Upload, SelectToken, ResultArr, Hint } from '@/components'
 import { MultisendPage, SENDINFO, ERROR_PAGE } from './style'
-import { SOL } from '@/components/SelectToken/Token';
+import { SOL } from '@/config/Token';
 
 
 const { TextArea } = Input

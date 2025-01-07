@@ -31,7 +31,7 @@ import { Input_Style, Button_Style, AUTHORITY_FEE, BANANATOOLS_ADDRESS } from '@
 import { Header, SelectToken, WalletInfoCollection, Hint } from '@/components'
 import { CollectorPage } from './style'
 import base58 from 'bs58';
-import { SOL_TOKEN } from '@/components/SelectToken/Token';
+import { SOL_TOKEN } from '@/config/Token';
 
 
 

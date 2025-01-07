@@ -25,7 +25,7 @@ import { addressHandler } from '@/utils'
 import { getMultipleAccounts } from '@/utils/sol'
 import { LoadingOut } from '@/components'
 import { Button_Style1 } from '@/config'
-import { SOL_TOKEN } from '../SelectToken/Token';
+import { SOL_TOKEN } from '../../config/Token';
 import type { CollocetionType } from '@/type'
 import PrivateKeyPage from './PrivateKeyPage'
 import {

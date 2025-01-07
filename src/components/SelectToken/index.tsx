@@ -13,17 +13,18 @@ import { getImage, IsAddress, addressHandler, fetcher } from '@/utils'
 import { getAsset } from '@/utils/sol'
 import { getSPLBalance, printSOLBalance } from '@/utils/util'
 import { getAllToken } from '@/utils/newSol'
-import { SOL, USDC, USDT } from './Token'
+import { SOL, USDC, USDT } from '../../config/Token'
 import type { Token_Type } from '@/type'
 import { TOKEN_BOX, SelectTokenPage, AllTokenItem } from './style'
 
 interface PropsType {
   selecToken: Token_Type
   callBack: (token: Token_Type) => void
+  isBot?: boolean
 }
 
 const App = (props: PropsType) => {
-  const { selecToken, callBack } = props
+  const { selecToken, callBack, isBot } = props
   const { connection } = useConnection()
   const { publicKey } = useWallet()
   const { t } = useTranslation()
@@ -153,7 +154,7 @@ const App = (props: PropsType) => {
               <div className='ml-3 address mr-2'>{addressHandler(token.address)}</div>
             </div>
           </div>
-          <div>{token.balance}</div>
+          {!isBot && <div>{token.balance}</div>}
         </div> :
         <div className='addtoken' onClick={showModal}>
           <BsPlus />
