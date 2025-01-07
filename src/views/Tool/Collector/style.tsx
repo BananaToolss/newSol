@@ -23,7 +23,7 @@ export const CollectorPage = styled.div`
     color: #fff;
   }
   }
-
+  
  
   .bb {
     border: 1px solid red;
@@ -83,5 +83,17 @@ export const CollectorPage = styled.div`
     border-radius: 6px;
     padding: 0 5px;
     margin-right: 8px;
+  }
+  .infobox {
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+
+    .info_item {
+      flex: 1;
+      border: 1px solid #cccccc;
+      padding: 20px;
+      border-radius: 6px;
+    }
   }
 `

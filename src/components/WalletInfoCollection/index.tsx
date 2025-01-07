@@ -4,13 +4,9 @@ import type { CheckboxChangeEvent } from 'antd'
 import {
   Keypair,
   PublicKey,
-  Connection,
-  LAMPORTS_PER_SOL,
-
 } from "@solana/web3.js";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { BsCopy } from "react-icons/bs";
-import { LoadingOutlined } from '@ant-design/icons';
 import { DeleteOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import {
   getMint,
@@ -22,7 +18,6 @@ import {
 import copy from 'copy-to-clipboard';
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { addressHandler } from '@/utils'
-import { getMultipleAccounts } from '@/utils/sol'
 import { LoadingOut } from '@/components'
 import { Button_Style1 } from '@/config'
 import { SOL_TOKEN } from '../../config/Token';
@@ -48,9 +43,6 @@ function WalletInfo(props: PropsType) {
 
   const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
   const [isLoading, setIsLoading] = useState(false)
-  const [totalSol, setTotalSol] = useState('')
-  const [totalToken, stTotalToken] = useState('')
-
 
   //**钱包私钥数组 */
   const privateKeyCallBack = async (keys: string) => {
@@ -59,7 +51,6 @@ function WalletInfo(props: PropsType) {
     setPrivateKeys(_privateKeys)
     getWalletsInfo(_privateKeys)
   }
-
 
   const getAt = async (mintAccount: PublicKey, walletAccount: PublicKey) => {
     let at: PublicKey = await getAssociatedTokenAddress(
@@ -147,14 +138,9 @@ function WalletInfo(props: PropsType) {
             state: 0
           }
         )
-        _totalSol += solBalance ? solBalance : 0
-        _tokenToken += tokenBalance ? tokenBalance : 0
       }
       console.log(accountInfoList, 'accountInfoList')
       setConfig(accountInfoList)
-      setTotalSol(_totalSol.toFixed(6))
-      stTotalToken(_tokenToken.toFixed(6))
-
       setIsLoading(false)
     } catch (error) {
       console.log(error, 'error')
@@ -162,7 +148,6 @@ function WalletInfo(props: PropsType) {
       setIsLoading(false)
     }
   }
-
 
   const deleteClick = (account: string, index: number) => {
     const _config = config.filter(item => item.walletAddr !== account)
@@ -215,13 +200,13 @@ function WalletInfo(props: PropsType) {
           <PrivateKeyPage privateKeys={privateKeys} callBack={privateKeyCallBack} title='导入钱包' />
           <Button className={`${Button_Style1} ml-2`} onClick={() => getWalletsInfo()}>获取余额</Button>
         </div>
-        {/* <div className='flex items-center h-100 flex-wrap'>
+        <div className='flex items-center h-100 flex-wrap'>
           <Button>选择余额为0</Button>
           <Button className='ml-2'>选择余额大于0</Button>
           <Button className='ml-2'>反选</Button>
           <Button className='ml-2'>选择失败</Button>
           <Button className='ml-2'><DeleteOutlined /></Button>
-        </div> */}
+        </div>
       </div>
 
       <div className='wallet'>
@@ -262,13 +247,6 @@ function WalletInfo(props: PropsType) {
           </div>
         }
 
-        <div className='mt-5'>
-          <div>
-            <div className='font-bold'>地址数量：{config.length}</div>
-            <div className='font-bold'>SOL余额：{totalSol}</div>
-            <div className='font-bold'>所选代币余额：{totalToken}</div>
-          </div>
-        </div>
       </div>
     </WalletInfoPage>
   )

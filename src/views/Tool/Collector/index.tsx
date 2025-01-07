@@ -299,6 +299,19 @@ function Authority() {
         <WalletInfoCollection tokenAddr={token ? token.address : null} config={walletConfig} setConfig={setWalletConfig} />
         {isError && <Button className='errBtn' onClick={copyErrClick}>复制失败地址</Button>}
 
+        <div className='mt-5 infobox'>
+          <div className='info_item'>
+            <div>地址数量：{walletConfig.length}</div>
+            <div>SOL余额：{1}</div>
+            <div>代币余额：{1}</div>
+          </div>
+          <div className='info_item ml-3'>
+            <div>所选地址数量：{walletConfig.length}</div>
+            <div>所选SOL余额：{1}</div>
+            <div>所选代币余额：{1}</div>
+          </div>
+        </div>
+
         <Hint title='如果执行失败，请检查 GAS 是否足够，归集代币数量是否大于设置的归集数量。' showClose />
 
         <div className='btn'>
