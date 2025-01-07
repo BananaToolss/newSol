@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button, Radio, notification, message } from 'antd'
 import type { RadioChangeEvent } from 'antd';
-import { DeleteOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   Keypair,
@@ -13,6 +12,7 @@ import {
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
 import { BigNumber, ethers } from 'ethers';
+import copy from 'copy-to-clipboard';
 import {
   TOKEN_PROGRAM_ID,
   getAccount,
@@ -28,30 +28,13 @@ import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
 import type { TOKEN_TYPE, CollocetionType } from '@/type'
 import { Input_Style, Button_Style, AUTHORITY_FEE, BANANATOOLS_ADDRESS } from '@/config'
-import { IsAddress, getTxLink, addressHandler, fetcher, getImage, getCurrentTimestamp, getLink } from '@/utils'
-import { fromSecretKey, printSOLBalance, getSPLBalance } from '@/utils/util'
-import { Header, SelectToken, WalletInfoCollection } from '@/components'
+import { Header, SelectToken, WalletInfoCollection, Hint } from '@/components'
 import { CollectorPage } from './style'
 import base58 from 'bs58';
 import { SOL_TOKEN } from '@/components/SelectToken/Token';
 
-type walletInfo = {
-  walletAddr: string;
-  solBalance: number;
-  baseTokenBlance: number | undefined;
-  targetTokenBalance: number | undefined;
-};
 
-interface Test {
-  time: string
-  data: string
-  isHash?: string
-  color?: string
-}
 
-const ERROR_COLOR = '#ff004d'
-const END_COLOR = '#2014cf'
-const HASH_COLOR = '#63e2bd'
 
 const SOLNUM = 8
 const TOKENNUM = 6
@@ -263,6 +246,25 @@ function Authority() {
     setToken(_token)
   }
 
+  const isError = useMemo(() => {
+    let isError = false
+    walletConfig.forEach((item) => {
+      if (item.state === 2) isError = true
+    })
+    return isError
+  }, [walletConfig])
+
+
+  const copyErrClick = () => {
+    const errAddr = []
+    walletConfig.forEach(item => {
+      if (item.state === 2) errAddr.push(item.privateKey)
+    })
+    const _value = errAddr.join('\n')
+    copy(_value)
+    messageApi.success('copy success')
+  }
+
   return (
     <Page>
       {contextHolder}
@@ -295,7 +297,9 @@ function Authority() {
         </div>
 
         <WalletInfoCollection tokenAddr={token ? token.address : null} config={walletConfig} setConfig={setWalletConfig} />
+        {isError && <Button className='errBtn' onClick={copyErrClick}>复制失败地址</Button>}
 
+        <Hint title='如果执行失败，请检查 GAS 是否足够，归集代币数量是否大于设置的归集数量。' showClose />
 
         <div className='btn'>
           <div className='buttonSwapper mt-4'>
