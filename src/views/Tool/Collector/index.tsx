@@ -277,7 +277,7 @@ function Authority() {
         <input className={Input_Style} placeholder={t('Please enter the wallet address to receive pooled tokens')}
           value={collectorAddr} onChange={(e) => setColletorAddr(e.target.value)} />
 
-        <div className=''>
+        <div className='mt-3'>
           <div className='mb-2'>{t('Select collection method')}</div>
           <Radio.Group onChange={modeTypeChange} value={modeType}>
             <Radio value={1}>{t('send all')}</Radio>
