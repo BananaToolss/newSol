@@ -1,4 +1,4 @@
-import { useState, SetStateAction, Dispatch } from 'react'
+import { useState, SetStateAction, Dispatch, useEffect } from 'react'
 import { Button, message, notification, Tag, Checkbox, Spin } from 'antd'
 import type { CheckboxChangeEvent } from 'antd'
 import {
@@ -44,12 +44,17 @@ function WalletInfo(props: PropsType) {
   const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
   const [isLoading, setIsLoading] = useState(false)
 
+  useEffect(()=> {
+    if(tokenAddr) getWalletsInfo()
+  },[tokenAddr])
+
   //**钱包私钥数组 */
   const privateKeyCallBack = async (keys: string) => {
     const resultArr = keys.split(/[(\r\n)\r\n]+/)
     const _privateKeys = resultArr.filter((item: string) => item !== '')
     setPrivateKeys(_privateKeys)
     getWalletsInfo(_privateKeys)
+    setCheckAll(false)
   }
 
   const getAt = async (mintAccount: PublicKey, walletAccount: PublicKey) => {
@@ -112,8 +117,6 @@ function WalletInfo(props: PropsType) {
       }
 
       let accountInfoList: CollocetionType[] = []
-      let _totalSol = 0
-      let _tokenToken = 0
 
       for (let i = 0; i < accountsSOL.length; i++) {
         let solBalance = 0
@@ -171,8 +174,16 @@ function WalletInfo(props: PropsType) {
   const itemOnCheckChange = (e: CheckboxChangeEvent) => {
     const _config = [...config]
     _config[Number(e.target.name)].isCheck = e.target.checked
-    const checkArr = _config.filter(item => item.isCheck)
     setConfig(_config)
+  }
+
+  useEffect(() => {
+    checkChange()
+  }, [config])
+
+  const checkChange = () => {
+    const _config = [...config]
+    const checkArr = _config.filter(item => item.isCheck)
     if (checkArr.length === 0) {
       setIndeterminate(false);
       setCheckAll(false)
@@ -184,9 +195,45 @@ function WalletInfo(props: PropsType) {
     }
   }
 
-  const copyClick = (value: string)=> {
+  const copyClick = (value: string) => {
     copy(value)
     messageApi.success('copy success')
+  }
+
+  const selectZero = () => {
+    const _config = [...config]
+    _config.map(item => {
+      item.tokenBalance == 0 ? item.isCheck = true : item.isCheck = false
+      return item
+    })
+    setConfig(_config)
+  }
+
+  const selectmoreZero = () => {
+    const _config = [...config]
+    _config.map(item => {
+      item.tokenBalance > 0 ? item.isCheck = true : item.isCheck = false
+      return item
+    })
+    setConfig(_config)
+  }
+
+  const selectError = () => {
+    const _config = [...config]
+    _config.map(item => {
+      item.state === 2 ? item.isCheck = true : item.isCheck = false
+      return item
+    })
+    setConfig(_config)
+  }
+
+  const selectOther = () => {
+    const _config = [...config]
+    _config.map(item => {
+      !item.isCheck ? item.isCheck = true : item.isCheck = false
+      return item
+    })
+    setConfig(_config)
   }
 
   return (
@@ -201,10 +248,10 @@ function WalletInfo(props: PropsType) {
           <Button className={`${Button_Style1} ml-2`} onClick={() => getWalletsInfo()}>获取余额</Button>
         </div>
         <div className='flex items-center h-100 flex-wrap'>
-          <Button>选择余额为0</Button>
-          <Button className='ml-2'>选择余额大于0</Button>
-          <Button className='ml-2'>反选</Button>
-          <Button className='ml-2'>选择失败</Button>
+          <Button onClick={selectZero}>选择余额为0</Button>
+          <Button className='ml-2' onClick={selectmoreZero}>选择余额大于0</Button>
+          <Button className='ml-2' onClick={selectOther}>反选</Button>
+          <Button className='ml-2' onClick={selectError}>选择失败</Button>
           <Button className='ml-2'><DeleteOutlined /></Button>
         </div>
       </div>
@@ -231,7 +278,7 @@ function WalletInfo(props: PropsType) {
                 </div>
                 <div className='flex items-center'>
                   <span>{addressHandler(item.walletAddr)} </span>
-                  <BsCopy className='ml-2' onClick={()=>copyClick(item.walletAddr)}/>
+                  <BsCopy className='ml-2' onClick={() => copyClick(item.walletAddr)} />
                 </div>
                 <div>{item.balance}</div>
                 <div>{item.tokenBalance}</div>

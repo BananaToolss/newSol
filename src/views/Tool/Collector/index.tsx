@@ -44,6 +44,7 @@ function Authority() {
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
+  const { publicKey } = useWallet()
   const { t } = useTranslation()
 
   const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
@@ -52,6 +53,45 @@ function Authority() {
   const [modeType, setModeType] = useState(1) //1发送全部 2固定数量 3保留余额
   const [colleAmount, setColleAmount] = useState('') //归集数量
   const [isSending, setIsSending] = useState<boolean>(false);
+
+  const [info, setInfo] = useState({
+    _totalSol: 0,
+    _totalTokenB: 0,
+    _seleNum: 0,
+    _seleSol: 0,
+    _seleTokenB: 0,
+  })
+
+  useEffect(() => {
+    getInfo()
+  }, [walletConfig])
+  useEffect(() => {
+    if (publicKey && publicKey.toBase58()) setColletorAddr(publicKey.toBase58())
+  }, [publicKey])
+
+  const getInfo = () => {
+    let _totalSol = 0
+    let _totalTokenB = 0
+    let _seleNum = 0
+    let _seleSol = 0
+    let _seleTokenB = 0
+    walletConfig.forEach(item => {
+      _totalSol += item.balance
+      _totalTokenB += item.tokenBalance
+      if (item.isCheck) {
+        _seleNum += 1
+        _seleSol += item.balance
+        _seleTokenB += item.tokenBalance
+      }
+    })
+    setInfo({
+      _totalSol,
+      _totalTokenB,
+      _seleNum,
+      _seleSol,
+      _seleTokenB
+    })
+  }
 
   const modeTypeChange = (e: RadioChangeEvent) => {
     setModeType(Number(e.target.value))
@@ -85,6 +125,7 @@ function Authority() {
     if (!collectorAddr) return messageApi.error('请填写归集接收地址')
     if (!token) return messageApi.error('请选择归集代币')
     if (modeType !== 1 && !colleAmount) return messageApi.error('请输入数量')
+    if (info._seleNum == 0) return messageApi.error('请选择需要归集的钱包')
     setIsSending(true)
     startCollector()
   }
@@ -94,13 +135,16 @@ function Authority() {
       const accounts: Keypair[] = [];
       const sendAmounts: number[] = []
       const assiciaAccounts: PublicKey[] = []
-      walletConfig.forEach((item, index) => {
+
+      const _walletConfig = walletConfig.filter(item => item.isCheck)
+
+      _walletConfig.forEach((item, index) => {
         const account = Keypair.fromSecretKey(base58.decode(item.privateKey))
         accounts.push(account)
         assiciaAccounts.push(item.assiciaAccount)
-        let balance = walletConfig[index].balance
+        let balance = _walletConfig[index].balance
         if (token.address !== SOL_TOKEN) {
-          balance = walletConfig[index].tokenBalance
+          balance = _walletConfig[index].tokenBalance
         }
 
         let amount = balance
@@ -224,11 +268,22 @@ function Authority() {
         getSignatureState(signatures)
       } else {
         const NUM = token.address === SOL_TOKEN ? SOLNUM : TOKENNUM
-        const _config = [...walletConfig]
+
+        const _walletConfig = walletConfig.filter(item => item.isCheck)
+
         state.forEach((item, index) => {
           for (let i = 0; i < NUM; i++) {
-            if (_config[i + index * NUM]) _config[i + index * NUM].state = item
+            if (_walletConfig[i + index * NUM]) _walletConfig[i + index * NUM].state = item
           }
+        })
+
+        const _config = [...walletConfig]
+        _config.forEach((item, index) => {
+          _walletConfig.forEach(wallet => {
+            if (wallet.walletAddr === item.walletAddr) {
+              _config[index].state = wallet.state
+            }
+          })
         })
         setWalletConfig(_config)
         setIsSending(false)
@@ -302,13 +357,13 @@ function Authority() {
         <div className='mt-5 infobox'>
           <div className='info_item'>
             <div>地址数量：{walletConfig.length}</div>
-            <div>SOL余额：{1}</div>
-            <div>代币余额：{1}</div>
+            <div>SOL余额：{info._seleSol}</div>
+            <div>代币余额：{info._totalTokenB}</div>
           </div>
           <div className='info_item ml-3'>
-            <div>所选地址数量：{walletConfig.length}</div>
-            <div>所选SOL余额：{1}</div>
-            <div>所选代币余额：{1}</div>
+            <div>所选地址数量：{info._seleNum}</div>
+            <div>所选SOL余额：{info._seleSol}</div>
+            <div>所选代币余额：{info._seleTokenB}</div>
           </div>
         </div>
 
