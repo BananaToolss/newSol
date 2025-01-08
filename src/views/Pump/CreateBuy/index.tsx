@@ -14,7 +14,7 @@ import { Input_Style, Button_Style, PUMP_CREATE_FEE, PUMP_CREATE_BIND_FEE } from
 import type { TOKEN_TYPE, WalletConfigType } from '@/type'
 import { Vanity, UpdataImage, Header, Result, WalletInfo, JitoFee, Hint } from '@/components'
 import { upLoadImage } from '@/utils/updataNFTImage'
-import { PumpFunSDK } from "../src";
+import { PumpFunSDK } from "@/Dex/Pump";
 import { Page } from '@/styles'
 import { CreatePage } from './style'
 
