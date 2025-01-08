@@ -1,30 +1,39 @@
 import { useState } from 'react'
+import { Api, Raydium, TxVersion, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2'
 import { Radio, Input, Select, Switch, Button } from 'antd'
 import type { RadioChangeEvent } from 'antd';
+import { AnchorProvider } from "@coral-xyz/anchor";
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { Header, SelectToken, Segmentd, WalletInfoCollection, JitoFee } from '@/components'
 import type { Token_Type, CollocetionType } from '@/type'
-import { SOL, USDC } from '@/config/Token'
+import { SOL, PUMP } from '@/config/Token'
 import { Input_Style, Button_Style } from '@/config'
+import { initSdk } from '@/Dex/Raydium'
+import { PumpFunSDK } from "@/Dex/Pump";
 import {
   SwapBotPage,
   LeftPage,
   RightPage,
   Card
 } from './style'
+import { Keypair, PublicKey } from '@solana/web3.js';
+import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
+import { delay } from './utils';
 
 
 
 
 function SwapBot() {
-
+  const { connection } = useConnection();
+  const wallet = useWallet()
   const [baseToken, setBseToken] = useState<Token_Type>(SOL)
-  const [token, setToken] = useState<Token_Type>(USDC)
+  const [token, setToken] = useState<Token_Type>(PUMP)
   const [dexCount, setDexCount] = useState(1) // 1raydium 2pump
   const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
 
 
   const [isJito, setIsJito] = useState(false)
-  const [jitoBindNum, setJitoBindNum] = useState(1)
+  const [jitoBindNum, setJitoBindNum] = useState(2)
   const [jitoFee, setJitoFee] = useState<number>(0)
   const [jitoRpc, setJitoRpc] = useState('')
 
@@ -71,9 +80,46 @@ function SwapBot() {
 
   const startClick = async () => {
     try {
-        if(dexCount === 1) {
-          
+      const _walletConfig = [...walletConfig]
+      const raydiums: Raydium[] = []
+      let sdk: PumpFunSDK | null
+
+      if (dexCount === 1) {
+        console.log('钱包准备中')
+        for (let i = 0; i < _walletConfig.length; i++) {
+          const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[i].privateKey))
+          let raydium: Raydium | null
+          try {
+            raydium = await initSdk({ owner: account, connection: connection })
+          } catch (error) {
+            console.log(`钱包${i + 1}加载失败`)
+          }
+          if (raydium) raydiums.push(raydium)
+          await delay(140)
         }
+        console.log(`钱包准备就绪`)
+      }
+      if (dexCount === 2) {
+        const provider = new AnchorProvider(connection, wallet, {
+          commitment: "finalized",
+        });
+        sdk = new PumpFunSDK(provider);
+        const tokenPool = await sdk.getBondingCurveAccount(new PublicKey(token.address))
+        console.log(tokenPool)
+      }
+      let walletIndex = 0
+      const raydium = raydiums[walletIndex]
+      const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey));
+
+
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const startSwap = async () => {
+    try {
+
     } catch (error) {
       console.log(error)
     }
