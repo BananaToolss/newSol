@@ -88,6 +88,18 @@ export default {
         icon: <img src={getImage('close.svg')} width={16} height={16} />,
       },
       {
+        path: '/raydium',
+        name: 'Raydium工具',
+        icon: <img src={getImage('raydium.png')} width={16} height={16} />,
+        routes: [
+          {
+            path: 'createId',
+            name: '创建市值ID',
+            icon: <AiOutlinePlusCircle color={COLOR} style={{ marginRight: '6px' }} />,
+          },
+        ]
+      },
+      {
         path: '/pump',
         name: 'Pump专区',
         icon: <img src={getImage('pump.svg')} width={16} height={16} />,

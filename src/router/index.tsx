@@ -15,6 +15,7 @@ import CreateWallet from "@/views/Tool/CreateWallet"
 import App from '@/views/App'
 import UnfreezeAccount from '@/views/Token/UnFreezeAccount'
 import SwapBot from '@/views/SwapBot'
+import CreateID from '@/views/Raydium/CreateID'
 
 const Routers = () => {
   const router = useRoutes([
@@ -44,12 +45,19 @@ const Routers = () => {
       ]
     },
     {
+      path: '/raydium',
+      element: <Home />,
+      children: [
+        { index: true, element: <Navigate to='createId' /> },
+        { path: "createId", element: <CreateID /> },
+      ]
+    },
+    {
       path: '/pump',
       element: <Home />,
       children: [
         { index: true, element: <Navigate to='create' /> },
         { path: "create", element: <CreateBuy /> },
-
       ]
     },
     {
