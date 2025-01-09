@@ -127,26 +127,27 @@ function SwapBot() {
       const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
       const _slippage = BigInt(Number(config.slippage) * 100)
 
-      let buyAmount = Number(config.minAmount) * LAMPORTS_PER_SOL
+
+      let buyAmount = Number(config.minAmount)
       if (config.amountType === 2) { //百分比
         let balance = await connection.getBalance(account.publicKey)
-        if (Number(config.maxAmount) == 2) {
+        balance = balance / LAMPORTS_PER_SOL
+        if (Number(config.modeType) == 2) {
           balance = await getSPLBalance(connection, QueteToken, account.publicKey)
         }
         buyAmount = balance * Number(config.minAmount) / 100
       } else if (config.amountType === 3) {
         const min = Number(config.minAmount) * BASE_NUMBER
         const max = Number(config.maxAmount) * BASE_NUMBER
-        const amountIn = getRandomNumber(min, max) / BASE_NUMBER
-        buyAmount = amountIn * LAMPORTS_PER_SOL
+        buyAmount = getRandomNumber(min, max) / BASE_NUMBER
       }
 
       const newTx = new Transaction()
       if (Number(config.modeType) === 1) {
-        const buyTx = await sdk.buy(account, QueteToken, BigInt(buyAmount), _slippage)
+        const buyTx = await sdk.buy(account, QueteToken, BigInt((buyAmount * LAMPORTS_PER_SOL).toFixed(0)), _slippage)
         newTx.add(buyTx)
       } else if (Number(config.modeType) === 2) {
-        const sellTx = await sdk.sell(account, QueteToken, BigInt(buyAmount), _slippage)
+        const sellTx = await sdk.sell(account, QueteToken, BigInt((buyAmount * 1000000).toFixed(0)), _slippage)
         newTx.add(sellTx)
       }
 

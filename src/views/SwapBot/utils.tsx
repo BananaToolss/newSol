@@ -33,7 +33,6 @@ export async function getSPLBalance(
   try {
     let ata = getAssociatedTokenAddressSync(mintAddress, pubKey, allowOffCurve);
     const balance = await connection.getTokenAccountBalance(ata, "processed");
-    console.log(balance)
     return Number(balance.value.uiAmount);
   } catch (e) {
     return 0;
