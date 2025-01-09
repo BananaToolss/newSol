@@ -19,7 +19,7 @@ import {
   Card
 } from './style'
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
-import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp } from './utils';
+import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp, getSolPrice } from './utils';
 import { ethers } from 'ethers';
 
 interface LogsType {
@@ -163,7 +163,11 @@ function SwapBot() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isStart, setIsStart] = useState(false)
   const [isStop, setIsStop] = useState(false)
+  const [solPrice, setSolPrice] = useState('')
 
+  useEffect(() => {
+    getSprice()
+  }, [])
   useEffect(() => {
     if (currentIndex > 0) {
       if (isStop) {
@@ -177,6 +181,14 @@ function SwapBot() {
     }
   }, [currentIndex])
 
+  const getSprice = async () => {
+    try {
+      setSolPrice(await getSolPrice())
+    } catch (error: any) {
+      setSolPrice(error)
+    }
+  }
+
   const pumpFun = async (index: number) => {
     try {
       const _walletConfig = [...walletConfig]
@@ -189,9 +201,10 @@ function SwapBot() {
 
       const tokenPool = await sdk.getBondingCurveAccount(QueteToken)
       const capSOL = tokenPool.getMarketCapSOL()
-      const price = ethers.utils.formatEther(capSOL)
-      console.log(price, 'price')
-
+      const _price = ethers.utils.formatEther(capSOL)
+      const price = ethers.utils.parseEther(_price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
+      const _pri = ethers.utils.formatEther(price)
+      logsArrChange(`代币价格：${_pri}`)
       const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
       const _slippage = BigInt(Number(config.slippage) * 100)
 
@@ -256,7 +269,7 @@ function SwapBot() {
     <SwapBotPage>
       {contextHolder1}
       <Header title='市值管理' hint='预设并自动执行交易指令，轻松实现批量在DEX交易，提高了交易的效率和时效性，特别适用于快速执行大量交易的场景' />
-
+      {solPrice}
       <div className='swap'>
         <LeftPage>
           <div className='box'>
