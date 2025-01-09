@@ -61,8 +61,7 @@ export async function sendTx(
   let versionedTx = await buildVersionedTx(connection, payer, newTx, commitment);
   versionedTx.sign(signers);
   try {
-    console.log((await connection.simulateTransaction(versionedTx, undefined)))
-
+  
     const sig = await connection.sendTransaction(versionedTx, {
       skipPreflight: false,
     });

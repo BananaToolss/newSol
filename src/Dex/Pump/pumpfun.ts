@@ -57,8 +57,6 @@ import { PumpFun, IDL } from "./IDL";
 import { jitoWithAxios } from "./jitoWithAxios";
 
 
-export const global_mint = new PublicKey("p89evAyzjd9fphjJx7G3RFA48sbZdpGEppRcfRNpump")
-
 const PROGRAM_ID = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P";
 const MPL_TOKEN_METADATA_PROGRAM_ID =
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
@@ -316,7 +314,7 @@ export class PumpFunSDK {
     priorityFees?: PriorityFee,
     commitment: Commitment = DEFAULT_COMMITMENT,
     finality: Finality = DEFAULT_FINALITY
-  ): Promise<TransactionResult> {
+  ): Promise<Transaction> {
     let buyTx = await this.getBuyInstructionsBySolAmount(
       buyer.publicKey,
       mint,
@@ -325,16 +323,16 @@ export class PumpFunSDK {
       commitment
     );
 
-    let buyResults = await sendTx(
-      this.connection,
-      buyTx,
-      buyer.publicKey,
-      [buyer],
-      priorityFees,
-      commitment,
-      finality
-    );
-    return buyResults;
+    // let buyResults = await sendTx(
+    //   this.connection,
+    //   buyTx,
+    //   buyer.publicKey,
+    //   [buyer],
+    //   priorityFees,
+    //   commitment,
+    //   finality
+    // );
+    return buyTx;
   }
 
   async sell(
@@ -411,7 +409,7 @@ export class PumpFunSDK {
     commitment: Commitment = DEFAULT_COMMITMENT
   ) {
     let bondingCurveAccount = await this.getBondingCurveAccount(
-      global_mint,
+      mint,
       commitment
     );
     if (!bondingCurveAccount) {

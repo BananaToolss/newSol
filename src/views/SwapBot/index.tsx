@@ -19,6 +19,7 @@ import {
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import { delay } from './utils';
+import { ethers } from 'ethers';
 
 
 
@@ -28,7 +29,7 @@ function SwapBot() {
   const wallet = useWallet()
   const [baseToken, setBseToken] = useState<Token_Type>(SOL)
   const [token, setToken] = useState<Token_Type>(PUMP)
-  const [dexCount, setDexCount] = useState(1) // 1raydium 2pump
+  const [dexCount, setDexCount] = useState(2) // 1raydium 2pump
   const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
 
 
@@ -82,7 +83,6 @@ function SwapBot() {
     try {
       const _walletConfig = [...walletConfig]
       const raydiums: Raydium[] = []
-      let sdk: PumpFunSDK | null
 
       if (dexCount === 1) {
         console.log('钱包准备中')
@@ -100,26 +100,31 @@ function SwapBot() {
         console.log(`钱包准备就绪`)
       }
       if (dexCount === 2) {
-        const provider = new AnchorProvider(connection, wallet, {
-          commitment: "finalized",
-        });
-        sdk = new PumpFunSDK(provider);
-        const tokenPool = await sdk.getBondingCurveAccount(new PublicKey(token.address))
-        console.log(tokenPool)
+        pumpFun()
       }
-      let walletIndex = 0
-      const raydium = raydiums[walletIndex]
-      const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey));
-
-
     } catch (error) {
       console.log(error)
     }
   }
 
-  const startSwap = async () => {
+  const pumpFun = async () => {
     try {
+      const _walletConfig = [...walletConfig]
+      const provider = new AnchorProvider(connection, wallet, {
+        commitment: "finalized",
+      });
+      let sdk: PumpFunSDK = new PumpFunSDK(provider);
+      const QueteToken = new PublicKey(token.address)
 
+      const tokenPool = await sdk.getBondingCurveAccount(QueteToken)
+      const capSOL = tokenPool.getMarketCapSOL()
+      const price = ethers.utils.formatEther(capSOL)
+
+      const walletIndex = 0
+      const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
+
+      const buyTx = await sdk.buy(account, QueteToken, 1000000n, 500n)
+      
     } catch (error) {
       console.log(error)
     }
