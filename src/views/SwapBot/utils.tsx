@@ -1,3 +1,41 @@
+import {
+  getAccount,
+  getAssociatedTokenAddressSync,
+  getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getMint
+} from '@solana/spl-token';
+import { Connection, PublicKey } from '@solana/web3.js';
+
 export function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+/**
+ * 两个数之间随机整数 含最大值，含最小值
+ * @param min 
+ * @param max 
+ * @returns number 类型
+ */
+export function getRandomNumber(min: number, max: number) {
+  min = Math.ceil(min)
+  max = Math.floor(max)
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+export async function getSPLBalance(
+  connection: Connection,
+  mintAddress: PublicKey,
+  pubKey: PublicKey,
+  allowOffCurve = false
+) {
+  try {
+    let ata = getAssociatedTokenAddressSync(mintAddress, pubKey, allowOffCurve);
+    const balance = await connection.getTokenAccountBalance(ata, "processed");
+    console.log(balance)
+    return Number(balance.value.uiAmount);
+  } catch (e) {
+    return 0;
+  }
+};

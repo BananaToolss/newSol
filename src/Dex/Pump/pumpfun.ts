@@ -343,7 +343,7 @@ export class PumpFunSDK {
     priorityFees?: PriorityFee,
     commitment: Commitment = DEFAULT_COMMITMENT,
     finality: Finality = DEFAULT_FINALITY
-  ): Promise<TransactionResult> {
+  ): Promise<Transaction> {
     let sellTx = await this.getSellInstructionsByTokenAmount(
       seller.publicKey,
       mint,
@@ -352,16 +352,16 @@ export class PumpFunSDK {
       commitment
     );
 
-    let sellResults = await sendTx(
-      this.connection,
-      sellTx,
-      seller.publicKey,
-      [seller],
-      priorityFees,
-      commitment,
-      finality
-    );
-    return sellResults;
+    // let sellResults = await sendTx(
+    //   this.connection,
+    //   sellTx,
+    //   seller.publicKey,
+    //   [seller],
+    //   priorityFees,
+    //   commitment,
+    //   finality
+    // );
+    return sellTx;
   }
 
   //create token instructions

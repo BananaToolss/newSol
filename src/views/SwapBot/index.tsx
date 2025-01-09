@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Api, Raydium, TxVersion, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2'
 import { Radio, Input, Select, Switch, Button } from 'antd'
 import type { RadioChangeEvent } from 'antd';
+import { Keypair, PublicKey, SystemProgram, Transaction, Commitment, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { Header, SelectToken, Segmentd, WalletInfoCollection, JitoFee } from '@/components'
@@ -10,23 +11,24 @@ import { SOL, PUMP } from '@/config/Token'
 import { Input_Style, Button_Style } from '@/config'
 import { initSdk } from '@/Dex/Raydium'
 import { PumpFunSDK } from "@/Dex/Pump";
+import { getTxLink, addPriorityFees } from '@/utils'
 import {
   SwapBotPage,
   LeftPage,
   RightPage,
   Card
 } from './style'
-import { Keypair, PublicKey } from '@solana/web3.js';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
-import { delay } from './utils';
+import { delay, getRandomNumber, getSPLBalance } from './utils';
 import { ethers } from 'ethers';
 
 
-
+const BASE_NUMBER = 10000
 
 function SwapBot() {
   const { connection } = useConnection();
   const wallet = useWallet()
+  const { sendTransaction } = useWallet()
   const [baseToken, setBseToken] = useState<Token_Type>(SOL)
   const [token, setToken] = useState<Token_Type>(PUMP)
   const [dexCount, setDexCount] = useState(2) // 1raydium 2pump
@@ -42,10 +44,11 @@ function SwapBot() {
     modeType: 1, //模式 1拉盘 2砸盘 3刷量
     thread: '1', //线程数
     spaceTime: '1', //间隔时间
-    slippage: '1', //滑点
+    slippage: '5', //滑点
     amountType: 1, //1固定 2百分比 3随机
     minAmount: '',
-    maxAmount: ''
+    maxAmount: '',
+    targetPrice: '', //目标价格
   })
   const configChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value })
@@ -122,9 +125,39 @@ function SwapBot() {
 
       const walletIndex = 0
       const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
+      const _slippage = BigInt(Number(config.slippage) * 100)
 
-      const buyTx = await sdk.buy(account, QueteToken, 1000000n, 500n)
-      
+      let buyAmount = Number(config.minAmount) * LAMPORTS_PER_SOL
+      if (config.amountType === 2) { //百分比
+        let balance = await connection.getBalance(account.publicKey)
+        if (Number(config.maxAmount) == 2) {
+          balance = await getSPLBalance(connection, QueteToken, account.publicKey)
+        }
+        buyAmount = balance * Number(config.minAmount) / 100
+      } else if (config.amountType === 3) {
+        const min = Number(config.minAmount) * BASE_NUMBER
+        const max = Number(config.maxAmount) * BASE_NUMBER
+        const amountIn = getRandomNumber(min, max) / BASE_NUMBER
+        buyAmount = amountIn * LAMPORTS_PER_SOL
+      }
+
+      const newTx = new Transaction()
+      if (Number(config.modeType) === 1) {
+        const buyTx = await sdk.buy(account, QueteToken, BigInt(buyAmount), _slippage)
+        newTx.add(buyTx)
+      } else if (Number(config.modeType) === 2) {
+        const sellTx = await sdk.sell(account, QueteToken, BigInt(buyAmount), _slippage)
+        newTx.add(sellTx)
+      }
+
+      //增加费用，减少失败
+      const versionedTx = await addPriorityFees(connection, newTx, account.publicKey);
+      versionedTx.sign([account])
+      const sig = await connection.sendTransaction(versionedTx, {
+        skipPreflight: false,
+      });
+      console.log(getTxLink(sig))
+
     } catch (error) {
       console.log(error)
     }
@@ -242,6 +275,13 @@ function SwapBot() {
                     </div>
                   </>
                 }
+              </div>
+            </div>
+
+            <div className='flex items-center mt-4'>
+              <div className='mr-3'>目标价格</div>
+              <div>
+                <Input value={config.targetPrice} onChange={configChange} name='targetPrice' />
               </div>
             </div>
           </div>
