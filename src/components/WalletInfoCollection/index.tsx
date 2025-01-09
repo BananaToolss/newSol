@@ -33,10 +33,11 @@ interface PropsType {
   config: CollocetionType[]
   setConfig: Dispatch<SetStateAction<CollocetionType[]>>
   isBot?: boolean
+  baseToken?: string
 }
 
 function WalletInfo(props: PropsType) {
-  const { tokenAddr, config, setConfig, isBot } = props
+  const { tokenAddr, config, setConfig, isBot, baseToken } = props
 
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
@@ -46,8 +47,8 @@ function WalletInfo(props: PropsType) {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    if (tokenAddr) getWalletsInfo()
-  }, [tokenAddr])
+    getWalletsInfo()
+  }, [tokenAddr, baseToken])
   useEffect(() => {
     privateChange()
   }, [config])
@@ -101,6 +102,10 @@ function WalletInfo(props: PropsType) {
 
       let decimals = 9 //代币信息
       let associaArr: PublicKey[] = []; //目标代币数组
+
+      let baseAccouns: PublicKey[] = [] //价值代币
+      let baseDecimals = 9
+
       if (tokenAddr && tokenAddr !== SOL_TOKEN) {
         const mintInfo = await getMint(connection, new PublicKey(tokenAddr));
         decimals = mintInfo.decimals
@@ -109,15 +114,26 @@ function WalletInfo(props: PropsType) {
           associaArr.push(to)
         }
       }
+      if (baseToken && baseToken !== SOL_TOKEN) {
+        const mintInfo = await getMint(connection, new PublicKey(baseToken));
+        baseDecimals = mintInfo.decimals
+        for (const account of accountsArr) {
+          const to = await getAt(new PublicKey(baseToken), account);
+          baseAccouns.push(to)
+        }
+      }
 
       let accountsArrSlice = []
       let associaArrSlice = []
+      let baseArrSlice = []
       for (let i = 0; i < accountsArr.length; i += 100) {
         accountsArrSlice.push(accountsArr.slice(i, i + 100))
         associaArrSlice.push(associaArr.slice(i, i + 100))
+        baseArrSlice.push(baseAccouns.slice(i, i + 100))
       }
       let accountsSOL: any[] = []
       let associaBalace: any[] = []
+      let basetBalace: any[] = []
 
       for (let i = 0; i < accountsArrSlice.length; i++) {
         const _accountSol = await connection.getMultipleAccountsInfo(accountsArrSlice[i], "processed")
@@ -125,6 +141,10 @@ function WalletInfo(props: PropsType) {
         if (associaArrSlice[i]) {
           const _associaBalace = await connection.getMultipleAccountsInfo(associaArrSlice[i], "processed")
           associaBalace = [...associaBalace, ..._associaBalace]
+        }
+        if (baseArrSlice[i]) {
+          const _basetBalace = await connection.getMultipleAccountsInfo(baseArrSlice[i], "processed")
+          basetBalace = [...basetBalace, ..._basetBalace]
         }
       }
 
@@ -142,6 +162,13 @@ function WalletInfo(props: PropsType) {
           const accountData = AccountLayout.decode(associaBalace[i].data);
           tokenBalance = Number(accountData.amount) / 10 ** decimals
         }
+        let baseTokenB = 0
+        if (baseToken === SOL_TOKEN) {
+          baseTokenB = solBalance
+        } else if (basetBalace[i] != undefined) {
+          const accountData = AccountLayout.decode(basetBalace[i].data);
+          baseTokenB = Number(accountData.amount) / 10 ** baseDecimals
+        }
         accountInfoList.push(
           {
             isCheck: true,
@@ -150,7 +177,9 @@ function WalletInfo(props: PropsType) {
             balance: solBalance ? solBalance : 0,
             tokenBalance: tokenBalance ? tokenBalance : 0,
             assiciaAccount: associaArr[i] ? associaArr[i] : null,
-            state: 0
+            state: 0,
+            baseTBalace: baseTokenB ? baseTokenB : 0,
+            baseAssiciaAccount: baseAccouns[i] ? baseAccouns[i] : null,
           }
         )
       }
@@ -274,9 +303,10 @@ function WalletInfo(props: PropsType) {
           <div className='flex items-center'><Checkbox indeterminate={indeterminate} checked={checkAll} onChange={onCheckAllChange} /></div>
           <div className='flex items-center'>地址</div>
           <div className='flex items-center'>SOL余额</div>
-          <div className='flex items-center'>所选代币余额</div>
-          <div className='flex items-center'>状态</div>
-          <div className='flex items-center'>移除数量</div>
+          {isBot && <div className='flex items-center'>价值代币</div>}
+          <div className='flex items-center'>代币余额</div>
+          {!isBot && <div className='flex items-center'>状态</div>}
+          <div className='flex items-center'>移除</div>
         </div>
         {isLoading && <LoadingOut title='钱包信息加载中...' />}
         {!isLoading &&
@@ -294,13 +324,14 @@ function WalletInfo(props: PropsType) {
                   <BsCopy className='ml-2' onClick={() => copyClick(item.walletAddr)} />
                 </div>
                 <div>{item.balance}</div>
+                <div>{item.baseTBalace}</div>
                 <div>{item.tokenBalance}</div>
-                <div>{
-                  item.state === 0 ? <Button>未执行</Button> :
+                {!isBot &&
+                  <div>{item.state === 0 ? <Button>未执行</Button> :
                     item.state === 1 ? <Tag color="#568ee6">成功</Tag> :
-                      <Tag color="red">失败</Tag>
+                      <Tag color="red">失败</Tag>}
+                  </div>
                 }
-                </div>
                 <div><DeleteOutlined onClick={() => deleteClick(item.walletAddr, index)} /></div>
               </div>
             ))}

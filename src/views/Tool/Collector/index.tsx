@@ -357,7 +357,7 @@ function Authority() {
         <div className='mt-5 infobox'>
           <div className='info_item'>
             <div>地址数量：{walletConfig.length}</div>
-            <div>SOL余额：{info._seleSol}</div>
+            <div>SOL余额：{info._totalSol}</div>
             <div>代币余额：{info._totalTokenB}</div>
           </div>
           <div className='info_item ml-3'>

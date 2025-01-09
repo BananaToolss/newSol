@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Api, Raydium, TxVersion, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2'
 import { Radio, Input, Select, Switch, Button, notification } from 'antd'
 import type { RadioChangeEvent } from 'antd';
@@ -57,6 +57,40 @@ function SwapBot() {
     maxAmount: '',
     targetPrice: '', //目标价格
   })
+
+  const [info, setInfo] = useState({
+    _totalSol: 0,
+    _totalTokenB: 0,
+    _seleNum: 0,
+    _seleSol: 0,
+    _seleTokenB: 0,
+  })
+  useEffect(() => {
+    getInfo()
+  }, [walletConfig])
+  const getInfo = () => {
+    let _totalSol = 0
+    let _totalTokenB = 0
+    let _seleNum = 0
+    let _seleSol = 0
+    let _seleTokenB = 0
+    walletConfig.forEach(item => {
+      _totalSol += item.balance
+      _totalTokenB += item.tokenBalance
+      if (item.isCheck) {
+        _seleNum += 1
+        _seleSol += item.balance
+        _seleTokenB += item.tokenBalance
+      }
+    })
+    setInfo({
+      _totalSol,
+      _totalTokenB,
+      _seleNum,
+      _seleSol,
+      _seleTokenB
+    })
+  }
   const configChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value })
   }
@@ -192,19 +226,19 @@ function SwapBot() {
             <div className='header'>账号概览</div>
             <div className='flex justify-between mt-4'>
               <div className='box1 mr-4'>
-                <div className='box1_header mb-3'>所有账户数量</div>
+                <div className='box1_header mb-3'>所有账户数量 {walletConfig.length}</div>
                 <div>
-                  <div className='mb-1'>SOL余额：0</div>
-                  <div className='mb-1'>USDC余额：0</div>
-                  <div className='mb-1'>Token余额：0</div>
+                  <div className='mb-1'>SOL余额：{info._totalSol}</div>
+                  <div className='mb-1'>价值代币余额：0</div>
+                  <div className='mb-1'>Token余额：{info._totalTokenB}</div>
                 </div>
               </div>
               <div className='box1'>
-                <div className='box1_header mb-3'>启用账户数量</div>
+                <div className='box1_header mb-3'>启用账户数量 {info._seleNum}</div>
                 <div>
-                  <div className='mb-1'>SOL余额：0</div>
-                  <div className='mb-1'>USDC余额：0</div>
-                  <div className='mb-1'>Token余额：0</div>
+                  <div className='mb-1'>SOL余额：{info._seleSol}</div>
+                  <div className='mb-1'>价值代币余额：0</div>
+                  <div className='mb-1'>Token余额：{info._seleTokenB}</div>
                 </div>
               </div>
             </div>
@@ -314,7 +348,8 @@ function SwapBot() {
 
         </LeftPage>
         <RightPage>
-          <WalletInfoCollection tokenAddr={token ? token.address : null} config={walletConfig} setConfig={setWalletConfig} isBot />
+          <WalletInfoCollection tokenAddr={token ? token.address : null} config={walletConfig}
+            setConfig={setWalletConfig} isBot baseToken={baseToken.address} />
           <div className='logs'>
             <div className='header'>交易日志</div>
             <div>
