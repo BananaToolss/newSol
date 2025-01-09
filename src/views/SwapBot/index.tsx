@@ -144,9 +144,11 @@ function SwapBot() {
 
       const newTx = new Transaction()
       if (Number(config.modeType) === 1) {
+        console.log(`钱包${walletIndex} + 1,买入${buyAmount}sol`)
         const buyTx = await sdk.buy(account, QueteToken, BigInt((buyAmount * LAMPORTS_PER_SOL).toFixed(0)), _slippage)
         newTx.add(buyTx)
       } else if (Number(config.modeType) === 2) {
+        console.log(`钱包${walletIndex} + 1,卖出${buyAmount} ${token.symbol}`)
         const sellTx = await sdk.sell(account, QueteToken, BigInt((buyAmount * 1000000).toFixed(0)), _slippage)
         newTx.add(sellTx)
       }
