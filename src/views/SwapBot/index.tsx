@@ -50,7 +50,7 @@ function SwapBot() {
   const [config, setConfig] = useState({
     modeType: 1, //模式 1拉盘 2砸盘 3刷量
     thread: '1', //线程数
-    spaceTime: '1', //间隔时间
+    spaceTime: '0', //间隔时间
     slippage: '5', //滑点
     amountType: 1, //1固定 2百分比 3随机
     minAmount: '',
@@ -128,10 +128,14 @@ function SwapBot() {
 
   const startClick = async () => {
     try {
+
       const _walletConfig = [...walletConfig]
       const raydiums: Raydium[] = []
-      if (_walletConfig.length === 0) return api.error({ message: "请导入钱包私钥" })
-
+      if (_walletConfig.length === 0) return logsArrChange('请导入钱包私钥', 'red')
+      if (!config.minAmount) return logsArrChange('请填写购买数量', 'red')
+      if (Number(config.amountType) === 3 && !config.maxAmount) return logsArrChange('请填写购买数量', 'red')
+      setIsStop(false)
+      setIsStart(true)
       if (dexCount === 1) {
         console.log('钱包准备中')
         for (let i = 0; i < _walletConfig.length; i++) {
@@ -148,16 +152,35 @@ function SwapBot() {
         console.log(`钱包准备就绪`)
       }
       if (dexCount === 2) {
-        pumpFun()
+        pumpFun(0)
       }
     } catch (error) {
       console.log(error)
+      setIsStart(false)
     }
   }
 
-  const pumpFun = async () => {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isStart, setIsStart] = useState(false)
+  const [isStop, setIsStop] = useState(false)
+
+  useEffect(() => {
+    if (currentIndex > 0) {
+      if (isStop) {
+        logsArrChange('任务暂停执行', '#ac20fa')
+        setIsStart(false)
+        return
+      }
+      setTimeout(() => {
+        pumpFun(currentIndex)
+      }, Number(config.spaceTime) * 1000)
+    }
+  }, [currentIndex])
+
+  const pumpFun = async (index: number) => {
     try {
       const _walletConfig = [...walletConfig]
+      const walletIndex = index < _walletConfig.length ? index : 0
       const provider = new AnchorProvider(connection, wallet, {
         commitment: "finalized",
       });
@@ -167,11 +190,10 @@ function SwapBot() {
       const tokenPool = await sdk.getBondingCurveAccount(QueteToken)
       const capSOL = tokenPool.getMarketCapSOL()
       const price = ethers.utils.formatEther(capSOL)
+      console.log(price, 'price')
 
-      const walletIndex = 0
       const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
       const _slippage = BigInt(Number(config.slippage) * 100)
-
 
       let amountIn = Number(config.minAmount)
       if (config.amountType === 2) { //百分比
@@ -210,9 +232,24 @@ function SwapBot() {
         skipPreflight: false,
       });
       logsArrChange(`${getTxLink(sig)}`, HASH_COLOR, true)
+
+      setCurrentIndex(walletIndex + 1)
     } catch (error) {
       console.log(error)
+      logsArrChange(`${error.toString()}`, 'red')
     }
+  }
+
+  const stopClick = () => {
+    setIsStop(true)
+  }
+
+  useEffect(() => {
+    scrollBottom()
+  }, [logsArr])
+  const scrollBottom = () => {
+    const div = document.getElementById('scrolldIV')
+    if (div) div.scrollTop = div.scrollHeight
   }
 
   return (
@@ -341,7 +378,9 @@ function SwapBot() {
 
           <div className='btn mt-5'>
             <div className='buttonSwapper mt-4'>
-              <Button className={Button_Style} onClick={startClick}>开始执行</Button>
+              <Button className={Button_Style} onClick={startClick} loading={isStart}>开始执行</Button>
+              <Button className={Button_Style} onClick={stopClick}>停止</Button>
+
             </div>
             <div className='fee'>全网最低服务费0.002SOL每笔交易</div>
           </div>
@@ -351,15 +390,18 @@ function SwapBot() {
           <WalletInfoCollection tokenAddr={token ? token.address : null} config={walletConfig}
             setConfig={setWalletConfig} isBot baseToken={baseToken.address} />
           <div className='logs'>
-            <div className='header'>交易日志</div>
-            <div>
+            <div className='header'>
+              <div>交易日志</div>
+              <Button type='primary' onClick={() => setLogsArr([])}>清空日志</Button>
+            </div>
+            <div className='scrolldIV' id='scrolldIV'>
               {logsArr.map((item, index) => (
                 item.isLink ?
                   <div key={index}>{item.time}: 交易hash--
                     <a href={item.label} target='_blank' style={{ color: '#51d38e' }}>{item.label}</a>
                   </div>
                   :
-                  <div key={index}>{item.time}: {item.label}</div>
+                  <div key={index} style={{ color: item.color }}>{item.time}: {item.label}</div>
               ))}
             </div>
           </div>

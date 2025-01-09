@@ -49,11 +49,18 @@ export const RightPage = styled.div`
      margin-top: 10px;
      border-radius: 6px;
      padding: 20px 10px;
+     height: 100%;
      .header {
       padding-bottom: 10px;
       border-bottom: 1px solid #cccccc;
       font-weight: 600;
+      display: flex;
+      justify-content: space-between;
      }
+   }
+   .scrolldIV {
+    overflow-y: scroll;
+    max-height: 550px;
    }
    .logs a{
     word-break:break-all;

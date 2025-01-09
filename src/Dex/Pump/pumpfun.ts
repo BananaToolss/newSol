@@ -315,31 +315,13 @@ export class PumpFunSDK {
     commitment: Commitment = DEFAULT_COMMITMENT,
     finality: Finality = DEFAULT_FINALITY
   ): Promise<{ buyTx: Transaction, buyAmount: bigint }> {
-    let buyTx = await this.getBuyInstructionsBySolAmount(
+    let { buyTx, buyAmount } = await this.getBuyInstructionsBySolAmount1(
       buyer.publicKey,
       mint,
       buyAmountSol,
       slippageBasisPoints,
       commitment
     );
-
-    let bondingCurveAccount = await this.getBondingCurveAccount(
-      mint,
-      commitment
-    );
-    if (!bondingCurveAccount) {
-      throw new Error(`Bonding curve account not found: ${mint.toBase58()}`);
-    }
-    let buyAmount = bondingCurveAccount.getBuyPrice(buyAmountSol);
-    // let buyResults = await sendTx(
-    //   this.connection,
-    //   buyTx,
-    //   buyer.publicKey,
-    //   [buyer],
-    //   priorityFees,
-    //   commitment,
-    //   finality
-    // );
     return { buyTx, buyAmount };
   }
 
@@ -438,6 +420,40 @@ export class PumpFunSDK {
       buyAmount,
       buyAmountWithSlippage,
     );
+  }
+
+  async getBuyInstructionsBySolAmount1(
+    buyer: PublicKey,
+    mint: PublicKey,
+    buyAmountSol: bigint,
+    slippageBasisPoints: bigint = 500n,
+    commitment: Commitment = DEFAULT_COMMITMENT
+  ) {
+    let bondingCurveAccount = await this.getBondingCurveAccount(
+      mint,
+      commitment
+    );
+    if (!bondingCurveAccount) {
+      throw new Error(`Bonding curve account not found: ${mint.toBase58()}`);
+    }
+
+    let buyAmount = bondingCurveAccount.getBuyPrice(buyAmountSol);
+    let buyAmountWithSlippage = calculateWithSlippageBuy(
+      buyAmountSol,
+      slippageBasisPoints
+    );
+    let globalAccount = await this.getGlobalAccount(commitment);
+
+    return {
+      buyTx: await this.getBuyInstructions(
+        buyer,
+        mint,
+        globalAccount.feeRecipient,
+        buyAmount,
+        buyAmountWithSlippage,
+      ),
+      buyAmount
+    };
   }
 
   //buy
