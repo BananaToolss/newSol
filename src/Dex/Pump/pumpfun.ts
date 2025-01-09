@@ -314,7 +314,7 @@ export class PumpFunSDK {
     priorityFees?: PriorityFee,
     commitment: Commitment = DEFAULT_COMMITMENT,
     finality: Finality = DEFAULT_FINALITY
-  ): Promise<Transaction> {
+  ): Promise<{ buyTx: Transaction, buyAmount: bigint }> {
     let buyTx = await this.getBuyInstructionsBySolAmount(
       buyer.publicKey,
       mint,
@@ -323,6 +323,14 @@ export class PumpFunSDK {
       commitment
     );
 
+    let bondingCurveAccount = await this.getBondingCurveAccount(
+      mint,
+      commitment
+    );
+    if (!bondingCurveAccount) {
+      throw new Error(`Bonding curve account not found: ${mint.toBase58()}`);
+    }
+    let buyAmount = bondingCurveAccount.getBuyPrice(buyAmountSol);
     // let buyResults = await sendTx(
     //   this.connection,
     //   buyTx,
@@ -332,7 +340,7 @@ export class PumpFunSDK {
     //   commitment,
     //   finality
     // );
-    return buyTx;
+    return { buyTx, buyAmount };
   }
 
   async sell(

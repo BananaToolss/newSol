@@ -128,28 +128,33 @@ function SwapBot() {
       const _slippage = BigInt(Number(config.slippage) * 100)
 
 
-      let buyAmount = Number(config.minAmount)
+      let amountIn = Number(config.minAmount)
       if (config.amountType === 2) { //百分比
         let balance = await connection.getBalance(account.publicKey)
         balance = balance / LAMPORTS_PER_SOL
         if (Number(config.modeType) == 2) {
           balance = await getSPLBalance(connection, QueteToken, account.publicKey)
         }
-        buyAmount = balance * Number(config.minAmount) / 100
+        amountIn = balance * Number(config.minAmount) / 100
       } else if (config.amountType === 3) {
         const min = Number(config.minAmount) * BASE_NUMBER
         const max = Number(config.maxAmount) * BASE_NUMBER
-        buyAmount = getRandomNumber(min, max) / BASE_NUMBER
+        amountIn = getRandomNumber(min, max) / BASE_NUMBER
       }
 
       const newTx = new Transaction()
-      if (Number(config.modeType) === 1) {
-        console.log(`钱包${walletIndex} + 1,买入${buyAmount}sol`)
-        const buyTx = await sdk.buy(account, QueteToken, BigInt((buyAmount * LAMPORTS_PER_SOL).toFixed(0)), _slippage)
+      if (Number(config.modeType) === 1 || Number(config.modeType) === 3) {
+        console.log(`钱包${walletIndex + 1} ,买入${amountIn}sol`)
+        const { buyTx, buyAmount } = await sdk.buy(account, QueteToken, BigInt((amountIn * LAMPORTS_PER_SOL).toFixed(0)), _slippage)
         newTx.add(buyTx)
+        if (Number(config.modeType) === 3) {
+          console.log(`钱包${walletIndex + 1},卖出${buyAmount} ${token.symbol}`)
+          const sellTx = await sdk.sell(account, QueteToken, buyAmount, _slippage)
+          newTx.add(sellTx)
+        }
       } else if (Number(config.modeType) === 2) {
-        console.log(`钱包${walletIndex} + 1,卖出${buyAmount} ${token.symbol}`)
-        const sellTx = await sdk.sell(account, QueteToken, BigInt((buyAmount * 1000000).toFixed(0)), _slippage)
+        console.log(`钱包${walletIndex + 1},卖出${amountIn} ${token.symbol}`)
+        const sellTx = await sdk.sell(account, QueteToken, BigInt((amountIn * 1000000).toFixed(0)), _slippage)
         newTx.add(sellTx)
       }
 
