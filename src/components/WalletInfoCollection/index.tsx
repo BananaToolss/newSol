@@ -144,7 +144,7 @@ function WalletInfo(props: PropsType) {
         }
         accountInfoList.push(
           {
-            isCheck: false,
+            isCheck: true,
             privateKey: _privateKeys[i],
             walletAddr: accountsArr[i].toBase58(),
             balance: solBalance ? solBalance : 0,

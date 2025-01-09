@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Api, Raydium, TxVersion, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2'
-import { Radio, Input, Select, Switch, Button } from 'antd'
+import { Radio, Input, Select, Switch, Button, notification } from 'antd'
 import type { RadioChangeEvent } from 'antd';
 import { Keypair, PublicKey, SystemProgram, Transaction, Commitment, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { AnchorProvider } from "@coral-xyz/anchor";
@@ -19,16 +19,22 @@ import {
   Card
 } from './style'
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
-import { delay, getRandomNumber, getSPLBalance } from './utils';
+import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp } from './utils';
 import { ethers } from 'ethers';
 
-
+interface LogsType {
+  time: string
+  label: string
+  color?: string
+  isLink?: boolean
+}
 const BASE_NUMBER = 10000
+const HASH_COLOR = '#51d38e'
 
 function SwapBot() {
   const { connection } = useConnection();
   const wallet = useWallet()
-  const { sendTransaction } = useWallet()
+  const [api, contextHolder1] = notification.useNotification();
   const [baseToken, setBseToken] = useState<Token_Type>(SOL)
   const [token, setToken] = useState<Token_Type>(PUMP)
   const [dexCount, setDexCount] = useState(2) // 1raydium 2pump
@@ -39,6 +45,7 @@ function SwapBot() {
   const [jitoBindNum, setJitoBindNum] = useState(2)
   const [jitoFee, setJitoFee] = useState<number>(0)
   const [jitoRpc, setJitoRpc] = useState('')
+  const [logsArr, setLogsArr] = useState<LogsType[]>([])
 
   const [config, setConfig] = useState({
     modeType: 1, //模式 1拉盘 2砸盘 3刷量
@@ -65,7 +72,10 @@ function SwapBot() {
   const tokenClick = (_token: Token_Type) => {
     setToken(_token)
   }
-
+  const logsArrChange = (label: string, color?: string, isLink?: boolean,) => {
+    const obj: LogsType = { time: getCurrentTimestamp(), label, color, isLink }
+    setLogsArr(item => [...item, obj])
+  }
 
   const jitoCallBack = (jitoFee_: number, jitoRpc_: string) => {
     setJitoFee(jitoFee_)
@@ -86,6 +96,7 @@ function SwapBot() {
     try {
       const _walletConfig = [...walletConfig]
       const raydiums: Raydium[] = []
+      if (_walletConfig.length === 0) return api.error({ message: "请导入钱包私钥" })
 
       if (dexCount === 1) {
         console.log('钱包准备中')
@@ -144,16 +155,16 @@ function SwapBot() {
 
       const newTx = new Transaction()
       if (Number(config.modeType) === 1 || Number(config.modeType) === 3) {
-        console.log(`钱包${walletIndex + 1} ,买入${amountIn}sol`)
+        logsArrChange(`钱包${walletIndex + 1} ,买入${amountIn}sol`)
         const { buyTx, buyAmount } = await sdk.buy(account, QueteToken, BigInt((amountIn * LAMPORTS_PER_SOL).toFixed(0)), _slippage)
         newTx.add(buyTx)
         if (Number(config.modeType) === 3) {
-          console.log(`钱包${walletIndex + 1},卖出${buyAmount} ${token.symbol}`)
+          logsArrChange(`钱包${walletIndex + 1},卖出${buyAmount} ${token.symbol}`)
           const sellTx = await sdk.sell(account, QueteToken, buyAmount, _slippage)
           newTx.add(sellTx)
         }
       } else if (Number(config.modeType) === 2) {
-        console.log(`钱包${walletIndex + 1},卖出${amountIn} ${token.symbol}`)
+        logsArrChange(`钱包${walletIndex + 1},卖出${amountIn} ${token.symbol}`)
         const sellTx = await sdk.sell(account, QueteToken, BigInt((amountIn * 1000000).toFixed(0)), _slippage)
         newTx.add(sellTx)
       }
@@ -164,8 +175,7 @@ function SwapBot() {
       const sig = await connection.sendTransaction(versionedTx, {
         skipPreflight: false,
       });
-      console.log(getTxLink(sig))
-
+      logsArrChange(`${getTxLink(sig)}`, HASH_COLOR, true)
     } catch (error) {
       console.log(error)
     }
@@ -173,6 +183,7 @@ function SwapBot() {
 
   return (
     <SwapBotPage>
+      {contextHolder1}
       <Header title='市值管理' hint='预设并自动执行交易指令，轻松实现批量在DEX交易，提高了交易的效率和时效性，特别适用于快速执行大量交易的场景' />
 
       <div className='swap'>
@@ -306,6 +317,16 @@ function SwapBot() {
           <WalletInfoCollection tokenAddr={token ? token.address : null} config={walletConfig} setConfig={setWalletConfig} isBot />
           <div className='logs'>
             <div className='header'>交易日志</div>
+            <div>
+              {logsArr.map((item, index) => (
+                item.isLink ?
+                  <div key={index}>{item.time}: 交易hash--
+                    <a href={item.label} target='_blank' style={{ color: '#51d38e' }}>{item.label}</a>
+                  </div>
+                  :
+                  <div key={index}>{item.time}: {item.label}</div>
+              ))}
+            </div>
           </div>
         </RightPage>
       </div>

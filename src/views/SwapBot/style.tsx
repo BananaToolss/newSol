@@ -55,6 +55,9 @@ export const RightPage = styled.div`
       font-weight: 600;
      }
    }
+   .logs a{
+    word-break:break-all;
+   }
 `
 export const Card = styled.div`
     margin: 20px 0;
