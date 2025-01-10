@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, notification } from 'antd'
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL, TransactionInstruction } from '@solana/web3.js'
@@ -10,41 +10,79 @@ import {
 } from '@raydium-io/raydium-sdk-v2'
 import BN from 'bn.js'
 import Decimal from 'decimal.js'
-import { initSdk, txVersion } from '@/Dex/Raydium'
+import { PoolFetchType, } from "@raydium-io/raydium-sdk-v2";
+import { initSdk, RaydiumApi } from '@/Dex/Raydium'
 import { Input_Style, Button_Style, REMOVE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
 import { Page } from '@/styles'
+import { getAsset } from '@/utils/sol'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
 import { Header, SelectToken, Result } from '@/components'
 import { isValidAmm } from './utils'
+import queryLpByToken from './getAllPool'
 import { CreatePool } from './style'
+
+interface PoolType {
+  lpReserve: number
+  baseMint: string
+  quoteMint: string
+  pubkey: string
+  marketProgramId: string
+  baseSymbol: string
+  baseImage: string
+  symbol: string
+  image: string
+}
 
 function CreateLiquidity() {
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
 
-  const [baseToken, setBaseToken] = useState<Token_Type>(SOL)
-  const [token, setToken] = useState<Token_Type>(PUMP)
-  const [isOptions, setIsOptions] = useState(false)
+  const [token, setToken] = useState<Token_Type>(SOL)
   const [isCreate, setIsCreate] = useState(false)
-  const [signature, setSignature] = useState("");
-  const [error, setError] = useState('');
   const [poolAddr, setPoolAddr] = useState('')
   const [isSearchId, setIsSearchId] = useState(false)
+  const [poolConfigArr, setPoolConfigArr] = useState<PoolType[]>([])
 
-  const [config, setConfig] = useState({
-    marketId: '',
-    baseAmount: '',
-    quoteAmount: '',
-    startTime: ''
-  })
-  const configChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setConfig({ ...config, [e.target.name]: e.target.value })
-  }
+  useEffect(() => {
+    if (token.address) getPoolInfo()
+  }, [token])
+
   const backClick = (_token: Token_Type) => {
     setToken(_token)
+  }
+
+  const getPoolInfo = async () => {
+    try {
+      const data = await queryLpByToken(token.address)
+      const _data = data.Raydium_LiquidityPoolv4
+      const _result = _data.slice(0, 5)
+      const allPoolConfig: PoolType[] = []
+      for (let index = 0; index < _result.length; index++) {
+        const item = _data[index];
+        const { symbol: baseSymbol, image: baseImage } = await getAsset(connection, item.baseMint)
+        const { symbol, image } = await getAsset(connection, item.quoteMint)
+
+        const obj: PoolType = {
+          lpReserve: item.lpReserve,
+          baseMint: item.baseMint,
+          quoteMint: item.quoteMint,
+          pubkey: item.pubkey,
+          marketProgramId: item.marketProgramId,
+          baseSymbol,
+          baseImage,
+          symbol,
+          image
+        }
+        allPoolConfig.push(obj)
+      }
+      setPoolConfigArr(allPoolConfig)
+      console.log(allPoolConfig, 'allPoolConfig')
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   const createClick = async () => {
@@ -149,13 +187,31 @@ function CreateLiquidity() {
           <div className='mb-1'>请选择代币</div>
           <SelectToken selecToken={token} callBack={backClick} />
         </div>
+        <div>
+          {poolConfigArr.map((item, index) => (
+            <div className='card' key={index}>
+              <div className='header'>
+                <div className='flex'>
+                  <img src={item.baseImage} />
+                  <img src={item.quoteMint} />
+                  <div className='font-bold'>{item.baseSymbol}/</div>
+                  <div className='font-bold'>{item.symbol}</div>
+                </div>
+                <div>{item.lpReserve}</div>
+              </div>
+              <div className='flex mt-2 items-center'>
+                <div className='text-sm'>池子ID：</div>
+                <div>{item.pubkey}</div>
+              </div>
+            </div>
+          ))}
+        </div>
         <div className='btn'>
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={createClick} loading={isCreate}>移除</Button>
           </div>
           <div className='fee'>全网最低服务费: {REMOVE_POOL_FEE} SOL</div>
         </div>
-        <Result tokenAddress={poolAddr} signature={signature} error={error} />
       </CreatePool>
 
     </Page>
