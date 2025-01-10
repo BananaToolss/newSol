@@ -1,12 +1,12 @@
 import { Api, Raydium, TxVersion, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2'
-import { Connection, Keypair } from '@solana/web3.js'
+import { Connection, Keypair, PublicKey } from '@solana/web3.js'
 
 
 export const txVersion = TxVersion.V0 // or TxVersion.LEGACY
 const cluster = 'devnet' // 'mainnet' | 'devnet'  //切换    //测试网兼容主网，反之不然
 
 let raydium: Raydium | undefined
-export const initSdk = async (params: { owner: Keypair, connection: Connection, loadToken?: boolean }) => {
+export const initSdk = async (params: { owner: Keypair | PublicKey, connection: Connection, loadToken?: boolean }) => {
   // if (raydium) return raydium
   // console.log(`connect to rpc ${connection.rpcEndpoint} in ${cluster}`)
   // console.log("init");

@@ -9,10 +9,23 @@ import {
   createInitializeAccountInstruction,
   MintLayout
 } from '@solana/spl-token'
+import {
+  MARKET_STATE_LAYOUT_V3,
+  AMM_V4,
+  OPEN_BOOK_PROGRAM,
+  FEE_DESTINATION_ID,
+  DEVNET_PROGRAM_ID,
+  TxVersion,
+  AmmRpcData,
+  AmmV4Keys,
+  ApiV3PoolInfoStandardItem,
+} from '@raydium-io/raydium-sdk-v2'
 import * as BufferLayout from 'buffer-layout';
 import BN from 'bn.js'
-import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, CREATE_POOL_FEE, BANANATOOLS_ADDRESS } from '@/config'
+import { initSdk } from '@/Dex/Raydium'
+import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
 import { Page } from '@/styles'
+import { getTxLink, addPriorityFees } from '@/utils'
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
 import { Header, SelectToken, Result } from '@/components'
@@ -96,10 +109,76 @@ function CreateLiquidity() {
 
   const createClick = async () => {
     try {
-      const startTime = new BN(Math.trunc(Date.now() / 1000) - 4)
+      if (!token) return api.error({ message: "请选择代币" })
+      setIsCreate(true)
+      let startTime = new BN(0)
+      if (isOptions && config.startTime) {
+        startTime = new BN(config.startTime)
+      }
+      const raydium = await initSdk({
+        owner: publicKey,
+        connection: connection,
+      });
 
+      const marketId = new PublicKey(config.marketId)
+      // if you are confirmed your market info, don't have to get market info from rpc below
+      const marketBufferInfo = await raydium.connection.getAccountInfo(new PublicKey(marketId))
+      const marketData = MARKET_STATE_LAYOUT_V3.decode(marketBufferInfo!.data)
+      const { baseMint, quoteMint } = MARKET_STATE_LAYOUT_V3.decode(marketBufferInfo!.data)
+      const txVersion = TxVersion.V0 // or TxVersion.LEGACY
+      const baseAmount = new BN(Number(config.baseAmount) * (10 ** baseToken.decimals))
+      const quoteAmount = new BN(Number(config.quoteAmount) * (10 ** token.decimals))
+
+      const execute = await raydium.liquidity.createPoolV4({
+        programId: isMainnet ? AMM_V4 : DEVNET_PROGRAM_ID.AmmV4,
+        marketInfo: {
+          marketId,
+          programId: isMainnet ? OPEN_BOOK_PROGRAM : DEVNET_PROGRAM_ID.OPENBOOK_MARKET,
+        },
+        baseMintInfo: {
+          mint: baseMint,
+          decimals: baseToken.decimals, // if you know mint decimals here, can pass number directly
+        },
+        quoteMintInfo: {
+          mint: quoteMint,
+          decimals: token.decimals, // if you know mint decimals here, can pass number directly
+        },
+        baseAmount, // if devent pool with sol/wsol, better use amount >= 4*10**9
+        quoteAmount, // if devent pool with sol/wsol, better use amount >= 4*10**9
+        startTime, // unit in seconds
+        ownerInfo: {
+          feePayer: publicKey,
+          useSOLBalance: true,
+        },
+        associatedOnly: false,
+        txVersion,
+        checkCreateATAOwner: true,
+        feeDestinationId: isMainnet ? FEE_DESTINATION_ID : DEVNET_PROGRAM_ID.FEE_DESTINATION_ID, // devnet
+        // optional: set up priority fee here
+        // computeBudgetConfig: {
+        //   units: 600000,
+        //   microLamports: 4659150,
+        // },
+      })
+      const poolId = execute.extInfo.address.ammId.toBase58()
+      const Tx = execute.transaction;
+
+      //增加费用，减少失败
+      // const versionedTx = await addPriorityFees(connection, Tx, publicKey)
+      const signature = await sendTransaction(Tx, connection);
+      const confirmed = await connection.confirmTransaction(
+        signature,
+        "processed"
+      );
+      setSignature(signature)
+      setPoolAddr(poolId)
+      console.log("confirmation", signature);
+      setIsCreate(false);
+      api.success({ message: 'create pool success' })
     } catch (error) {
       console.log(error)
+      api.error({ message: error.toString() })
+      setIsCreate(false);
     }
   }
 
