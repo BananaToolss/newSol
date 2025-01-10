@@ -15,6 +15,10 @@ export const CreatePool = styled.div`
     margin: 10px 0;
     border-radius: 6px;
     border: 1px solid #dfd4c4;
+    .info {
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 20px;
+    }
     .header {
       display: flex;
       justify-content: space-between;
@@ -23,6 +27,16 @@ export const CreatePool = styled.div`
       width: 30px;
       height: 30px;
       border-radius: 50%;
+    }
+    .card1 {
+      margin-top: 20px;
+      font-size: 16px;
+    }
+    .ant-segmented-item {
+      flex: 1;
+    }
+    .ant-segmented.ant-segmented-lg {
+      width: 80%;
     }
   }
 `
