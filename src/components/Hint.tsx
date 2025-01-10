@@ -19,10 +19,16 @@ const HintPage = styled.div`
   }
   .svg {
     width: 20px;
+    height: 20px;
     svg {
     width: 16px !important;
     height: 16px !important;
     }
+  }
+  .pointer {
+    width: 26px;
+    height: 26px;
+    margin-left: 6px;
   }
 `
 
