@@ -330,11 +330,11 @@ function CreateID() {
       <CreateIDPage>
         <div className='token'>
           <div className='tokenItem mr-5'>
-            <div className='mb-1'>基础代币</div>
+            <div className='mb-1 start'>基础代币</div>
             <SelectToken selecToken={baseToken} callBack={baseChange} />
           </div>
           <div className='tokenItem'>
-            <div className='mb-1'>报价代币</div>
+            <div className='mb-1 start'>报价代币</div>
             <SelectToken selecToken={token} callBack={backClick} />
           </div>
         </div>

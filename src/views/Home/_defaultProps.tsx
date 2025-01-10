@@ -5,7 +5,7 @@ import {
   BsHouseFill,
   BsDatabaseFill,
   BsRobot,
-  BsUnlock ,
+  BsUnlock,
   BsSend,
   BsPersonLock,
   BsGraphUp,
@@ -73,7 +73,7 @@ export default {
           {
             path: 'unfreezeAccount',
             name: '解冻账户',
-            icon: <BsUnlock  color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <BsUnlock color={COLOR} style={{ marginRight: '6px' }} />,
           },
           {
             path: 'mint',
@@ -95,6 +95,11 @@ export default {
           {
             path: 'createId',
             name: '创建市值ID',
+            icon: <AiOutlinePlusCircle color={COLOR} style={{ marginRight: '6px' }} />,
+          },
+          {
+            path: 'createLiquidity',
+            name: '创建流动性',
             icon: <AiOutlinePlusCircle color={COLOR} style={{ marginRight: '6px' }} />,
           },
         ]
