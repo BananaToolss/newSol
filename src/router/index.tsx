@@ -52,7 +52,7 @@ const Routers = () => {
         { index: true, element: <Navigate to='createId' /> },
         { path: "createId", element: <CreateID /> },
         { path: "createLiquidity", element: <CreateLiquidity /> },
-
+        { path: "createLiquidityandbuy", element: <CreateLiquidity /> },
       ]
     },
     {

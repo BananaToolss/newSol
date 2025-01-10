@@ -2,13 +2,7 @@ import { useState } from 'react'
 import { Input, Switch, DatePicker, Button, notification, Space } from 'antd'
 import type { DatePickerProps } from 'antd';
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { Keypair, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from '@solana/web3.js'
-import {
-  ACCOUNT_SIZE,
-  TOKEN_PROGRAM_ID,
-  createInitializeAccountInstruction,
-  MintLayout
-} from '@solana/spl-token'
+import { PublicKey, SystemProgram, LAMPORTS_PER_SOL, Transaction, TransactionInstruction } from '@solana/web3.js'
 import {
   MARKET_STATE_LAYOUT_V3,
   AMM_V4,
@@ -16,20 +10,16 @@ import {
   FEE_DESTINATION_ID,
   DEVNET_PROGRAM_ID,
   TxVersion,
-  AmmRpcData,
-  AmmV4Keys,
-  ApiV3PoolInfoStandardItem,
 } from '@raydium-io/raydium-sdk-v2'
 import * as BufferLayout from 'buffer-layout';
 import BN from 'bn.js'
 import { initSdk } from '@/Dex/Raydium'
+import { getTxLink, addPriorityFees } from '@/utils'
 import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
 import { Page } from '@/styles'
-import { getTxLink, addPriorityFees } from '@/utils'
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
-import { Header, SelectToken, Result } from '@/components'
-import DatePage from './DatePage'
+import { Header, SelectToken, Result, Hint } from '@/components'
 import { CreatePool } from './style'
 
 function CreateLiquidity() {
@@ -165,11 +155,29 @@ function CreateLiquidity() {
         // },
       })
       const poolId = execute.extInfo.address.ammId.toBase58()
-      const Tx = execute.transaction;
-
+      const _transaction = execute.transaction;
+      const Tx = new Transaction();
+      const instructions = _transaction.message.compiledInstructions.map((instruction: any) => {
+        return new TransactionInstruction({
+          keys: instruction.accountKeyIndexes.map((index: any) => ({
+            pubkey: _transaction.message.staticAccountKeys[index],
+            isSigner: _transaction.message.isAccountSigner(index),
+            isWritable: _transaction.message.isAccountWritable(index),
+          })),
+          programId: _transaction.message.staticAccountKeys[instruction.programIdIndex],
+          data: Buffer.from(instruction.data),
+        });
+      });
+      instructions.forEach((instruction: any) => Tx.add(instruction));
+      const fee = SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+        lamports: CREATE_POOL_FEE * LAMPORTS_PER_SOL,
+      })
+      Tx.add(fee)
       //增加费用，减少失败
-      // const versionedTx = await addPriorityFees(connection, Tx, publicKey)
-      const signature = await sendTransaction(Tx, connection);
+      const versionedTx = await addPriorityFees(connection, Tx, publicKey)
+      const signature = await sendTransaction(versionedTx, connection);
       const confirmed = await connection.confirmTransaction(
         signature,
         "processed"
@@ -193,11 +201,11 @@ function CreateLiquidity() {
       <CreatePool>
         <div className='token'>
           <div className='tokenItem mr-5'>
-            <div className='mb-1 start'>基础代币</div>
+            <div className='mb-1 start'>报价代币</div>
             <SelectToken selecToken={baseToken} callBack={baseChange} />
           </div>
           <div className='tokenItem'>
-            <div className='mb-1 start'>报价代币</div>
+            <div className='mb-1 start'>基础代币</div>
             <SelectToken selecToken={token} callBack={backClick} />
           </div>
         </div>
@@ -214,11 +222,11 @@ function CreateLiquidity() {
 
         <div className='token mt-5'>
           <div className='tokenItem mr-5'>
-            <div className='mb-1 start'>基础代币数量</div>
+            <div className='mb-1 start'>报价代币数量</div>
             <Input className={Input_Style} type='number' value={config.baseAmount} onChange={configChange} name='baseAmount' />
           </div>
           <div className='tokenItem'>
-            <div className='mb-1 start'>报价代币数量</div>
+            <div className='mb-1 start'>基础代币数量</div>
             <Input className={Input_Style} type='number' value={config.quoteAmount} onChange={configChange} name='quoteAmount' />
           </div>
         </div>
@@ -235,6 +243,8 @@ function CreateLiquidity() {
             </Space>
           </>
         }
+
+        <Hint title='当创建流动性至Raydium时，Raydium官方将收取0.4 SOL的手续费。为确保操作成功，请确保账户中预留至少0.5 SOL，以避免因余额不足导致添加流动性失败。' showClose/>
 
         <div className='btn'>
           <div className='buttonSwapper mt-4'>
