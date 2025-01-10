@@ -1,22 +1,9 @@
 import { useState } from 'react'
-import { Input, Switch, DatePicker, Button, notification, Space } from 'antd'
-import type { DatePickerProps } from 'antd';
+import { Button, notification } from 'antd'
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { Keypair, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from '@solana/web3.js'
+import { PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL, TransactionInstruction } from '@solana/web3.js'
 import {
-  ACCOUNT_SIZE,
-  TOKEN_PROGRAM_ID,
-  createInitializeAccountInstruction,
-  MintLayout
-} from '@solana/spl-token'
-import {
-  MARKET_STATE_LAYOUT_V3,
-  AMM_V4,
-  OPEN_BOOK_PROGRAM,
-  FEE_DESTINATION_ID,
-  DEVNET_PROGRAM_ID,
   TxVersion,
-  AmmRpcData,
   AmmV4Keys,
   AmmV5Keys,
   ApiV3PoolInfoStandardItem,
@@ -24,7 +11,7 @@ import {
 import BN from 'bn.js'
 import Decimal from 'decimal.js'
 import { initSdk, txVersion } from '@/Dex/Raydium'
-import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
+import { Input_Style, Button_Style, REMOVE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
 import { Page } from '@/styles'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { SOL, PUMP } from '@/config/Token'
@@ -62,15 +49,16 @@ function CreateLiquidity() {
 
   const createClick = async () => {
     try {
+      setIsCreate(true)
       const poolId = '23miCdKG2WNVS3AUZ55ErSNRFRXNx2ZWHw4g4ChRVeYC'
+      let poolKeys: AmmV4Keys | AmmV5Keys | undefined
+      let poolInfo: ApiV3PoolInfoStandardItem
+      const withdrawLpAmount = new BN(Number(1) * 1000000000)
+
       const raydium = await initSdk({
         owner: publicKey,
         connection: connection,
       });
-
-      let poolKeys: AmmV4Keys | AmmV5Keys | undefined
-      let poolInfo: ApiV3PoolInfoStandardItem
-      const withdrawLpAmount = new BN(Number(1) * 1000000000)
 
       if (isMainnet) {
         const data = await raydium.api.fetchPoolById({ ids: poolId })
@@ -80,37 +68,72 @@ function CreateLiquidity() {
         poolInfo = data.poolInfo
         poolKeys = data.poolKeys
       }
-      if (!isValidAmm(poolInfo.programId)) throw new Error('target pool is not AMM pool')
-      console.log(poolInfo, 'poolInfo')
-      const [baseRatio, quoteRatio] = [
-        new Decimal(poolInfo.mintAmountA).div(poolInfo.lpAmount || 1),
-        new Decimal(poolInfo.mintAmountB).div(poolInfo.lpAmount || 1),
-      ]
 
-      const withdrawAmountDe = new Decimal(withdrawLpAmount.toString())
-      const [withdrawAmountA, withdrawAmountB] = [
-        withdrawAmountDe.mul(baseRatio).mul(10 ** (poolInfo?.mintA.decimals || 0)),
-        withdrawAmountDe.mul(quoteRatio).mul(10 ** (poolInfo?.mintB.decimals || 0)),
-      ]
-      console.log('first')
-      const lpSlippage = 0.001 // means 0.1%
+      const txVersion = TxVersion.V0
+      try {
+        if (!isValidAmm(poolInfo.programId)) throw new Error('target pool is not AMM pool')
+        const [baseRatio, quoteRatio] = [
+          new Decimal(poolInfo.mintAmountA).div(poolInfo.lpAmount || 1),
+          new Decimal(poolInfo.mintAmountB).div(poolInfo.lpAmount || 1),
+        ]
 
-      const execute = await raydium.liquidity.removeLiquidity({
-        poolInfo,
-        poolKeys,
-        lpAmount: withdrawLpAmount,
-        baseAmountMin: new BN(withdrawAmountA.mul(1 - lpSlippage).toFixed(0)),
-        quoteAmountMin: new BN(withdrawAmountB.mul(1 - lpSlippage).toFixed(0)),
-        txVersion,
-        // optional: set up priority fee here
-        // computeBudgetConfig: {
-        //   units: 600000,
-        //   microLamports: 46591500,
-        // },
-      })
+        const withdrawAmountDe = new Decimal(withdrawLpAmount.toString()).div(10 ** poolInfo.lpMint.decimals)
+        const [withdrawAmountA, withdrawAmountB] = [
+          withdrawAmountDe.mul(baseRatio).mul(10 ** (poolInfo?.mintA.decimals || 0)),
+          withdrawAmountDe.mul(quoteRatio).mul(10 ** (poolInfo?.mintB.decimals || 0)),
+        ]
 
-      const signedTransaction = await sendTransaction(execute.transaction, connection)
-      console.log(signedTransaction, execute.extInfo)
+        const lpSlippage = 0.1 // means 1%
+
+        const execute = await raydium.liquidity.removeLiquidity({
+          poolInfo,
+          poolKeys,
+          lpAmount: withdrawLpAmount,
+          baseAmountMin: new BN(withdrawAmountA.mul(1 - lpSlippage).toFixed(0)),
+          quoteAmountMin: new BN(withdrawAmountB.mul(1 - lpSlippage).toFixed(0)),
+          txVersion,
+          // optional: set up priority fee here
+          // computeBudgetConfig: {
+          //   units: 600000,
+          //   microLamports: 46591500,
+          // },
+        })
+
+        const _transaction = execute.transaction;
+        const Tx = new Transaction();
+        const instructions = _transaction.message.compiledInstructions.map((instruction: any) => {
+          return new TransactionInstruction({
+            keys: instruction.accountKeyIndexes.map((index: any) => ({
+              pubkey: _transaction.message.staticAccountKeys[index],
+              isSigner: _transaction.message.isAccountSigner(index),
+              isWritable: _transaction.message.isAccountWritable(index),
+            })),
+            programId: _transaction.message.staticAccountKeys[instruction.programIdIndex],
+            data: Buffer.from(instruction.data),
+          });
+        });
+        instructions.forEach((instruction: any) => Tx.add(instruction));
+        const fee = SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+          lamports: REMOVE_POOL_FEE * LAMPORTS_PER_SOL,
+        })
+        Tx.add(fee)
+        //增加费用，减少失败
+        const versionedTx = await addPriorityFees(connection, Tx, publicKey)
+        const signature = await sendTransaction(versionedTx, connection);
+        const confirmed = await connection.confirmTransaction(
+          signature,
+          "processed"
+        );
+        setIsCreate(false);
+      } catch (error) {
+        console.log(error, 'ssssssssssss')
+        console.log(error)
+        api.error({ message: error.toString() })
+        setIsCreate(false);
+      }
+
 
     } catch (error) {
       console.log(error)
@@ -130,7 +153,7 @@ function CreateLiquidity() {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={createClick} loading={isCreate}>移除</Button>
           </div>
-          <div className='fee'>全网最低服务费: {CREATE_POOL_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: {REMOVE_POOL_FEE} SOL</div>
         </div>
         <Result tokenAddress={poolAddr} signature={signature} error={error} />
       </CreatePool>

@@ -32,6 +32,7 @@ export const FREE_TOKEN_FEE = 0.08 //冻结账户
 export const BURN_FEE = 0.05 //烧烧代币
 export const MARKET_FEE = 0.1 //市场 
 export const CREATE_POOL_FEE = 0.1 //创建流动性
+export const REMOVE_POOL_FEE = 0.05
 export const MULTISEND_FEE = 0.008 //批量转账费用
 export const COLLECT_FEE = 0.01 //批量归集
 
