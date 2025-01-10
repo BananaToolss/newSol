@@ -5,7 +5,7 @@ export const SelectTokenPage = styled.div`
   display: flex;
   padding: 10px;
   width: 100%;
-  border-radius: 10px;
+  border-radius: 6px;
 
   .address {
     color: #595555;

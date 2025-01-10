@@ -155,7 +155,8 @@ const App = (props: PropsType) => {
               <div className='ml-3 address mr-2'>{addressHandler(token.address)}</div>
             </div>
           </div>
-          {isBot ? <BsChevronDown /> : <div>{token.balance}</div>}
+          {!isBot && <div className='text-sm'>{token.balance}</div>}
+          <BsChevronDown />
         </div> :
         <div className='addtoken' onClick={showModal}>
           <BsPlus />
