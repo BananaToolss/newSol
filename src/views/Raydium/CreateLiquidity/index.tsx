@@ -110,6 +110,10 @@ function CreateLiquidity() {
   const createClick = async () => {
     try {
       if (!token) return api.error({ message: "请选择代币" })
+      if (!config.marketId) return api.error({ message: "请填写市场ID" })
+      if (!config.baseAmount) return api.error({ message: "请填写基础代币数量" })
+      if (!config.quoteAmount) return api.error({ message: "请填写报价代币数量" })
+
       setIsCreate(true)
       let startTime = new BN(0)
       if (isOptions && config.startTime) {
