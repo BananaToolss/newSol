@@ -9,12 +9,13 @@ import {
   createInitializeAccountInstruction,
   MintLayout
 } from '@solana/spl-token'
+import * as BufferLayout from 'buffer-layout';
 import BN from 'bn.js'
 import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, CREATE_POOL_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { Page } from '@/styles'
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
-import { Header, SelectToken } from '@/components'
+import { Header, SelectToken, Result } from '@/components'
 import DatePage from './DatePage'
 import { CreatePool } from './style'
 
@@ -27,8 +28,20 @@ function CreateLiquidity() {
   const [token, setToken] = useState<Token_Type>(PUMP)
   const [isOptions, setIsOptions] = useState(false)
   const [isCreate, setIsCreate] = useState(false)
+  const [signature, setSignature] = useState("");
+  const [error, setError] = useState('');
+  const [poolAddr, setPoolAddr] = useState('')
+  const [isSearchId, setIsSearchId] = useState(false)
 
-
+  const [config, setConfig] = useState({
+    marketId: '',
+    baseAmount: '',
+    quoteAmount: '',
+    startTime: ''
+  })
+  const configChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfig({ ...config, [e.target.name]: e.target.value })
+  }
   const baseChange = (_token: Token_Type) => {
     setBaseToken(_token)
   }
@@ -36,16 +49,63 @@ function CreateLiquidity() {
     setToken(_token)
   }
   const timeOnChange: DatePickerProps['onChange'] = (date, dateString) => {
-    console.log(date, dateString);
+    const time = Date.parse(dateString as string) / 1000
+    setConfig({ ...config, startTime: time.toString() })
   };
 
-  const createClick = async () => {
-    const startTime = new BN(Math.trunc(Date.now() / 1000) - 4)
+  const ACCOUNT_LAYOUT = BufferLayout.struct([
+    BufferLayout.blob(53, 'mint'),
+    BufferLayout.blob(32, 'owner'),
+    BufferLayout.blob(85, 'base'),
+    BufferLayout.nu64('amount'),
+    BufferLayout.blob(93),
+  ]);
+  const findMarketId = async () => {
+    try {
+      setIsSearchId(true)
+      const result = await connection.getProgramAccounts(new PublicKey(OPENBOOK_PROGRAM_ID), {
+        filters: [
+          {
+            memcmp: {
+              offset: ACCOUNT_LAYOUT.offsetOf('owner'),
+              bytes: baseToken.address,
+            },
+          },
+          {
+            memcmp: {
+              offset: ACCOUNT_LAYOUT.offsetOf('base'),
+              bytes: token.address,
+            },
+          },
+        ]
+      });
+      if (result.length > 0) {
+        const marketId = result[0].pubkey.toBase58()
+        setConfig({ ...config, marketId })
+        api.success({ message: "查找成功" })
+      } else {
+        api.success({ message: "没有查找到ID" })
+      }
+      setIsSearchId(false)
+    } catch (error) {
+      console.log(error)
+      api.error({ message: error.toString() })
+      setIsSearchId(false)
+    }
+  }
 
+  const createClick = async () => {
+    try {
+      const startTime = new BN(Math.trunc(Date.now() / 1000) - 4)
+
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   return (
     <Page>
+      {contextHolder1}
       <Header title='创建流动性池' hint='轻松创建任何 Solana 代币的流动资金池。您的代币将可在 Raydium、Birdeye 和 DexScreener 上进行交易。' />
       <CreatePool>
         <div className='token'>
@@ -62,21 +122,21 @@ function CreateLiquidity() {
         <div className='mt-5'>
           <div className='flex mb-1 justify-between'>
             <div>OpenBook市场 ID(没有？去创建)</div>
-            <Button type='primary'>查找Market ID</Button>
+            <Button type='primary' onClick={findMarketId} loading={isSearchId}>查找Market ID</Button>
           </div>
           <div>
-            <Input className={Input_Style} />
+            <Input className={Input_Style} value={config.marketId} onChange={configChange} name='marketId' />
           </div>
         </div>
 
         <div className='token mt-5'>
           <div className='tokenItem mr-5'>
             <div className='mb-1 start'>基础代币数量</div>
-            <Input className={Input_Style} type='number' />
+            <Input className={Input_Style} type='number' value={config.baseAmount} onChange={configChange} name='baseAmount' />
           </div>
           <div className='tokenItem'>
             <div className='mb-1 start'>报价代币数量</div>
-            <Input className={Input_Style} type='number' />
+            <Input className={Input_Style} type='number' value={config.quoteAmount} onChange={configChange} name='quoteAmount' />
           </div>
         </div>
 
@@ -100,7 +160,7 @@ function CreateLiquidity() {
           <div className='fee'>全网最低服务费: {CREATE_POOL_FEE} SOL</div>
         </div>
 
-        {/* <Result signature={signature} error={error} /> */}
+        <Result tokenAddress={poolAddr} signature={signature} error={error} />
       </CreatePool>
 
     </Page>
