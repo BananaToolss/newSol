@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Input, Switch, Segmented, Button, notification } from 'antd'
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
+import { Keypair, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import {
   ACCOUNT_SIZE,
   TOKEN_PROGRAM_ID,
@@ -11,10 +11,10 @@ import {
 import { ZERO } from '@raydium-io/raydium-sdk-v2';
 import BN from 'bn.js'
 import { DexInstructions, Market } from "@project-serum/serum";
-import { Header, SelectToken, Hint } from '@/components'
+import { Header, SelectToken, Hint, Result } from '@/components'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { SOL, PUMP } from '@/config/Token'
-import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID } from '@/config'
+import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, MARKET_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { Page } from '@/styles'
 import type { Token_Type } from '@/type'
 import {
@@ -67,6 +67,8 @@ function CreateID() {
   const [level, setLevel] = useState(0)
   const [isCreate, setIsCreate] = useState(false)
   const [marketId, setMarketId] = useState('')
+  const [signature, setSignature] = useState("");
+  const [error, setError] = useState('');
 
   const [config, setConfig] = useState({
     minBuy: '1',
@@ -97,6 +99,9 @@ function CreateID() {
 
   const createClick = async () => {
     try {
+      setSignature('')
+      setError('')
+      setMarketId('')
       if (!baseToken) return api.error({ message: "请选择基础代币" })
       if (!token) return api.error({ message: "请选择报价代币" })
       if (Number(config.minBuy) < 0) return api.error({ message: "请填写订单量" })
@@ -266,6 +271,12 @@ function CreateID() {
         programId: programID,
       });
 
+      const fee = SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+        lamports: MARKET_FEE * LAMPORTS_PER_SOL,
+      })
+
       const newTx = new Transaction().add(
         marketInstruction1,
         marketInstruction2,
@@ -273,6 +284,7 @@ function CreateID() {
         marketInstruction4,
         marketInstruction5,
         marketInstruction6,
+        fee
       );
 
       //增加费用，减少失败
@@ -290,14 +302,24 @@ function CreateID() {
         "processed"
       );
       console.log(confirmed1, 'confirmed1')
-      console.log(getTxLink(signature1))
       api.success({ message: '创建成功' })
       setIsCreate(false)
+      setSignature(signature1)
       setMarketId(marketAccounts.market.publicKey.toBase58())
     } catch (error) {
       console.log(error)
       api.error({ message: error.toString() })
       setIsCreate(false)
+      const err = (error as any)?.message;
+      if (
+        err.includes(
+          "Cannot read properties of undefined (reading 'public_keys')"
+        )
+      ) {
+        setError("It is not a valid Backpack username");
+      } else {
+        setError(err);
+      }
     }
   }
 
@@ -361,8 +383,10 @@ function CreateID() {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={createClick} loading={isCreate}>确认燃烧</Button>
           </div>
-          <div className='fee'>全网最低服务费: {1} SOL</div>
+          <div className='fee'>全网最低服务费: {MARKET_FEE} SOL</div>
         </div>
+
+        <Result tokenAddress={marketId} signature={signature} error={error} />
       </CreateIDPage>
     </Page>
   )
