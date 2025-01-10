@@ -18,16 +18,19 @@ import {
   TxVersion,
   AmmRpcData,
   AmmV4Keys,
+  AmmV5Keys,
   ApiV3PoolInfoStandardItem,
 } from '@raydium-io/raydium-sdk-v2'
 import BN from 'bn.js'
-import { initSdk } from '@/Dex/Raydium'
+import Decimal from 'decimal.js'
+import { initSdk, txVersion } from '@/Dex/Raydium'
 import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
 import { Page } from '@/styles'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
 import { Header, SelectToken, Result } from '@/components'
+import { isValidAmm } from './utils'
 import { CreatePool } from './style'
 
 function CreateLiquidity() {
@@ -56,14 +59,79 @@ function CreateLiquidity() {
   const backClick = (_token: Token_Type) => {
     setToken(_token)
   }
- 
+
+  const createClick = async () => {
+    try {
+      const poolId = '23miCdKG2WNVS3AUZ55ErSNRFRXNx2ZWHw4g4ChRVeYC'
+      const raydium = await initSdk({
+        owner: publicKey,
+        connection: connection,
+      });
+
+      let poolKeys: AmmV4Keys | AmmV5Keys | undefined
+      let poolInfo: ApiV3PoolInfoStandardItem
+      const withdrawLpAmount = new BN(Number(1) * 1000000000)
+
+      if (isMainnet) {
+        const data = await raydium.api.fetchPoolById({ ids: poolId })
+        poolInfo = data[0] as ApiV3PoolInfoStandardItem
+      } else {
+        const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId })
+        poolInfo = data.poolInfo
+        poolKeys = data.poolKeys
+      }
+      if (!isValidAmm(poolInfo.programId)) throw new Error('target pool is not AMM pool')
+      console.log(poolInfo, 'poolInfo')
+      const [baseRatio, quoteRatio] = [
+        new Decimal(poolInfo.mintAmountA).div(poolInfo.lpAmount || 1),
+        new Decimal(poolInfo.mintAmountB).div(poolInfo.lpAmount || 1),
+      ]
+
+      const withdrawAmountDe = new Decimal(withdrawLpAmount.toString())
+      const [withdrawAmountA, withdrawAmountB] = [
+        withdrawAmountDe.mul(baseRatio).mul(10 ** (poolInfo?.mintA.decimals || 0)),
+        withdrawAmountDe.mul(quoteRatio).mul(10 ** (poolInfo?.mintB.decimals || 0)),
+      ]
+      console.log('first')
+      const lpSlippage = 0.001 // means 0.1%
+
+      const execute = await raydium.liquidity.removeLiquidity({
+        poolInfo,
+        poolKeys,
+        lpAmount: withdrawLpAmount,
+        baseAmountMin: new BN(withdrawAmountA.mul(1 - lpSlippage).toFixed(0)),
+        quoteAmountMin: new BN(withdrawAmountB.mul(1 - lpSlippage).toFixed(0)),
+        txVersion,
+        // optional: set up priority fee here
+        // computeBudgetConfig: {
+        //   units: 600000,
+        //   microLamports: 46591500,
+        // },
+      })
+
+      const signedTransaction = await sendTransaction(execute.transaction, connection)
+      console.log(signedTransaction, execute.extInfo)
+
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   return (
     <Page>
       {contextHolder1}
-      <Header title='创建流动性池' hint='轻松创建任何 Solana 代币的流动资金池。您的代币将可在 Raydium、Birdeye 和 DexScreener 上进行交易。' />
+      <Header title='移除流动性' hint='移除当前代币的AMM流动性,并收回流动性池内所有的报价代币(SOL),移除流动性后代币将无法交易,流动性池内的资金会自动回流到创建者钱包' />
       <CreatePool>
-
+        <div>
+          <div className='mb-1'>请选择代币</div>
+          <SelectToken selecToken={token} callBack={backClick} />
+        </div>
+        <div className='btn'>
+          <div className='buttonSwapper mt-4'>
+            <Button className={Button_Style} onClick={createClick} loading={isCreate}>移除</Button>
+          </div>
+          <div className='fee'>全网最低服务费: {CREATE_POOL_FEE} SOL</div>
+        </div>
         <Result tokenAddress={poolAddr} signature={signature} error={error} />
       </CreatePool>
 

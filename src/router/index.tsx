@@ -17,6 +17,7 @@ import UnfreezeAccount from '@/views/Token/UnFreezeAccount'
 import SwapBot from '@/views/SwapBot'
 import CreateID from '@/views/Raydium/CreateID'
 import CreateLiquidity from '@/views/Raydium/CreateLiquidity'
+import RemoveLiquidity from '@/views/Raydium/RemoveLiquidity'
 
 const Routers = () => {
   const router = useRoutes([
@@ -52,6 +53,7 @@ const Routers = () => {
         { index: true, element: <Navigate to='createId' /> },
         { path: "createId", element: <CreateID /> },
         { path: "createLiquidity", element: <CreateLiquidity /> },
+        { path: "removeLiquidity", element: <RemoveLiquidity /> },
         { path: "createLiquidityandbuy", element: <CreateLiquidity /> },
       ]
     },
