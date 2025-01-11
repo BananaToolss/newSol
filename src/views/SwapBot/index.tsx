@@ -179,6 +179,7 @@ function SwapBot() {
         pumpFun(currentIndex)
       }, Number(config.spaceTime) * 1000)
     }
+
   }, [currentIndex])
 
   const getSprice = async () => {
@@ -214,7 +215,7 @@ function SwapBot() {
 
   const pumpFun = async (index: number) => {
     const _walletConfig = [...walletConfig]
-    const walletIndex = index < _walletConfig.length ? index : 0
+    const walletIndex = index % _walletConfig.length
 
     try {
       const provider = new AnchorProvider(connection, wallet, {
@@ -250,22 +251,39 @@ function SwapBot() {
       const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
       const _slippage = BigInt(Number(config.slippage) * 100)
 
-      let amountIn = Number(config.minAmount)
+
       let balance = await connection.getBalance(account.publicKey)
-      balance = balance / LAMPORTS_PER_SOL
-      if (config.amountType === 2) { //百分比
-        if (Number(config.modeType) == 2) {
-          balance = await getSPLBalance(connection, QueteToken, account.publicKey)
+      const Solb = balance / LAMPORTS_PER_SOL
+
+      let amountIn = 0
+      if (Number(config.modeType) === 1 || Number(config.modeType) === 3) { //拉盘
+        if (config.amountType === 1) {
+          amountIn = Number(config.minAmount)
+        } else if (config.amountType === 2) {
+          amountIn = balance * Number(config.minAmount) / 100
+        } else if (config.amountType === 3) {
+          const min = Number(config.minAmount) * BASE_NUMBER
+          const max = Number(config.maxAmount) * BASE_NUMBER
+          amountIn = getRandomNumber(min, max) / BASE_NUMBER
         }
-        amountIn = balance * Number(config.minAmount) / 100
-      } else if (config.amountType === 3) {
-        const min = Number(config.minAmount) * BASE_NUMBER
-        const max = Number(config.maxAmount) * BASE_NUMBER
-        amountIn = getRandomNumber(min, max) / BASE_NUMBER
+        amountIn = amountIn < Solb ? amountIn : 0
+      }
+      if (Number(config.modeType) === 2) { //砸盘
+        const tokenB = await getSPLBalance(connection, QueteToken, account.publicKey)
+        if (config.amountType === 1) {
+          amountIn = Number(config.minAmount)
+        } else if (config.amountType === 2) {
+          amountIn = tokenB * Number(config.minAmount) / 100
+        } else if (config.amountType === 3) {
+          const min = Number(config.minAmount) * BASE_NUMBER
+          const max = Number(config.maxAmount) * BASE_NUMBER
+          amountIn = getRandomNumber(min, max) / BASE_NUMBER
+        }
+        amountIn = amountIn < tokenB ? amountIn : 0
       }
 
       if (amountIn == 0 || balance == 0) {
-        setCurrentIndex(walletIndex + 1)
+        setCurrentIndex(item => item + 1)
         return
       }
 
@@ -293,11 +311,11 @@ function SwapBot() {
       });
       logsArrChange(`${getTxLink(sig)}`, HASH_COLOR, true)
 
-      setCurrentIndex(walletIndex + 1)
+      setCurrentIndex(item => item + 1)
     } catch (error) {
       console.log(error)
       logsArrChange(`执行失败`, 'red')
-      setCurrentIndex(walletIndex + 1)
+      setCurrentIndex(item => item + 1)
     }
   }
 
