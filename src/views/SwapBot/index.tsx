@@ -189,6 +189,29 @@ function SwapBot() {
     }
   }
 
+  const [tokenPrice, setTokenPrice] = useState('')
+  useEffect(() => {
+    if (token && solPrice) getPumpPrice()
+  }, [token, solPrice])
+  const getPumpPrice = async () => {
+    try {
+      const provider = new AnchorProvider(connection, wallet, {
+        commitment: "finalized",
+      });
+      let sdk: PumpFunSDK = new PumpFunSDK(provider);
+      const QueteToken = new PublicKey(token.address)
+
+      const tokenPool = await sdk.getBondingCurveAccount(QueteToken)
+      const capSOL = tokenPool.getMarketCapSOL()
+      const _price = ethers.utils.formatEther(capSOL)
+      const price = ethers.utils.parseEther(_price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
+      const _pri = ethers.utils.formatEther(price)
+      setTokenPrice(_pri)
+    } catch (error) {
+      setTokenPrice('')
+    }
+  }
+
   const pumpFun = async (index: number) => {
     const _walletConfig = [...walletConfig]
     const walletIndex = index < _walletConfig.length ? index : 0
@@ -202,17 +225,35 @@ function SwapBot() {
 
       const tokenPool = await sdk.getBondingCurveAccount(QueteToken)
       const capSOL = tokenPool.getMarketCapSOL()
+      console.log(capSOL)
       const _price = ethers.utils.formatEther(capSOL)
       const price = ethers.utils.parseEther(_price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
       const _pri = ethers.utils.formatEther(price)
-      logsArrChange(`代币价格：${_pri}`)
+      logsArrChange(`代币价格：${_pri}`, '#eb9630')
+      if (Number(config.modeType) === 1) {
+        if (ethers.utils.parseEther(_pri).gte(ethers.utils.parseEther(config.targetPrice))) {
+          setCurrentIndex(0)
+          setIsStart(false)
+          logsArrChange('拉盘任务完成', '#51d38e')
+          return
+        }
+      }
+      if (Number(config.modeType) === 2) {
+        if (ethers.utils.parseEther(_pri).lte(ethers.utils.parseEther(config.targetPrice))) {
+          setCurrentIndex(0)
+          setIsStart(false)
+          logsArrChange('砸盘任务完成', '#51d38e')
+          return
+        }
+      }
+
       const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
       const _slippage = BigInt(Number(config.slippage) * 100)
 
       let amountIn = Number(config.minAmount)
+      let balance = await connection.getBalance(account.publicKey)
+      balance = balance / LAMPORTS_PER_SOL
       if (config.amountType === 2) { //百分比
-        let balance = await connection.getBalance(account.publicKey)
-        balance = balance / LAMPORTS_PER_SOL
         if (Number(config.modeType) == 2) {
           balance = await getSPLBalance(connection, QueteToken, account.publicKey)
         }
@@ -223,7 +264,7 @@ function SwapBot() {
         amountIn = getRandomNumber(min, max) / BASE_NUMBER
       }
 
-      if(amountIn == 0) {
+      if (amountIn == 0 || balance == 0) {
         setCurrentIndex(walletIndex + 1)
         return
       }
@@ -255,7 +296,7 @@ function SwapBot() {
       setCurrentIndex(walletIndex + 1)
     } catch (error) {
       console.log(error)
-      logsArrChange(`${error.toString()}`, 'red')
+      logsArrChange(`执行失败`, 'red')
       setCurrentIndex(walletIndex + 1)
     }
   }
@@ -388,7 +429,10 @@ function SwapBot() {
               </div>
             </div>
 
-            <div className='flex items-center mt-4'>
+            <div className='mt-4'>
+              当前代币价格：{tokenPrice}
+            </div>
+            <div className='flex items-center'>
               <div className='mr-3'>目标价格</div>
               <div>
                 <Input value={config.targetPrice} onChange={configChange} name='targetPrice' />
