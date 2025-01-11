@@ -190,9 +190,10 @@ function SwapBot() {
   }
 
   const pumpFun = async (index: number) => {
+    const _walletConfig = [...walletConfig]
+    const walletIndex = index < _walletConfig.length ? index : 0
+
     try {
-      const _walletConfig = [...walletConfig]
-      const walletIndex = index < _walletConfig.length ? index : 0
       const provider = new AnchorProvider(connection, wallet, {
         commitment: "finalized",
       });
@@ -220,6 +221,11 @@ function SwapBot() {
         const min = Number(config.minAmount) * BASE_NUMBER
         const max = Number(config.maxAmount) * BASE_NUMBER
         amountIn = getRandomNumber(min, max) / BASE_NUMBER
+      }
+
+      if(amountIn == 0) {
+        setCurrentIndex(walletIndex + 1)
+        return
       }
 
       const newTx = new Transaction()
@@ -250,6 +256,7 @@ function SwapBot() {
     } catch (error) {
       console.log(error)
       logsArrChange(`${error.toString()}`, 'red')
+      setCurrentIndex(walletIndex + 1)
     }
   }
 
