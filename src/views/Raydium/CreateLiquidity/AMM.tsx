@@ -11,6 +11,7 @@ import {
   DEVNET_PROGRAM_ID,
   TxVersion,
 } from '@raydium-io/raydium-sdk-v2'
+import base58 from "bs58";
 import * as BufferLayout from 'buffer-layout';
 import BN from 'bn.js'
 import { initSdk } from '@/Dex/Raydium'
@@ -19,14 +20,19 @@ import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, CREATE_POOL_FEE, BANANA
 import { Page } from '@/styles'
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
-import { Header, SelectToken, Result, Hint } from '@/components'
+import { JitoFee, SelectToken, Result, Hint } from '@/components'
 import { CreatePool } from './style'
 
+interface PropsType {
+  isAndBuy?: boolean
+}
 
-function CreateLiquidity() {
+function CreateLiquidity(props: PropsType) {
+  const { isAndBuy } = props
+
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
-  const { publicKey, sendTransaction, signAllTransactions } = useWallet();
+  const { publicKey, sendTransaction, signTransaction } = useWallet();
 
   const [baseToken, setBaseToken] = useState<Token_Type>(PUMP)
   const [token, setToken] = useState<Token_Type>(SOL)
@@ -36,7 +42,9 @@ function CreateLiquidity() {
   const [error, setError] = useState('');
   const [poolAddr, setPoolAddr] = useState('')
   const [isSearchId, setIsSearchId] = useState(false)
-
+  const [jitoOpen, setJitoOpen] = useState(false)
+  const [jitoFee, setJitoFee] = useState<number>(0)
+  const [jitoRpc, setJitoRpc] = useState('')
 
   const [config, setConfig] = useState({
     marketId: '',
@@ -57,6 +65,10 @@ function CreateLiquidity() {
     const time = Date.parse(dateString as string) / 1000
     setConfig({ ...config, startTime: time.toString() })
   };
+  const jitoCallBack = (jitoFee_: number, jitoRpc_: string) => {
+    setJitoFee(jitoFee_)
+    setJitoRpc(jitoRpc_)
+  }
 
   const ACCOUNT_LAYOUT = BufferLayout.struct([
     BufferLayout.blob(53, 'mint'),
@@ -177,14 +189,52 @@ function CreateLiquidity() {
         lamports: CREATE_POOL_FEE * LAMPORTS_PER_SOL,
       })
       Tx.add(fee)
-      //增加费用，减少失败
-      const versionedTx = await addPriorityFees(connection, Tx, publicKey)
-      const signature = await sendTransaction(versionedTx, connection);
-      const confirmed = await connection.confirmTransaction(
-        signature,
-        "processed"
-      );
-      setSignature(signature)
+
+      if (!isAndBuy) {
+        //增加费用，减少失败
+        const versionedTx = await addPriorityFees(connection, Tx, publicKey)
+        const signature = await sendTransaction(versionedTx, connection);
+        const confirmed = await connection.confirmTransaction(
+          signature,
+          "processed"
+        );
+        setSignature(signature)
+      } else { //捆绑
+
+        const tipAccounts = [
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+        ];
+        const jitoTipAccount = new PublicKey(tipAccounts[Math.floor(tipAccounts.length * Math.random())])
+        const JITO_FEE = Number(jitoFee) * LAMPORTS_PER_SOL; // 小费
+        console.log('小费', JITO_FEE)
+        Tx.add(
+          SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: JITO_FEE,
+          })
+        );
+
+        // Get recent blockhash
+        const { blockhash } = await connection.getLatestBlockhash("processed");
+        Tx.recentBlockhash = blockhash;
+        Tx.feePayer = publicKey;
+
+        const transactions: string[] = [];
+        // Sign the transaction
+        const finalTxId = await signTransaction(Tx);
+        const txId = await connection.sendRawTransaction(finalTxId.serialize()!);
+        console.log(`sig: ${txId}`);
+
+      }
+
       setPoolAddr(poolId)
       console.log("confirmation", signature);
       setIsCreate(false);
@@ -234,11 +284,20 @@ function CreateLiquidity() {
         </div>
 
 
-        <div className='flex items-center mt-5 options'>
-          <div className='mr-3 mb-2'>开盘时间</div>
-          <Switch checked={isOptions} onChange={(e) => setIsOptions(e)} />
-        </div>
-        {isOptions &&
+        {isAndBuy ?
+          <div className='flex items-center mt-5 options'>
+            <div className='mr-3 mb-2'>高级选项</div>
+            <Switch checked={jitoOpen} onChange={(e) => setJitoOpen(e)} />
+          </div> :
+          <div className='flex items-center mt-5 options'>
+            <div className='mr-3 mb-2'>开盘时间</div>
+            <Switch checked={isOptions} onChange={(e) => setIsOptions(e)} />
+          </div>
+        }
+        {jitoOpen && isAndBuy && <JitoFee callBack={jitoCallBack} />}
+
+
+        {isOptions && !isAndBuy &&
           <>
             <Space direction="vertical" size={12}>
               <DatePicker showTime onChange={timeOnChange} size='large' />

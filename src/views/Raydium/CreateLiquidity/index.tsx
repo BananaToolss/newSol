@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Input, Switch, DatePicker, Button, notification, Segmented } from 'antd'
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { Page } from '@/styles'
@@ -18,18 +18,16 @@ const SGECONFIG = [
 
 function CreateLiquidity() {
   const [api, contextHolder1] = notification.useNotification();
-  const { connection } = useConnection();
-  const { publicKey, sendTransaction, signAllTransactions } = useWallet();
-
-  const [baseToken, setBaseToken] = useState<Token_Type>(SOL)
-  const [token, setToken] = useState<Token_Type>(PUMP)
-  const [isOptions, setIsOptions] = useState(false)
-  const [isCreate, setIsCreate] = useState(false)
-  const [signature, setSignature] = useState("");
-  const [error, setError] = useState('');
-  const [poolAddr, setPoolAddr] = useState('')
-  const [isSearchId, setIsSearchId] = useState(false)
   const [pooltype, setPoolType] = useState(1)
+  const [isCreateAndBuy, setIsCreateAndBuy] = useState(false)
+
+  useEffect(() => {
+    if (window.location.hash && window.location.hash === '#/raydium/createLiquidityandbuy') {
+      setIsCreateAndBuy(true)
+    } else {
+      setIsCreateAndBuy(false)
+    }
+  }, [window.location.hash])
 
   const pooltypeChange = (e) => {
     setPoolType(e)
@@ -44,7 +42,7 @@ function CreateLiquidity() {
         <Segmented options={SGECONFIG} size='large' value={pooltype} onChange={pooltypeChange} />
       </div>
 
-      {pooltype === 1 && <AMM />}
+      {pooltype === 1 && <AMM isAndBuy={isCreateAndBuy} />}
       {pooltype === 2 && <CPMM />}
       {pooltype === 3 && <CLMM />}
 
