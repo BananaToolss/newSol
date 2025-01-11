@@ -8,7 +8,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { Header, SelectToken, Segmentd, WalletInfoCollection, JitoFee } from '@/components'
 import type { Token_Type, CollocetionType } from '@/type'
 import { SOL, PUMP } from '@/config/Token'
-import { Input_Style, Button_Style } from '@/config'
+import { Input_Style, Button_Style, isMainnet } from '@/config'
 import { initSdk } from '@/Dex/Raydium'
 import { PumpFunSDK } from "@/Dex/Pump";
 import { getTxLink, addPriorityFees } from '@/utils'
@@ -21,6 +21,7 @@ import {
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp, getSolPrice } from './utils';
 import { ethers } from 'ethers';
+import { getPoolPrice } from './usePoolPrice'
 
 interface LogsType {
   time: string
@@ -35,9 +36,9 @@ function SwapBot() {
   const { connection } = useConnection();
   const wallet = useWallet()
   const [api, contextHolder1] = notification.useNotification();
-  const [baseToken, setBseToken] = useState<Token_Type>(SOL)
-  const [token, setToken] = useState<Token_Type>(PUMP)
-  const [dexCount, setDexCount] = useState(2) // 1raydium 2pump
+  const [baseToken, setBseToken] = useState<Token_Type>(PUMP) //
+  const [token, setToken] = useState<Token_Type>(SOL)
+  const [dexCount, setDexCount] = useState(1) // 1raydium 2pump
   const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
 
 
@@ -128,28 +129,13 @@ function SwapBot() {
 
   const startClick = async () => {
     try {
-
-      const _walletConfig = [...walletConfig]
-      const raydiums: Raydium[] = []
-      if (_walletConfig.length === 0) return logsArrChange('请导入钱包私钥', 'red')
-      if (!config.minAmount) return logsArrChange('请填写购买数量', 'red')
-      if (Number(config.amountType) === 3 && !config.maxAmount) return logsArrChange('请填写购买数量', 'red')
-      setIsStop(false)
-      setIsStart(true)
+      // if (walletConfig.length === 0) return logsArrChange('请导入钱包私钥', 'red')
+      // if (!config.minAmount) return logsArrChange('请填写购买数量', 'red')
+      // if (Number(config.amountType) === 3 && !config.maxAmount) return logsArrChange('请填写购买数量', 'red')
+      // setIsStop(false)
+      // setIsStart(true)
       if (dexCount === 1) {
-        console.log('钱包准备中')
-        for (let i = 0; i < _walletConfig.length; i++) {
-          const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[i].privateKey))
-          let raydium: Raydium | null
-          try {
-            raydium = await initSdk({ owner: account, connection: connection })
-          } catch (error) {
-            console.log(`钱包${i + 1}加载失败`)
-          }
-          if (raydium) raydiums.push(raydium)
-          await delay(140)
-        }
-        console.log(`钱包准备就绪`)
+        Raydium(0)
       }
       if (dexCount === 2) {
         pumpFun(0)
@@ -157,6 +143,75 @@ function SwapBot() {
     } catch (error) {
       console.log(error)
       setIsStart(false)
+    }
+  }
+
+  const rayDiumGetPool = async (raydium: Raydium, mint1: PublicKey, mint2: PublicKey) => {
+    try {
+      let poolId = 'AWRmPJjhk5onj5DAKhybg8Z6k3hAYNe7jgazE9dy1KbF' //dev
+      if (isMainnet) {
+        const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1, mint2 })
+        poolId = tokenPool.data[0].id
+      }
+      return poolId
+    } catch (error) {
+      return error
+    }
+  }
+  const getRaydiumPrice = async (raydium: Raydium, poolId: string) => {
+    try {
+      let price = ''
+      if (isMainnet) {
+        const _price = await getPoolPrice(poolId)
+        price = _price.toFixed(18)
+      } else {
+        const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId: poolId });
+        const _price =
+          data.poolInfo.mintA.address == baseToken.address
+            ? data.poolInfo.mintAmountA / data.poolInfo.mintAmountB
+            : data.poolInfo.mintAmountB / data.poolInfo.mintAmountA;
+        price = _price.toFixed(18);
+      }
+      return price
+    } catch (error) {
+      return error
+    }
+  }
+
+  const Raydium = async (index: number) => {
+    const walletIndex = 0
+    const _walletConfig = [...walletConfig]
+    const raydiums: Raydium[] = []
+    try {
+      console.log('钱包准备中')
+      for (let i = 0; i < _walletConfig.length; i++) {
+        const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[i].privateKey))
+        let raydium: Raydium | null
+        try {
+          raydium = await initSdk({ owner: account, connection: connection })
+        } catch (error) {
+          console.log(`钱包${i + 1}加载失败`)
+        }
+        if (raydium) raydiums.push(raydium)
+        await delay(140)
+      }
+      console.log(`钱包准备就绪`)
+
+      const mint1 = new PublicKey(baseToken.address)
+      const mint2 = new PublicKey(token.address)
+      const raydium = raydiums[walletIndex]
+      const poolID = await rayDiumGetPool(raydium, mint1, mint2)
+
+      const Token = new PublicKey(baseToken.address)
+      const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
+      const { balance, amountIn } = await getAmountIn(account, Token)
+      if (amountIn == 0 || balance == 0) {
+        // setCurrentIndex(item => item + 1)
+        return
+      }
+
+    } catch (error) {
+      console.log(error)
     }
   }
 
@@ -213,45 +268,8 @@ function SwapBot() {
     }
   }
 
-  const pumpFun = async (index: number) => {
-    const _walletConfig = [...walletConfig]
-    const walletIndex = index % _walletConfig.length
-
+  const getAmountIn = async (account: Keypair, QueteToken: PublicKey) => {
     try {
-      const provider = new AnchorProvider(connection, wallet, {
-        commitment: "finalized",
-      });
-      let sdk: PumpFunSDK = new PumpFunSDK(provider);
-      const QueteToken = new PublicKey(token.address)
-
-      const tokenPool = await sdk.getBondingCurveAccount(QueteToken)
-      const capSOL = tokenPool.getMarketCapSOL()
-      console.log(capSOL)
-      const _price = ethers.utils.formatEther(capSOL)
-      const price = ethers.utils.parseEther(_price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
-      const _pri = ethers.utils.formatEther(price)
-      logsArrChange(`代币价格：${_pri}`, '#eb9630')
-      if (Number(config.modeType) === 1) {
-        if (ethers.utils.parseEther(_pri).gte(ethers.utils.parseEther(config.targetPrice))) {
-          setCurrentIndex(0)
-          setIsStart(false)
-          logsArrChange('拉盘任务完成', '#51d38e')
-          return
-        }
-      }
-      if (Number(config.modeType) === 2) {
-        if (ethers.utils.parseEther(_pri).lte(ethers.utils.parseEther(config.targetPrice))) {
-          setCurrentIndex(0)
-          setIsStart(false)
-          logsArrChange('砸盘任务完成', '#51d38e')
-          return
-        }
-      }
-
-      const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
-      const _slippage = BigInt(Number(config.slippage) * 100)
-
-
       let balance = await connection.getBalance(account.publicKey)
       const Solb = balance / LAMPORTS_PER_SOL
 
@@ -281,7 +299,50 @@ function SwapBot() {
         }
         amountIn = amountIn < tokenB ? amountIn : 0
       }
+      return { balance, amountIn }
+    } catch (error) {
+      return { balance: 0, amountIn: 0 }
+    }
+  }
 
+  const pumpFun = async (index: number) => {
+    const _walletConfig = [...walletConfig]
+    const walletIndex = index % _walletConfig.length
+
+    try {
+      const provider = new AnchorProvider(connection, wallet, {
+        commitment: "finalized",
+      });
+      let sdk: PumpFunSDK = new PumpFunSDK(provider);
+      const Token = new PublicKey(baseToken.address)
+
+      const tokenPool = await sdk.getBondingCurveAccount(Token)
+      const capSOL = tokenPool.getMarketCapSOL()
+      console.log(capSOL)
+      const _price = ethers.utils.formatEther(capSOL)
+      const price = ethers.utils.parseEther(_price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
+      const _pri = ethers.utils.formatEther(price)
+      logsArrChange(`代币价格：${_pri}`, '#eb9630')
+      if (Number(config.modeType) === 1) {
+        if (ethers.utils.parseEther(_pri).gte(ethers.utils.parseEther(config.targetPrice))) {
+          setCurrentIndex(0)
+          setIsStart(false)
+          logsArrChange('拉盘任务完成', '#51d38e')
+          return
+        }
+      }
+      if (Number(config.modeType) === 2) {
+        if (ethers.utils.parseEther(_pri).lte(ethers.utils.parseEther(config.targetPrice))) {
+          setCurrentIndex(0)
+          setIsStart(false)
+          logsArrChange('砸盘任务完成', '#51d38e')
+          return
+        }
+      }
+
+      const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
+      const _slippage = BigInt(Number(config.slippage) * 100)
+      const { balance, amountIn } = await getAmountIn(account, Token)
       if (amountIn == 0 || balance == 0) {
         setCurrentIndex(item => item + 1)
         return
@@ -290,16 +351,16 @@ function SwapBot() {
       const newTx = new Transaction()
       if (Number(config.modeType) === 1 || Number(config.modeType) === 3) {
         logsArrChange(`钱包${walletIndex + 1} ,买入${amountIn}sol`)
-        const { buyTx, buyAmount } = await sdk.buy(account, QueteToken, BigInt((amountIn * LAMPORTS_PER_SOL).toFixed(0)), _slippage)
+        const { buyTx, buyAmount } = await sdk.buy(account, Token, BigInt((amountIn * LAMPORTS_PER_SOL).toFixed(0)), _slippage)
         newTx.add(buyTx)
         if (Number(config.modeType) === 3) {
           logsArrChange(`钱包${walletIndex + 1},卖出${buyAmount} ${token.symbol}`)
-          const sellTx = await sdk.sell(account, QueteToken, buyAmount, _slippage)
+          const sellTx = await sdk.sell(account, Token, buyAmount, _slippage)
           newTx.add(sellTx)
         }
       } else if (Number(config.modeType) === 2) {
         logsArrChange(`钱包${walletIndex + 1},卖出${amountIn} ${token.symbol}`)
-        const sellTx = await sdk.sell(account, QueteToken, BigInt((amountIn * 1000000).toFixed(0)), _slippage)
+        const sellTx = await sdk.sell(account, Token, BigInt((amountIn * 1000000).toFixed(0)), _slippage)
         newTx.add(sellTx)
       }
 
@@ -368,11 +429,11 @@ function SwapBot() {
             <div className='flex justify-between mt-4'>
               <div className='flex-1 mr-4'>
                 <div>价值代币</div>
-                <SelectToken selecToken={baseToken} callBack={baseTokenClick} isBot />
+                <SelectToken selecToken={token} callBack={tokenClick} isBot />
               </div>
               <div className='flex-1'>
                 <div>做市代币</div>
-                <SelectToken selecToken={token} callBack={tokenClick} isBot />
+                <SelectToken selecToken={baseToken} callBack={baseTokenClick} isBot />
               </div>
             </div>
           </div>
