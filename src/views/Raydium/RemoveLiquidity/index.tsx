@@ -344,7 +344,7 @@ function CreateLiquidity() {
                 <div className='header'>
                   <div className='flex'>
                     <img src={item.baseSymbol === 'SOL' ? getImage('sol.png') : item.baseImage} />
-                    <img src={item.symbol === 'SOL' ? getImage('sol.png') : item.quoteMint} />
+                    <img src={item.symbol === 'SOL' ? getImage('sol.png') : item.image} />
                     <div className='font-bold'>{item.baseSymbol}/</div>
                     <div className='font-bold'>{item.symbol}</div>
                   </div>
