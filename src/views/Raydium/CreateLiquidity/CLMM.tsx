@@ -5,11 +5,11 @@ import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey, SystemProgram, LAMPORTS_PER_SOL, Transaction, TransactionInstruction } from '@solana/web3.js'
 import {
   DEVNET_PROGRAM_ID,
-  getCpmmPdaAmmConfigId,
+  CLMM_PROGRAM_ID,
   CREATE_CPMM_POOL_PROGRAM,
   CREATE_CPMM_POOL_FEE_ACC
 } from '@raydium-io/raydium-sdk-v2'
-import * as BufferLayout from 'buffer-layout';
+import Decimal from 'decimal.js'
 import BN from 'bn.js'
 import { initSdk, txVersion } from '@/Dex/Raydium'
 import { getTxLink, addPriorityFees } from '@/utils'
@@ -71,34 +71,22 @@ function CreateLiquidity() {
       });
 
       // RAY
-      const mintA = await raydium.token.getTokenInfo(baseToken.address)
-      // USDC
-      const mintB = await raydium.token.getTokenInfo(token.address)
-      const feeConfigs = await raydium.api.getCpmmConfigs()
-
-      if (!isMainnet) {
-        feeConfigs.forEach((config) => {
-          config.id = getCpmmPdaAmmConfigId(DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM, config.index).publicKey.toBase58()
-        })
-      }
+      const mint1 = await raydium.token.getTokenInfo(baseToken.address)
+      // USDT
+      const mint2 = await raydium.token.getTokenInfo(token.address)
+      const clmmConfigs = await raydium.api.getClmmConfigs()
 
       const baseAmount = new BN(Number(config.baseAmount) * (10 ** baseToken.decimals))
       const quoteAmount = new BN(Number(config.quoteAmount) * (10 ** token.decimals))
 
-      const execute = await raydium.cpmm.createPool({
-        // poolId: // your custom publicKey, default sdk will automatically calculate pda pool id
-        programId: isMainnet ? CREATE_CPMM_POOL_PROGRAM : DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM, // devnet: DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM
-        poolFeeAccount: isMainnet ? CREATE_CPMM_POOL_FEE_ACC : DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_FEE_ACC, // devnet:  DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_FEE_ACC
-        mintA,
-        mintB,
-        mintAAmount: baseAmount,
-        mintBAmount: quoteAmount,
-        startTime,
-        feeConfig: feeConfigs[0],
-        associatedOnly: false,
-        ownerInfo: {
-          useSOLBalance: true,
-        },
+      const execute = await raydium.clmm.createPool({
+        programId: isMainnet ? CLMM_PROGRAM_ID : DEVNET_PROGRAM_ID.CLMM,
+        // programId: DEVNET_PROGRAM_ID.CLMM,
+        mint1,
+        mint2,
+        ammConfig: { ...clmmConfigs[0], id: new PublicKey(clmmConfigs[0].id), fundOwner: '', description: '' },
+        initialPrice: new Decimal(1),
+        startTime: new BN(0),
         txVersion,
         // optional: set up priority fee here
         // computeBudgetConfig: {
@@ -106,7 +94,9 @@ function CreateLiquidity() {
         //   microLamports: 46591500,
         // },
       })
-      const poolId = execute.extInfo.address.poolId.toBase58()
+      const poolId = ''
+      console.log(execute)
+      // const poolId = execute.extInfo.address.poolId.toBase58()
       const _transaction = execute.transaction;
       const Tx = new Transaction();
       const instructions = _transaction.message.compiledInstructions.map((instruction: any) => {

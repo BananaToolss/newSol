@@ -7,6 +7,7 @@ import type { Token_Type } from '@/type'
 import { Header, SelectToken, Result, Hint } from '@/components'
 import AMM from './AMM'
 import CPMM from './CPMM'
+import CLMM from './CLMM'
 
 const SGECONFIG = [
   { label: 'AMM OpenBook ID', value: 1 },
@@ -45,6 +46,8 @@ function CreateLiquidity() {
 
       {pooltype === 1 && <AMM />}
       {pooltype === 2 && <CPMM />}
+      {pooltype === 3 && <CLMM />}
+
     </Page>
   )
 }
