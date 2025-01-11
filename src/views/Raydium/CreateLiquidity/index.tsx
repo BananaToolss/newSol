@@ -6,6 +6,7 @@ import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
 import { Header, SelectToken, Result, Hint } from '@/components'
 import AMM from './AMM'
+import CPMM from './CPMM'
 
 const SGECONFIG = [
   { label: 'AMM OpenBook ID', value: 1 },
@@ -42,7 +43,8 @@ function CreateLiquidity() {
         <Segmented options={SGECONFIG} size='large' value={pooltype} onChange={pooltypeChange} />
       </div>
 
-      <AMM />
+      {pooltype === 1 && <AMM />}
+      {pooltype === 2 && <CPMM />}
     </Page>
   )
 }
