@@ -61,8 +61,8 @@ function CreateID() {
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
 
-  const [baseToken, setBaseToken] = useState<Token_Type>(SOL)
-  const [token, setToken] = useState<Token_Type>(PUMP)
+  const [baseToken, setBaseToken] = useState<Token_Type>(PUMP)
+  const [token, setToken] = useState<Token_Type>(SOL)
   const [isOptions, setIsOptions] = useState(false)
   const [level, setLevel] = useState(0)
   const [isCreate, setIsCreate] = useState(false)
@@ -288,15 +288,23 @@ function CreateID() {
       );
 
       //增加费用，减少失败
-      const versionedTx1 = await addPriorityFees(connection, newTx, publicKey)
-      versionedTx1.sign([
-        marketAccounts.market,
-        marketAccounts.requestQueue,
-        marketAccounts.eventQueue,
-        marketAccounts.bids,
-        marketAccounts.asks,
-      ])
-      const signature1 = await sendTransaction(versionedTx1, connection);
+      // const versionedTx1 = await addPriorityFees(connection, newTx, publicKey)
+      // versionedTx1.sign([
+      //   marketAccounts.market,
+      //   marketAccounts.requestQueue,
+      //   marketAccounts.eventQueue,
+      //   marketAccounts.bids,
+      //   marketAccounts.asks,
+      // ])
+      const signature1 = await sendTransaction(newTx, connection, {
+        signers: [
+          marketAccounts.market,
+          marketAccounts.requestQueue,
+          marketAccounts.eventQueue,
+          marketAccounts.bids,
+          marketAccounts.asks,
+        ]
+      });
       const confirmed1 = await connection.confirmTransaction(
         signature1,
         "processed"
