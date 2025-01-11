@@ -137,8 +137,7 @@ function CreateLiquidity() {
   const getPoolInfo = async () => {
     try {
       setIsSearch(true)
-      const _token = isMainnet ? token.address : '6Qn2muot6pbTTWJ6F83zrpBQTFjb69FcmG1xbg64RoUD'
-      const data = await queryLpByToken(_token)
+      const data = await queryLpByToken( token.address)
       const _data: any[] = data.Raydium_LiquidityPoolv4
       console.log(_data, '_data')
       const _result = _data.slice(0, 5)
