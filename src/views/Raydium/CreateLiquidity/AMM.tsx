@@ -231,7 +231,7 @@ function CreateLiquidity(props: PropsType) {
         // Sign the transaction
         const finalTxId = await signTransaction(Tx);
         const txId = await connection.sendRawTransaction(finalTxId.serialize()!);
-        console.log(`sig: ${txId}`);
+        console.log(`${getTxLink(txId)}`);
 
       }
 
