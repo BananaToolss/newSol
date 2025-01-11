@@ -146,6 +146,9 @@ function CreateLiquidity() {
         const item = _data[index];
         const { symbol: baseSymbol, image: baseImage } = await getAsset(connection, item.baseMint)
         const { symbol, image } = await getAsset(connection, item.quoteMint)
+        const lpMint = new PublicKey(item.lpMint)
+        const mintAccount = await getMint(connection, lpMint, 'processed')
+        const lpReserve = Number(mintAccount.supply) / 10 ** mintAccount.decimals
         let balance = 0
         if (publicKey) {
           try {
@@ -155,7 +158,7 @@ function CreateLiquidity() {
           }
         }
         const obj: PoolType = {
-          lpReserve: item.lpReserve / LAMPORTS_PER_SOL,
+          lpReserve: lpReserve,
           baseMint: item.baseMint,
           quoteMint: item.quoteMint,
           pubkey: item.pubkey,
@@ -325,7 +328,6 @@ function CreateLiquidity() {
               </div>
             </div>
           }
-          <Button onClick={getPoolInfo}>twte</Button>
         </div>
 
         {
