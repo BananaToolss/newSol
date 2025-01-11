@@ -10,6 +10,7 @@ import {
   FEE_DESTINATION_ID,
   DEVNET_PROGRAM_ID,
   TxVersion,
+  getLiquidityAssociatedId,
 } from '@raydium-io/raydium-sdk-v2'
 import base58 from "bs58";
 import * as BufferLayout from 'buffer-layout';
@@ -26,6 +27,7 @@ import { CreatePool } from './style'
 interface PropsType {
   isAndBuy?: boolean
 }
+declare type AssociatedName = "amm_associated_seed" | "lp_mint_associated_seed" | "coin_vault_associated_seed" | "pc_vault_associated_seed" | "lp_mint_associated_seed" | "temp_lp_token_associated_seed" | "open_order_associated_seed" | "target_associated_seed" | "withdraw_associated_seed";
 
 function CreateLiquidity(props: PropsType) {
   const { isAndBuy } = props
@@ -201,26 +203,6 @@ function CreateLiquidity(props: PropsType) {
         setSignature(signature)
       } else { //捆绑
 
-        const tipAccounts = [
-          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
-          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
-          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
-          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
-          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
-          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
-          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
-          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
-        ];
-        const jitoTipAccount = new PublicKey(tipAccounts[Math.floor(tipAccounts.length * Math.random())])
-        const JITO_FEE = Number(jitoFee) * LAMPORTS_PER_SOL; // 小费
-        console.log('小费', JITO_FEE)
-        Tx.add(
-          SystemProgram.transfer({
-            fromPubkey: publicKey,
-            toPubkey: jitoTipAccount,
-            lamports: JITO_FEE,
-          })
-        );
 
         // Get recent blockhash
         const { blockhash } = await connection.getLatestBlockhash("processed");
