@@ -10,12 +10,15 @@ import {
   FEE_DESTINATION_ID,
   DEVNET_PROGRAM_ID,
   TxVersion,
+  getCpmmPdaAmmConfigId,
+  CREATE_CPMM_POOL_PROGRAM,
+  CREATE_CPMM_POOL_FEE_ACC
 } from '@raydium-io/raydium-sdk-v2'
 import * as BufferLayout from 'buffer-layout';
 import BN from 'bn.js'
-import { initSdk } from '@/Dex/Raydium'
+import { initSdk, txVersion } from '@/Dex/Raydium'
 import { getTxLink, addPriorityFees } from '@/utils'
-import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
+import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet, base } from '@/config'
 import { Page } from '@/styles'
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
@@ -101,10 +104,9 @@ function CreateLiquidity() {
 
   const createClick = async () => {
     try {
-      if (!token) return api.error({ message: "请选择代币" })
-      if (!config.marketId) return api.error({ message: "请填写市场ID" })
-      if (!config.baseAmount) return api.error({ message: "请填写基础代币数量" })
-      if (!config.quoteAmount) return api.error({ message: "请填写报价代币数量" })
+      // if (!token) return api.error({ message: "请选择代币" })
+      // if (!config.baseAmount) return api.error({ message: "请填写基础代币数量" })
+      // if (!config.quoteAmount) return api.error({ message: "请填写报价代币数量" })
 
       setIsCreate(true)
       let startTime = new BN(0)
@@ -116,47 +118,43 @@ function CreateLiquidity() {
         connection: connection,
       });
 
-      const marketId = new PublicKey(config.marketId)
-      // if you are confirmed your market info, don't have to get market info from rpc below
-      const marketBufferInfo = await raydium.connection.getAccountInfo(new PublicKey(marketId))
-      const marketData = MARKET_STATE_LAYOUT_V3.decode(marketBufferInfo!.data)
-      const { baseMint, quoteMint } = MARKET_STATE_LAYOUT_V3.decode(marketBufferInfo!.data)
-      const txVersion = TxVersion.V0 // or TxVersion.LEGACY
+      // RAY
+      const mintA = await raydium.token.getTokenInfo(baseToken.address)
+      // USDC
+      const mintB = await raydium.token.getTokenInfo(token.address)
+      const feeConfigs = await raydium.api.getCpmmConfigs()
+
+      if (!isMainnet) {
+        feeConfigs.forEach((config) => {
+          config.id = getCpmmPdaAmmConfigId(DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM, config.index).publicKey.toBase58()
+        })
+      }
+
       const baseAmount = new BN(Number(config.baseAmount) * (10 ** baseToken.decimals))
       const quoteAmount = new BN(Number(config.quoteAmount) * (10 ** token.decimals))
 
-      const execute = await raydium.liquidity.createPoolV4({
-        programId: isMainnet ? AMM_V4 : DEVNET_PROGRAM_ID.AmmV4,
-        marketInfo: {
-          marketId,
-          programId: isMainnet ? OPEN_BOOK_PROGRAM : DEVNET_PROGRAM_ID.OPENBOOK_MARKET,
-        },
-        baseMintInfo: {
-          mint: baseMint,
-          decimals: baseToken.decimals, // if you know mint decimals here, can pass number directly
-        },
-        quoteMintInfo: {
-          mint: quoteMint,
-          decimals: token.decimals, // if you know mint decimals here, can pass number directly
-        },
-        baseAmount, // if devent pool with sol/wsol, better use amount >= 4*10**9
-        quoteAmount, // if devent pool with sol/wsol, better use amount >= 4*10**9
-        startTime, // unit in seconds
+      const execute = await raydium.cpmm.createPool({
+        // poolId: // your custom publicKey, default sdk will automatically calculate pda pool id
+        programId: isMainnet ? CREATE_CPMM_POOL_PROGRAM : DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM, // devnet: DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM
+        poolFeeAccount: isMainnet ? CREATE_CPMM_POOL_FEE_ACC : DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_FEE_ACC, // devnet:  DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_FEE_ACC
+        mintA,
+        mintB,
+        mintAAmount: baseAmount,
+        mintBAmount: quoteAmount,
+        startTime,
+        feeConfig: feeConfigs[0],
+        associatedOnly: false,
         ownerInfo: {
-          feePayer: publicKey,
           useSOLBalance: true,
         },
-        associatedOnly: false,
         txVersion,
-        checkCreateATAOwner: true,
-        feeDestinationId: isMainnet ? FEE_DESTINATION_ID : DEVNET_PROGRAM_ID.FEE_DESTINATION_ID, // devnet
         // optional: set up priority fee here
         // computeBudgetConfig: {
         //   units: 600000,
-        //   microLamports: 4659150,
+        //   microLamports: 46591500,
         // },
       })
-      const poolId = execute.extInfo.address.ammId.toBase58()
+      const poolId = execute.extInfo.address.poolId.toBase58()
       const _transaction = execute.transaction;
       const Tx = new Transaction();
       const instructions = _transaction.message.compiledInstructions.map((instruction: any) => {
@@ -199,7 +197,7 @@ function CreateLiquidity() {
   return (
     <>
       {contextHolder1}
- 
+
       <CreatePool>
         <div className='token'>
           <div className='tokenItem mr-5'>
