@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Input, Switch, DatePicker, Button, notification, Space } from 'antd'
+import { Input, Switch, DatePicker, Button, notification, Space, Segmented } from 'antd'
 import type { DatePickerProps } from 'antd';
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey, SystemProgram, LAMPORTS_PER_SOL, Transaction, TransactionInstruction } from '@solana/web3.js'
@@ -22,6 +22,7 @@ import type { Token_Type } from '@/type'
 import { Header, SelectToken, Result, Hint } from '@/components'
 import { CreatePool } from './style'
 
+
 function CreateLiquidity() {
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
@@ -35,6 +36,7 @@ function CreateLiquidity() {
   const [error, setError] = useState('');
   const [poolAddr, setPoolAddr] = useState('')
   const [isSearchId, setIsSearchId] = useState(false)
+
 
   const [config, setConfig] = useState({
     marketId: '',
@@ -195,9 +197,9 @@ function CreateLiquidity() {
   }
 
   return (
-    <Page>
+    <>
       {contextHolder1}
-      <Header title='创建流动性池' hint='轻松创建任何 Solana 代币的流动资金池。您的代币将可在 Raydium、Birdeye 和 DexScreener 上进行交易。' />
+ 
       <CreatePool>
         <div className='token'>
           <div className='tokenItem mr-5'>
@@ -244,7 +246,7 @@ function CreateLiquidity() {
           </>
         }
 
-        <Hint title='当创建流动性至Raydium时，Raydium官方将收取0.4 SOL的手续费。为确保操作成功，请确保账户中预留至少0.5 SOL，以避免因余额不足导致添加流动性失败。' showClose/>
+        <Hint title='当创建流动性至Raydium时，Raydium官方将收取0.4 SOL的手续费。为确保操作成功，请确保账户中预留至少0.5 SOL，以避免因余额不足导致添加流动性失败。' showClose />
 
         <div className='btn'>
           <div className='buttonSwapper mt-4'>
@@ -256,7 +258,7 @@ function CreateLiquidity() {
         <Result tokenAddress={poolAddr} signature={signature} error={error} />
       </CreatePool>
 
-    </Page>
+    </>
   )
 }
 
