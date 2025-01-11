@@ -7,14 +7,14 @@ import {
   DEVNET_PROGRAM_ID,
   CLMM_PROGRAM_ID,
   CREATE_CPMM_POOL_PROGRAM,
-  CREATE_CPMM_POOL_FEE_ACC
+  CREATE_CPMM_POOL_FEE_ACC,
 } from '@raydium-io/raydium-sdk-v2'
 import Decimal from 'decimal.js'
 import BN from 'bn.js'
 import { initSdk, txVersion } from '@/Dex/Raydium'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { Input_Style, Button_Style, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet, base } from '@/config'
-import { SOL, PUMP } from '@/config/Token'
+import { SOL, PUMP, USDT } from '@/config/Token'
 import type { Token_Type } from '@/type'
 import { Header, SelectToken, Result, Hint } from '@/components'
 import { devConfigs } from './utils'
@@ -26,8 +26,8 @@ function CreateLiquidity() {
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
 
-  const [baseToken, setBaseToken] = useState<Token_Type>(SOL)
-  const [token, setToken] = useState<Token_Type>(PUMP)
+  const [baseToken, setBaseToken] = useState<Token_Type>(PUMP)
+  const [token, setToken] = useState<Token_Type>(USDT)
   const [isOptions, setIsOptions] = useState(false)
   const [isCreate, setIsCreate] = useState(false)
   const [signature, setSignature] = useState("");
@@ -75,8 +75,8 @@ function CreateLiquidity() {
       // USDT
       const mint2 = await raydium.token.getTokenInfo(token.address)
       const clmmConfigs = await raydium.api.getClmmConfigs()
-
-    //  const clmmConfigs = devConfigs // devnet configs
+      console.log(clmmConfigs, 'clmmConfigs')
+      //  const clmmConfigs = devConfigs // devnet configs
 
       const execute = await raydium.clmm.createPool({
         programId: isMainnet ? CLMM_PROGRAM_ID : DEVNET_PROGRAM_ID.CLMM,
@@ -93,9 +93,12 @@ function CreateLiquidity() {
         //   microLamports: 46591500,
         // },
       })
-      const poolId = ''
+
       console.log(execute)
-      // const poolId = execute.extInfo.address.poolId.toBase58()
+      const addr: any = execute.extInfo.address
+      let poolId = ''
+      if (addr.poolId) poolId = addr.poolId.toBase58()
+      console.log(poolId, 'poolid')
       const _transaction = execute.transaction;
       const Tx = new Transaction();
       const instructions = _transaction.message.compiledInstructions.map((instruction: any) => {
