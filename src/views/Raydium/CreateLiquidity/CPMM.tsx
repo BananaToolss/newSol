@@ -25,8 +25,8 @@ function CreateLiquidity() {
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
 
-  const [baseToken, setBaseToken] = useState<Token_Type>(SOL)
-  const [token, setToken] = useState<Token_Type>(PUMP)
+  const [baseToken, setBaseToken] = useState<Token_Type>(PUMP)
+  const [token, setToken] = useState<Token_Type>(SOL)
   const [isOptions, setIsOptions] = useState(false)
   const [isCreate, setIsCreate] = useState(false)
   const [signature, setSignature] = useState("");
@@ -153,22 +153,22 @@ function CreateLiquidity() {
       <CreatePool>
         <div className='token'>
           <div className='tokenItem mr-5'>
-            <div className='mb-1 start'>报价代币</div>
+            <div className='mb-1 start'>基础报价代币</div>
             <SelectToken selecToken={baseToken} callBack={baseChange} />
           </div>
           <div className='tokenItem'>
-            <div className='mb-1 start'>基础代币</div>
+            <div className='mb-1 start'>报价代币</div>
             <SelectToken selecToken={token} callBack={backClick} />
           </div>
         </div>
 
         <div className='token mt-5'>
           <div className='tokenItem mr-5'>
-            <div className='mb-1 start'>报价代币数量</div>
+            <div className='mb-1 start'>基础代币数量</div>
             <Input className={Input_Style} type='number' value={config.baseAmount} onChange={configChange} name='baseAmount' />
           </div>
           <div className='tokenItem'>
-            <div className='mb-1 start'>基础代币数量</div>
+            <div className='mb-1 start'>报价代币数量</div>
             <Input className={Input_Style} type='number' value={config.quoteAmount} onChange={configChange} name='quoteAmount' />
           </div>
         </div>

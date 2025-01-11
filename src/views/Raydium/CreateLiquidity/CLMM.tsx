@@ -17,6 +17,7 @@ import { Input_Style, Button_Style, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMain
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
 import { Header, SelectToken, Result, Hint } from '@/components'
+import { devConfigs } from './utils'
 import { CreatePool } from './style'
 
 
@@ -57,8 +58,7 @@ function CreateLiquidity() {
   const createClick = async () => {
     try {
       if (!token) return api.error({ message: "请选择代币" })
-      if (!config.baseAmount) return api.error({ message: "请填写基础代币数量" })
-      if (!config.quoteAmount) return api.error({ message: "请填写报价代币数量" })
+
 
       setIsCreate(true)
       let startTime = new BN(0)
@@ -76,8 +76,7 @@ function CreateLiquidity() {
       const mint2 = await raydium.token.getTokenInfo(token.address)
       const clmmConfigs = await raydium.api.getClmmConfigs()
 
-      const baseAmount = new BN(Number(config.baseAmount) * (10 ** baseToken.decimals))
-      const quoteAmount = new BN(Number(config.quoteAmount) * (10 ** token.decimals))
+    //  const clmmConfigs = devConfigs // devnet configs
 
       const execute = await raydium.clmm.createPool({
         programId: isMainnet ? CLMM_PROGRAM_ID : DEVNET_PROGRAM_ID.CLMM,
@@ -86,7 +85,7 @@ function CreateLiquidity() {
         mint2,
         ammConfig: { ...clmmConfigs[0], id: new PublicKey(clmmConfigs[0].id), fundOwner: '', description: '' },
         initialPrice: new Decimal(1),
-        startTime: new BN(0),
+        startTime: startTime,
         txVersion,
         // optional: set up priority fee here
         // computeBudgetConfig: {
@@ -143,22 +142,22 @@ function CreateLiquidity() {
       <CreatePool>
         <div className='token'>
           <div className='tokenItem mr-5'>
-            <div className='mb-1 start'>报价代币</div>
+            <div className='mb-1 start'>基础代币</div>
             <SelectToken selecToken={baseToken} callBack={baseChange} />
           </div>
           <div className='tokenItem'>
-            <div className='mb-1 start'>基础代币</div>
+            <div className='mb-1 start'>报价代币</div>
             <SelectToken selecToken={token} callBack={backClick} />
           </div>
         </div>
 
         <div className='token mt-5'>
           <div className='tokenItem mr-5'>
-            <div className='mb-1 start'>报价代币数量</div>
+            <div className='mb-1 start'>基础代币数量</div>
             <Input className={Input_Style} type='number' value={config.baseAmount} onChange={configChange} name='baseAmount' />
           </div>
           <div className='tokenItem'>
-            <div className='mb-1 start'>基础代币数量</div>
+            <div className='mb-1 start'>报价代币数量</div>
             <Input className={Input_Style} type='number' value={config.quoteAmount} onChange={configChange} name='quoteAmount' />
           </div>
         </div>
