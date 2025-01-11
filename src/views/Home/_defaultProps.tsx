@@ -107,11 +107,11 @@ export default {
             name: '移除流动性',
             icon: <AiOutlinePlusCircle color={COLOR} style={{ marginRight: '6px' }} />,
           },
-          {
-            path: 'createLiquidityandbuy',
-            name: '创建流动性并买入',
-            icon: <AiOutlinePlusCircle color={COLOR} style={{ marginRight: '6px' }} />,
-          },
+          // {
+          //   path: 'createLiquidityandbuy',
+          //   name: '创建流动性并买入',
+          //   icon: <AiOutlinePlusCircle color={COLOR} style={{ marginRight: '6px' }} />,
+          // },
         ]
       },
       {
