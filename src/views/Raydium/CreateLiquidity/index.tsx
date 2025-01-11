@@ -12,7 +12,7 @@ import CLMM from './CLMM'
 const SGECONFIG = [
   { label: 'AMM OpenBook ID', value: 1 },
   { label: 'CPMM', value: 2 },
-  { label: 'CLMM-稳定池', value: 3 },
+  // { label: 'CLMM-稳定池', value: 3 },
 ]
 
 
