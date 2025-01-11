@@ -30,7 +30,7 @@ export const CreatePool = styled.div`
     }
     .card1 {
       margin-top: 20px;
-      font-size: 16px;
+      font-size: 16px; 
     }
     .ant-segmented-item {
       flex: 1;

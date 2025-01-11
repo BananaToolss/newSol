@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Button, notification, Segmented, Input } from 'antd'
+import { Button, notification, Segmented, Input, Flex, Spin } from 'antd'
+import { LoadingOutlined } from '@ant-design/icons'
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL, TransactionInstruction } from '@solana/web3.js'
 import {
@@ -10,6 +11,7 @@ import {
 } from '@raydium-io/raydium-sdk-v2'
 import BN from 'bn.js'
 import Decimal from 'decimal.js'
+import { getMint } from '@solana/spl-token';
 import { PoolFetchType, } from "@raydium-io/raydium-sdk-v2";
 import { initSdk, RaydiumApi } from '@/Dex/Raydium'
 import { Input_Style, Button_Style, REMOVE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
@@ -30,12 +32,13 @@ interface PoolType {
   baseMint: string
   quoteMint: string
   pubkey: string
-  marketProgramId: string
+  marketProgramId: string //交易所
   baseSymbol: string
   baseImage: string
   symbol: string
   image: string
   balance: number
+  lpMint: string
 }
 
 const JITOFEEARR = [
@@ -57,6 +60,8 @@ function CreateLiquidity() {
   const [isSearch, setIsSearch] = useState(false)
   const [poolConfigArr, setPoolConfigArr] = useState<PoolType[]>([])
   const [segValue, setSegValue] = useState(1)
+  const [isIdFind, setIsIdFind] = useState(false)
+  const [withdramLp, setWithdramLp] = useState('')
 
   useEffect(() => {
     if (token && token.address && publicKey) getPoolInfo()
@@ -69,8 +74,10 @@ function CreateLiquidity() {
     setSegValue(e)
   }
 
-  const poolFindInfo = async () => {
+  //池子id查找
+  const poolFindInfoByID = async () => {
     try {
+      if (!poolAddr) return api.error({ message: "请输入池子ID" })
       setIsSearch(true)
       const poolId = poolAddr
       let poolKeys: AmmV4Keys | AmmV5Keys | undefined
@@ -88,18 +95,52 @@ function CreateLiquidity() {
         const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId })
         poolInfo = data.poolInfo
       }
+      const baseMint = poolInfo.mintA.address
+      const quoteMint = poolInfo.mintB.address
+      const pubkey = poolAddr
+      const marketProgramId = poolInfo.marketId
+      const { symbol: baseSymbol, image: baseImage } = await getAsset(connection, baseMint)
+      const { symbol, image } = await getAsset(connection, quoteMint)
+      const lpMint = new PublicKey(poolInfo.lpMint.address)
+      const mintAccount = await getMint(connection, lpMint, 'processed')
+      const lpReserve = Number(mintAccount.supply) / 10 ** mintAccount.decimals
+      let balance = 0
+      if (publicKey) {
+        balance = await getSPLBalance(connection, lpMint, publicKey)
+        console.log(balance, 'balance')
+      }
       console.log(poolInfo, 'poolInfo')
+      const obj: PoolType = {
+        lpReserve,
+        baseMint,
+        quoteMint,
+        pubkey,
+        marketProgramId,
+        baseSymbol,
+        baseImage,
+        symbol,
+        image,
+        balance,
+        lpMint: poolInfo.lpMint.address
+      }
+      console.log(obj)
+      setPoolConfigArr([obj])
       setIsSearch(false)
     } catch (error) {
+      console.log(error)
+      api.error({ message: error.toString() })
       setIsSearch(false)
     }
   }
 
-
+  //代币地址查找
   const getPoolInfo = async () => {
     try {
-      const data = await queryLpByToken(token.address)
-      const _data = data.Raydium_LiquidityPoolv4
+      setIsSearch(true)
+      const _token = isMainnet ? token.address : '6Qn2muot6pbTTWJ6F83zrpBQTFjb69FcmG1xbg64RoUD'
+      const data = await queryLpByToken(_token)
+      const _data: any[] = data.Raydium_LiquidityPoolv4
+      console.log(_data, '_data')
       const _result = _data.slice(0, 5)
       const allPoolConfig: PoolType[] = []
       for (let index = 0; index < _result.length; index++) {
@@ -108,10 +149,14 @@ function CreateLiquidity() {
         const { symbol, image } = await getAsset(connection, item.quoteMint)
         let balance = 0
         if (publicKey) {
-          balance = await getSPLBalance(connection, new PublicKey(item.pubkey), publicKey)
+          try {
+            balance = await getSPLBalance(connection, new PublicKey(item.pubkey), publicKey)
+          } catch (error) {
+            balance = 0
+          }
         }
         const obj: PoolType = {
-          lpReserve: item.lpReserve,
+          lpReserve: item.lpReserve / LAMPORTS_PER_SOL,
           baseMint: item.baseMint,
           quoteMint: item.quoteMint,
           pubkey: item.pubkey,
@@ -120,25 +165,44 @@ function CreateLiquidity() {
           baseImage,
           symbol,
           image,
-          balance
+          balance,
+          lpMint: item.lpMint
         }
         allPoolConfig.push(obj)
       }
       setPoolConfigArr(allPoolConfig)
       console.log(allPoolConfig, 'allPoolConfig')
+      setIsSearch(false)
     } catch (error) {
       console.log(error)
+      api.error({ message: error.toString() })
+      setIsSearch(false)
     }
   }
 
-  const createClick = async () => {
+  const createClick = async (item: PoolType) => {
     try {
+      if (!publicKey) return api.error({ message: "请先连接钱包" })
       setIsCreate(true)
-      const poolId = '23miCdKG2WNVS3AUZ55ErSNRFRXNx2ZWHw4g4ChRVeYC'
+      const poolId = item.pubkey
+      const lpMint = item.lpMint
       let poolKeys: AmmV4Keys | AmmV5Keys | undefined
       let poolInfo: ApiV3PoolInfoStandardItem
-      const withdrawLpAmount = new BN(Number(1) * 1000000000)
 
+      const balance = await getSPLBalance(connection, new PublicKey(lpMint), publicKey)
+      console.log(balance, 'balance')
+      if (balance <= 0) {
+        api.error({ message: "当前账户lp余额为0" })
+        setIsCreate(false)
+        return
+      }
+      let withdrawLpAmount
+      if (segValue < 5) {
+        withdrawLpAmount = new BN(Number(balance * (segValue * 25) / 100 * 1000000000).toFixed(0))
+      } else {
+        withdrawLpAmount = new BN(Number(Number(withdramLp) * 1000000000).toFixed(0))
+      }
+      console.log(withdrawLpAmount, 'withdrawLpAmount')
       const raydium = await initSdk({
         owner: publicKey,
         connection: connection,
@@ -211,6 +275,8 @@ function CreateLiquidity() {
           "processed"
         );
         setIsCreate(false);
+        api.success({ message: "移除流动性成功" })
+        isIdFind ? poolFindInfoByID() : getPoolInfo()
       } catch (error) {
         console.log(error, 'ssssssssssss')
         console.log(error)
@@ -230,27 +296,47 @@ function CreateLiquidity() {
       <Header title='移除流动性' hint='移除当前代币的AMM流动性,并收回流动性池内所有的报价代币(SOL),移除流动性后代币将无法交易,流动性池内的资金会自动回流到创建者钱包' />
       <CreatePool>
         <div>
-          <div className='mb-1'>请选择代币</div>
-          <SelectToken selecToken={token} callBack={backClick} />
-          <div>通过 池子ID查找</div>
-          <div>
-            <div>代币合约地址</div>
-            <div className='tokenInput'>
-              <div className='input'>
-                <Input type="text" className={Input_Style} placeholder='请输入池子ID'
-                  value={poolAddr} onChange={(e) => setPoolAddr(e.target.value)}
-                />
+          {isIdFind ?
+            <div>
+              <div>池子ID</div>
+              <div className='tokenInput'>
+                <div className='input'>
+                  <Input type="text" className={Input_Style} placeholder='请输入池子ID'
+                    value={poolAddr} onChange={(e) => setPoolAddr(e.target.value)}
+                  />
+                </div>
+                <div className='buttonSwapper'>
+                  <Button className={Button_Style} loading={isSearch}
+                    onClick={poolFindInfoByID} >
+                    <span>搜索</span>
+                  </Button>
+                </div>
               </div>
-              <div className='buttonSwapper'>
-                <Button className={Button_Style} loading={isSearch}
-                  onClick={poolFindInfo} >
-                  <span>搜索</span>
-                </Button>
+              <div className='flex text-base mt-1'>
+                <div>不知道池子ID，试试</div>
+                <div className='ml-2 text-rose-600 pointer' onClick={() => setIsIdFind(false)}>代币地址查找</div>
+              </div>
+            </div> :
+            <div>
+              <div className='mb-1'>请选择代币</div>
+              <SelectToken selecToken={token} callBack={backClick} />
+              <div className='flex text-base mt-1'>
+                <div>通过</div>
+                <div className='ml-2 text-rose-600 pointer' onClick={() => setIsIdFind(true)}>池子ID查找</div>
               </div>
             </div>
-          </div>
+          }
+          <Button onClick={getPoolInfo}>twte</Button>
         </div>
-        <div>
+
+        {
+          isSearch &&
+          <Flex align="center" gap="middle" className='mt-4 mb-4 ml-4'>
+            <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
+          </Flex>
+        }
+
+        {!isSearch && <div>
           {poolConfigArr.map((item, index) => (
             <div className='card' key={index}>
               <div className='info'>
@@ -275,17 +361,18 @@ function CreateLiquidity() {
                 </div>
                 <div className='flex justify-between mt-2'>
                   <div>移除数量</div>
-                  <div>0%</div>
+                  <div>{JITOFEEARR[segValue - 1].label}</div>
                 </div>
                 <div className='seg mt-2'>
                   <Segmented options={JITOFEEARR} size='large' value={segValue} onChange={segValueChange} />
-                  {segValue === 5 && <Input className={`${Input_Style} mt-2`} />}
+                  {segValue === 5 && <Input className={`${Input_Style} mt-2`} value={withdramLp}
+                    onChange={(e) => setWithdramLp(e.target.value)} type='number' />}
                 </div>
 
 
                 <div className='btn mt-5'>
                   <div className='buttonSwapper mt-4'>
-                    <Button className={Button_Style} onClick={createClick} loading={isCreate}>移除</Button>
+                    <Button className={Button_Style} onClick={() => createClick(item)} loading={isCreate}>移除</Button>
                   </div>
                   <div className='fee'>全网最低服务费: {REMOVE_POOL_FEE} SOL</div>
                 </div>
@@ -293,6 +380,7 @@ function CreateLiquidity() {
             </div>
           ))}
         </div>
+        }
 
       </CreatePool>
 

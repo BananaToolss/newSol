@@ -78,7 +78,6 @@ const App = (props: PropsType) => {
         }
         tokenArr.push(token)
       })
-      console.log(tokenArr)
       setAllTokenArr(tokenArr)
       setIsSearch(false)
     } catch (error) {
