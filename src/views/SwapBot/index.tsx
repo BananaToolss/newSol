@@ -6,7 +6,8 @@ import {
   ApiV3PoolInfoStandardItemCpmm,
   CpmmRpcData,
   CpmmKeys,
-  ApiV3Token
+  ApiV3Token,
+  CurveCalculator
 } from '@raydium-io/raydium-sdk-v2'
 import { Radio, Input, Select, Switch, Button, notification, message } from 'antd'
 import type { RadioChangeEvent } from 'antd';
@@ -355,10 +356,10 @@ function SwapBot() {
       } else {
         if (isAMM) {
           const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId: AMM_POOL })
-          programId = poolInfo.programId
           poolInfo = data.poolInfo;
           poolKeys = data.poolKeys;
           rpcData = data.poolRpcData;
+          programId = poolInfo.programId
           const _price =
             poolInfo.mintA.address == token.address
               ? poolInfo.mintAmountA / poolInfo.mintAmountB
@@ -369,6 +370,7 @@ function SwapBot() {
           poolInfoCpmm = data.poolInfo;
           poolKeysCpmm = data.poolKeys;
           rpcDataCpmm = data.rpcData;
+          programId = poolInfoCpmm.programId
           const _price =
             poolInfoCpmm.mintA.address == token.address
               ? poolInfoCpmm.mintAmountA / poolInfoCpmm.mintAmountB
@@ -415,13 +417,7 @@ function SwapBot() {
           slippage: Number(config.slippage) / 100, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%
         });
 
-        logsArrChange(
-          `花费 ${amountIn} ${mintIn.symbol || getTokenSymbol(mintIn.address)} 交换 ${new Decimal(out.amountOut.toString())
-            .div(10 ** mintOut.decimals)
-            .toDecimalPlaces(mintOut.decimals)
-            .toString()} ${mintOut.symbol || getTokenSymbol(mintOut.address)}, 最小得到数量 ${new Decimal(out.minAmountOut.toString())
-              .div(10 ** mintOut.decimals)
-              .toDecimalPlaces(mintOut.decimals)} ${mintOut.symbol || getTokenSymbol(mintOut.address)}`)
+        logsArrChange(`花费 ${amountIn} ${mintIn.symbol || getTokenSymbol(mintIn.address)}`)
         //交易
         const execute = await raydium.liquidity.swap({
           poolInfo,
@@ -470,15 +466,64 @@ function SwapBot() {
         );
         console.log(getTxLink(finalTxId))
       } else if (isValidCpmm(programId)) {
-        let inputMint: ApiV3Token;
-        if (Number(config.modeType) === 1) {
-          inputMint = poolInfo.mintA.address == baseToken.address ? poolInfo.mintA : poolInfo.mintB;
-        } else {
-          inputMint = poolInfo.mintA.address == baseToken.address ? poolInfo.mintB : poolInfo.mintA;
-        }
-        const baseIn = inputMint.address === poolInfo.mintA.address;
-        console.log(baseIn, 'baseIn')
 
+        if (baseToken.address !== poolInfoCpmm.mintA.address && baseToken.address !== poolInfoCpmm.mintB.address)
+          throw new Error('input mint does not match pool')
+
+        let mintIn: ApiV3Token;
+        if (Number(config.modeType) === 1) {
+          mintIn = poolInfoCpmm.mintA.address == baseToken.address ? poolInfoCpmm.mintB : poolInfoCpmm.mintA;
+        } else {
+          mintIn = poolInfoCpmm.mintA.address == baseToken.address ? poolInfoCpmm.mintA : poolInfoCpmm.mintB;
+        }
+        const baseIn = mintIn.address === poolInfoCpmm.mintA.address;
+        console.log(baseIn, 'baseIn', mintIn.address)
+
+        const swapRes = CurveCalculator.swap(
+          new BN(amountIn * 10 ** (mintIn.decimals)), //判断精度,
+          baseIn ? rpcDataCpmm.baseReserve : rpcDataCpmm.quoteReserve,
+          baseIn ? rpcDataCpmm.quoteReserve : rpcDataCpmm.baseReserve,
+          rpcDataCpmm.configInfo!.tradeFeeRate
+        );
+        const swapResult = await raydium.cpmm.swap({
+          poolInfo: poolInfoCpmm,
+          poolKeys: poolKeysCpmm,
+          swapResult: swapRes,
+          inputAmount: new BN(amountIn * 10 ** (mintIn.decimals)),
+          slippage: Number(config.slippage) / 100, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%),
+          baseIn,
+          computeBudgetConfig: {
+            units: priorityFees.unitLimit,
+            microLamports: priorityFees.unitPrice,
+          },
+        });
+
+        // 提取交易对象
+        const transaction = swapResult.transaction as Transaction;
+        // 创建新的 Transaction 对象
+        const combinedTransaction = new Transaction();
+        combinedTransaction.add(transaction)
+        // 添加手续费转账指令
+        if (true) {
+          combinedTransaction.add(
+            SystemProgram.transfer({
+              fromPubkey: account.publicKey,
+              toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+              lamports: SWAP_BOT_FEE * LAMPORTS_PER_SOL,
+            })
+          );
+        }
+        const { blockhash } = await connection.getLatestBlockhash('processed');
+        // 设置最近区块哈希
+        combinedTransaction.recentBlockhash = blockhash;
+        // 发送并确认合并后的交易
+        const finalTxId = await sendAndConfirmTransaction(connection, combinedTransaction, [account],
+          { commitment: 'processed', skipPreflight: true });
+        const confirmed = await connection.confirmTransaction(
+          finalTxId,
+          "processed"
+        );
+        console.log(` ${getTxLink(finalTxId)}`);
       }
 
 
