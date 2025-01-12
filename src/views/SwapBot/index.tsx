@@ -47,6 +47,11 @@ const options = [
   { value: '4', label: '捆绑4个地址' },
 ]
 
+const priorityFees = {
+  unitLimit: 5_000_000,
+  unitPrice: 200_000,
+}
+
 function SwapBot() {
   const { connection } = useConnection();
   const wallet = useWallet()
@@ -392,8 +397,8 @@ function SwapBot() {
         inputMint: mintIn.address,
         txVersion,
         computeBudgetConfig: {
-          units: 5_000_000,
-          microLamports: 200_000,
+          units: priorityFees.unitLimit,
+          microLamports: priorityFees.unitPrice,
         },
       });
 
