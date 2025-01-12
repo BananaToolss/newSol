@@ -32,6 +32,13 @@ interface LogsType {
 const BASE_NUMBER = 10000
 const HASH_COLOR = '#51d38e'
 
+const options = [
+  { value: '1', label: '不捆绑' },
+  { value: '2', label: '捆绑2个地址' },
+  { value: '3', label: '捆绑3个地址' },
+  { value: '4', label: '捆绑4个地址' },
+]
+
 function SwapBot() {
   const { connection } = useConnection();
   const wallet = useWallet()
@@ -40,7 +47,6 @@ function SwapBot() {
   const [token, setToken] = useState<Token_Type>(SOL)
   const [dexCount, setDexCount] = useState(1) // 1raydium 2pump
   const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
-
 
   const [isJito, setIsJito] = useState(false)
   const [jitoBindNum, setJitoBindNum] = useState(2)
@@ -66,9 +72,63 @@ function SwapBot() {
     _seleSol: 0,
     _seleTokenB: 0,
   })
+  const [currentIndex, setCurrentIndex] = useState(0) //执行次数
+  const [isStart, setIsStart] = useState(false)
+  const [isStop, setIsStop] = useState(false)
+  const [solPrice, setSolPrice] = useState('') //sol价格
+  const [tokenPrice, setTokenPrice] = useState('') //代币价格
+  useEffect(() => {
+    getSprice()
+  }, [])
+  useEffect(()=> {
+    setCurrentIndex(0)
+  },[dexCount])
+  useEffect(() => {
+    if (token && solPrice) getPumpPrice()
+  }, [token, solPrice])
+  useEffect(() => {
+    if (currentIndex > 0) {
+      if (isStop) {
+        logsArrChange('任务暂停执行', '#ac20fa')
+        setIsStart(false)
+        return
+      }
+      setTimeout(() => {
+        pumpFun(currentIndex)
+      }, Number(config.spaceTime) * 1000)
+    }
+
+  }, [currentIndex])
   useEffect(() => {
     getInfo()
   }, [walletConfig])
+
+  const configChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfig({ ...config, [e.target.name]: e.target.value })
+  }
+  const modeTypeChange = (e: RadioChangeEvent) => {
+    setConfig({ ...config, modeType: Number(e.target.value) })
+  }
+  const amountTypeChange = (e: RadioChangeEvent) => {
+    setConfig({ ...config, amountType: Number(e.target.value) })
+  }
+  const baseTokenClick = (_token: Token_Type) => {
+    setBseToken(_token)
+  }
+  const tokenClick = (_token: Token_Type) => {
+    setToken(_token)
+  }
+  const logsArrChange = (label: string, color?: string, isLink?: boolean,) => {
+    const obj: LogsType = { time: getCurrentTimestamp(), label, color, isLink }
+    setLogsArr(item => [...item, obj])
+  }
+  const jitoCallBack = (jitoFee_: number, jitoRpc_: string) => {
+    setJitoFee(jitoFee_)
+    setJitoRpc(jitoRpc_)
+  }
+  const optionsChange = (value: string) => {
+    setJitoBindNum(Number(value))
+  }
   const getInfo = () => {
     let _totalSol = 0
     let _totalTokenB = 0
@@ -91,40 +151,6 @@ function SwapBot() {
       _seleSol,
       _seleTokenB
     })
-  }
-  const configChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setConfig({ ...config, [e.target.name]: e.target.value })
-  }
-  const modeTypeChange = (e: RadioChangeEvent) => {
-    setConfig({ ...config, modeType: Number(e.target.value) })
-  }
-  const amountTypeChange = (e: RadioChangeEvent) => {
-    setConfig({ ...config, amountType: Number(e.target.value) })
-  }
-  const baseTokenClick = (_token: Token_Type) => {
-    setBseToken(_token)
-  }
-  const tokenClick = (_token: Token_Type) => {
-    setToken(_token)
-  }
-  const logsArrChange = (label: string, color?: string, isLink?: boolean,) => {
-    const obj: LogsType = { time: getCurrentTimestamp(), label, color, isLink }
-    setLogsArr(item => [...item, obj])
-  }
-
-  const jitoCallBack = (jitoFee_: number, jitoRpc_: string) => {
-    setJitoFee(jitoFee_)
-    setJitoRpc(jitoRpc_)
-  }
-
-  const options = [
-    { value: '1', label: '不捆绑' },
-    { value: '2', label: '捆绑2个地址' },
-    { value: '3', label: '捆绑3个地址' },
-    { value: '4', label: '捆绑4个地址' },
-  ]
-  const optionsChange = (value: string) => {
-    setJitoBindNum(Number(value))
   }
 
   const startClick = async () => {
@@ -215,27 +241,7 @@ function SwapBot() {
     }
   }
 
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isStart, setIsStart] = useState(false)
-  const [isStop, setIsStop] = useState(false)
-  const [solPrice, setSolPrice] = useState('')
 
-  useEffect(() => {
-    getSprice()
-  }, [])
-  useEffect(() => {
-    if (currentIndex > 0) {
-      if (isStop) {
-        logsArrChange('任务暂停执行', '#ac20fa')
-        setIsStart(false)
-        return
-      }
-      setTimeout(() => {
-        pumpFun(currentIndex)
-      }, Number(config.spaceTime) * 1000)
-    }
-
-  }, [currentIndex])
 
   const getSprice = async () => {
     try {
@@ -245,10 +251,7 @@ function SwapBot() {
     }
   }
 
-  const [tokenPrice, setTokenPrice] = useState('')
-  useEffect(() => {
-    if (token && solPrice) getPumpPrice()
-  }, [token, solPrice])
+
   const getPumpPrice = async () => {
     try {
       const provider = new AnchorProvider(connection, wallet, {
