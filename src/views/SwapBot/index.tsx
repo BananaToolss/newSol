@@ -203,11 +203,10 @@ function SwapBot() {
         const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId });
         console.log(data, 'data')
         const _price =
-          data.poolInfo.mintA.address == baseToken.address
+          data.poolInfo.mintA.address == token.address
             ? data.poolInfo.mintAmountA / data.poolInfo.mintAmountB
             : data.poolInfo.mintAmountB / data.poolInfo.mintAmountA;
         price = _price.toFixed(18);
-        console.log(price, 'devprice')
       }
       const solPrice = await getSolPrice()
       const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
@@ -241,7 +240,7 @@ function SwapBot() {
 
   const rayDiumGetPool = async (raydium: Raydium, mint1: PublicKey, mint2: PublicKey) => {
     try {
-      let poolId = '23miCdKG2WNVS3AUZ55ErSNRFRXNx2ZWHw4g4ChRVeYC' //dev
+      let poolId = 'CGjmakq9tEteMMsBNmhyCBeM3Spqax58VYyFpa9XERw9' //dev
       if (isMainnet) {
         const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1, mint2 })
         poolId = tokenPool.data[0].id
