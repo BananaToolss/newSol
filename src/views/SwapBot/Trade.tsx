@@ -381,9 +381,12 @@ export const getRayDiumPrice = async (
         price = _price.toFixed(18)
       }
     }
+    console.log(price, 'price')
     const solPrice = await getSolPrice()
+    console.log(solPrice, 'solPrice')
     const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
     const _pri = ethers.utils.formatEther(_price)
+    console.log(_pri,'_pri')
     return _pri
   } catch (error) {
     return null

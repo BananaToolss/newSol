@@ -136,9 +136,7 @@ function SwapBot() {
       if (dexCount === 1) {
         const account = Keypair.generate()
         const raydium = await initSdk({ owner: account.publicKey, connection: connection })
-        const price1 = await getRayDiumPrice(raydium, new PublicKey(token.address), new PublicKey(baseToken.address))
-        const _price = ethers.utils.parseEther(price1).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
-        price = ethers.utils.formatEther(_price)
+        price = await getRayDiumPrice(raydium, new PublicKey(token.address), new PublicKey(baseToken.address))
       }
       if (dexCount === 2) {
         price = await getPumpPrice(sdk, new PublicKey(baseToken.address), solPrice)
