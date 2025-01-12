@@ -172,12 +172,11 @@ function SwapBot() {
   }
 
   const workersRef = useRef<any[]>([]);
-  const tRef = useRef(true);
-  const indexRef = useRef<number>(0);
   const TaskRef = useRef<NodeJS.Timeout>(null);
 
   const startClick = async () => {
     try {
+      setIsStop(false)
       if (walletConfig.length === 0) return logsArrChange('请导入钱包私钥', 'red')
       if (!config.minAmount) return logsArrChange('请填写购买数量', 'red')
       if (Number(config.amountType) === 3 && !config.maxAmount) return logsArrChange('请填写购买数量', 'red')
@@ -202,12 +201,10 @@ function SwapBot() {
         console.log(`钱包准备就绪`)
       }
 
-      tRef.current = true;
-      if (TaskRef.current) clearInterval(TaskRef.current)
-      indexRef.current = 1;
-      let waitingForConfirmation: boolean; //执行中
 
-      let times = 0;
+      if (TaskRef.current) clearInterval(TaskRef.current)
+
+      let waitingForConfirmation: boolean; //执行中
       let walletIndexes = 0
       let round = 0
       const rounds: any[] = []
@@ -255,6 +252,27 @@ function SwapBot() {
               signer = await PumpFunSwap(connection, sdk, account, Number(config.modeType), BaseToken,
                 amountIn * baseToken.decimals, BigInt(Number(config.slippage) * 100))
               _tokenPrice = await getPumpPrice(sdk, new PublicKey(baseToken.address), solPrice)
+            }
+          } else {
+            console.log('first')
+            const url = `${window.location.origin}/worker1.js`
+            console.log(config.thread)
+            for (let index = 0; index < Number(config.thread); index++) {
+              workersRef.current[index] = new Worker(url)
+              console.log({
+                eventName: 'START',
+                total: _walletConfig.length,
+                thread: config.thread,
+                threadIndex: index,
+                spaceTime: config.spaceTime
+              })
+              workersRef.current[index].postMessage({
+                eventName: 'START',
+                total: _walletConfig.length,
+                thread: config.thread,
+                threadIndex: index,
+                spaceTime: config.spaceTime
+              })
             }
           }
           if (isStop) console.log('任务暂停')
