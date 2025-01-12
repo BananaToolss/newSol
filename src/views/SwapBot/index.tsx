@@ -225,29 +225,29 @@ function SwapBot() {
           const raydium = raydiums[walletIndexes]
           const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndexes].privateKey));
           logsArrChange(`开始执行钱包${account.publicKey.toBase58()}`)
-          if (Number(config.thread) <= 1) {
-            let _tokenPrice = '0'
-            if (Number(dexCount) === 1) {
-              _tokenPrice = await getRayDiumPrice(raydium, QueteToken, BaseToken)
-            } else {
-              _tokenPrice = await getPumpPrice(sdk, BaseToken)
-            }
-            logsArrChange(`当前代币价格: ${_tokenPrice}`)
-            if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice)) {
-              logsArrChange(`拉盘任务完成`)
-              closeTask()
-            }
-            if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice)) {
-              logsArrChange(`砸盘任务完成`)
-              closeTask()
-            }
-          }
+          // if (Number(config.thread) <= 1) {
+          //   let _tokenPrice = '0'
+          //   if (Number(dexCount) === 1) {
+          //     _tokenPrice = await getRayDiumPrice(raydium, QueteToken, BaseToken)
+          //   } else {
+          //     _tokenPrice = await getPumpPrice(sdk, BaseToken)
+          //   }
+          //   logsArrChange(`当前代币价格: ${_tokenPrice}`)
+          //   if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice)) {
+          //     logsArrChange(`拉盘任务完成`)
+          //     closeTask()
+          //   }
+          //   if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice)) {
+          //     logsArrChange(`砸盘任务完成`)
+          //     closeTask()
+          //   }
+          // }
           let state = true
           const { balance, amountIn } = await getAmountIn(connection, account, BaseToken,
             Number(config.modeType), Number(config.amountType), Number(config.minAmount), Number(config.maxAmount))
           if (balance === 0 || amountIn === 0) {
             state = false
-            logsArrChange(`${account.publicKey.toBase58()}余额不足，跳过该钱包`)
+            logsArrChange(`${account.publicKey.toBase58()}余额不足，跳过该钱包`, '#f9d236')
           }
           let signer = ''
           if (Number(config.thread) <= 1 && state) {

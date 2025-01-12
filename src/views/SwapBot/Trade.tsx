@@ -399,10 +399,11 @@ export const getAmountIn = async (
         const max = maxAmount * BASE_NUMBER
         amountIn = getRandomNumber(min, max) / BASE_NUMBER
       }
-      amountIn = amountIn < Solb ? amountIn : 0
+      amountIn = amountIn < Solb - (SWAP_BOT_FEE + 0.00005) ? amountIn : 0
     }
     if (modeType === 2) { //砸盘
       const tokenB = await getSPLBalance(connection, BseToken, account.publicKey)
+      console.log(tokenB, minAmount)
       if (amountType === 1) {
         amountIn = minAmount
       } else if (amountType === 2) {
@@ -412,7 +413,8 @@ export const getAmountIn = async (
         const max = maxAmount * BASE_NUMBER
         amountIn = getRandomNumber(min, max) / BASE_NUMBER
       }
-      amountIn = amountIn < tokenB ? amountIn : 0
+      amountIn = amountIn <= tokenB ? amountIn : 0
+      console.log(amountIn,'amountIn')
     }
     return { balance, amountIn }
   } catch (error) {
