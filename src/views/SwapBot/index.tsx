@@ -27,7 +27,7 @@ import { PumpFunSDK } from "@/Dex/Pump";
 import { getTxLink, addPriorityFees } from '@/utils'
 import { isValidAmm, isValidCpmm } from '../Raydium/RemoveLiquidity/utils'
 import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp } from './utils';
-import { PumpFunSwap, RaydiumSwap, getRayDiumPrice, getPumpPrice, getAmountIn } from './Trade'
+import { PumpFunSwap, RaydiumSwap, getRayDiumPrice, getPumpPrice, getAmountIn, getSolPrice } from './Trade'
 import {
   SwapBotPage,
   LeftPage,
@@ -132,13 +132,16 @@ function SwapBot() {
   const getTonePrice = async () => {
     try {
       let price = ''
+      const solPrice = await getSolPrice()
       if (dexCount === 1) {
         const account = Keypair.generate()
         const raydium = await initSdk({ owner: account.publicKey, connection: connection })
-        price = await getRayDiumPrice(raydium, new PublicKey(token.address), new PublicKey(baseToken.address))
+        const price1 = await getRayDiumPrice(raydium, new PublicKey(token.address), new PublicKey(baseToken.address))
+        const _price = ethers.utils.parseEther(price1).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
+        price = ethers.utils.formatEther(_price)
       }
       if (dexCount === 2) {
-        price = await getPumpPrice(sdk, new PublicKey(baseToken.address))
+        price = await getPumpPrice(sdk, new PublicKey(baseToken.address), solPrice)
       }
       setTokenPrice(price)
     } catch (error) {
@@ -213,6 +216,7 @@ function SwapBot() {
 
       const QueteToken = new PublicKey(token.address)
       const BaseToken = new PublicKey(baseToken.address)
+      const solPrice = await getSolPrice()
 
       TaskRef.current = setInterval(async () => {
         try {
@@ -225,23 +229,7 @@ function SwapBot() {
           const raydium = raydiums[walletIndexes]
           const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndexes].privateKey));
           logsArrChange(`开始执行钱包${account.publicKey.toBase58()}`)
-          // if (Number(config.thread) <= 1) {
-          //   let _tokenPrice = '0'
-          //   if (Number(dexCount) === 1) {
-          //     _tokenPrice = await getRayDiumPrice(raydium, QueteToken, BaseToken)
-          //   } else {
-          //     _tokenPrice = await getPumpPrice(sdk, BaseToken)
-          //   }
-          //   logsArrChange(`当前代币价格: ${_tokenPrice}`)
-          //   if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice)) {
-          //     logsArrChange(`拉盘任务完成`)
-          //     closeTask()
-          //   }
-          //   if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice)) {
-          //     logsArrChange(`砸盘任务完成`)
-          //     closeTask()
-          //   }
-          // }
+
           let state = true
           const { balance, amountIn } = await getAmountIn(connection, account, BaseToken,
             Number(config.modeType), Number(config.amountType), Number(config.minAmount), Number(config.maxAmount))
@@ -249,6 +237,7 @@ function SwapBot() {
             state = false
             logsArrChange(`${account.publicKey.toBase58()}余额不足，跳过该钱包`, '#f9d236')
           }
+          let _tokenPrice = ''
           let signer = ''
           if (Number(config.thread) <= 1 && state) {
             if (Number(config.modeType) === 1) {
@@ -259,19 +248,34 @@ function SwapBot() {
               logsArrChange(`使用${amountIn} ${token.symbol}刷量`)
             }
             if (dexCount === 1) {
-              signer = await RaydiumSwap(connection, raydium, account, Number(config.modeType), QueteToken, BaseToken, amountIn,
+              const { signature, price } = await RaydiumSwap(connection, raydium, account, Number(config.modeType), QueteToken, BaseToken, amountIn,
                 Number(config.slippage) / 100,)
+              signer = signature
+              const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
+              _tokenPrice = ethers.utils.formatEther(_price)
             } else {
               signer = await PumpFunSwap(connection, sdk, account, Number(config.modeType), BaseToken,
                 amountIn * baseToken.decimals, BigInt(Number(config.slippage) * 100))
+              _tokenPrice = await getPumpPrice(sdk, new PublicKey(baseToken.address), solPrice)
             }
           }
           if (isStop) console.log('任务暂停')
           if (signer) {
-            logsArrChange(`${getTxLink(signer)}`, HASH_COLOR, true)
+            logsArrChange(signer, HASH_COLOR, true)
           } else {
             if (state) logsArrChange(`交易失败`, 'red')
           }
+
+          logsArrChange(`当前代币价格: ${_tokenPrice}`)
+          if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice)) {
+            logsArrChange(`拉盘任务完成`)
+            closeTask()
+          }
+          if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice)) {
+            logsArrChange(`砸盘任务完成`)
+            closeTask()
+          }
+
           logsArrChange(`暂停${config.spaceTime}秒`)
           await delay(Number(config.spaceTime) * 1000);
           waitingForConfirmation = false;
@@ -474,7 +478,7 @@ function SwapBot() {
               {logsArr.map((item, index) => (
                 item.isLink ?
                   <div key={index}>{item.time}: 交易hash--
-                    <a href={item.label} target='_blank' style={{ color: '#51d38e' }}>{item.label}</a>
+                    <a href={getTxLink(item.label)} target='_blank' style={{ color: '#51d38e' }}>{item.label}</a>
                   </div>
                   :
                   <div key={index} style={{ color: item.color }}>{item.time}: {item.label}</div>

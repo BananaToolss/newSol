@@ -95,6 +95,7 @@ export const RaydiumSwap = async (
     let rpcDataCpmm: CpmmRpcData;
 
     let programId = ''
+    let price = ''
 
     if (isMainnet) {
       const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1: QuteToken, mint2: BaseToken })
@@ -109,6 +110,10 @@ export const RaydiumSwap = async (
       if (isValidCpmm(poolInfo.programId)) {
         rpcDataCpmm = await raydium.cpmm.getRpcPoolInfo(poolInfo.id, true);
       }
+      const _price = !poolInfo ? 0 : poolInfo.mintA.address === SOL_TOKEN
+        ? 1 / poolInfo.price
+        : poolInfo.price;
+      price = _price.toFixed(18)
     } else {
       if (isAMM) {
         const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId: AMM_POOL })
@@ -116,12 +121,22 @@ export const RaydiumSwap = async (
         poolKeys = data.poolKeys;
         rpcData = data.poolRpcData;
         programId = poolInfo.programId
+        const _price =
+          poolInfo.mintA.address == QuteToken.toBase58()
+            ? poolInfo.mintAmountA / poolInfo.mintAmountB
+            : poolInfo.mintAmountB / poolInfo.mintAmountA;
+        price = _price.toFixed(18)
       } else {
         const data = await raydium.cpmm.getPoolInfoFromRpc(CPMM_POOL);
         poolInfoCpmm = data.poolInfo;
         poolKeysCpmm = data.poolKeys;
         rpcDataCpmm = data.rpcData;
         programId = poolInfoCpmm.programId
+        const _price =
+          poolInfoCpmm.mintA.address == QuteToken.toBase58()
+            ? poolInfoCpmm.mintAmountA / poolInfoCpmm.mintAmountB
+            : poolInfoCpmm.mintAmountB / poolInfoCpmm.mintAmountA;
+        price = _price.toFixed(18)
       }
     }
     if (!isValidAmm(programId) && !isValidCpmm(programId)) throw new Error('target pool is not AMM pool and Cpmm Pool')
@@ -134,7 +149,7 @@ export const RaydiumSwap = async (
       signature = await RaydiumCPMMSwap(connection, raydium,
         account, modeType, BaseToken, amountIn, slippage, poolInfoCpmm, poolKeysCpmm, rpcDataCpmm)
     }
-    return signature
+    return { signature, price }
   } catch (error) {
     return null
   }
@@ -302,7 +317,7 @@ export const RaydiumCPMMSwap = async (
   }
 }
 
-const getSolPrice = async () => {
+export const getSolPrice = async () => {
   try {
     const url = `https://api.jup.ag/price/v2?ids=${SOL_TOKEN}`
     const resut = await fetcher(url)
@@ -315,11 +330,11 @@ const getSolPrice = async () => {
 
 export const getPumpPrice = async (
   sdk: PumpFunSDK,
-  BseToken: PublicKey
+  BseToken: PublicKey,
+  solPrice: string
 ) => {
   try {
     const tokenPool = await sdk.getBondingCurveAccount(BseToken)
-    const solPrice = await getSolPrice()
     const capSOL = tokenPool.getMarketCapSOL()
     const _price = ethers.utils.formatEther(capSOL)
     const price = ethers.utils.parseEther(_price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
@@ -414,7 +429,7 @@ export const getAmountIn = async (
         amountIn = getRandomNumber(min, max) / BASE_NUMBER
       }
       amountIn = amountIn <= tokenB ? amountIn : 0
-      console.log(amountIn,'amountIn')
+      console.log(amountIn, 'amountIn')
     }
     return { balance, amountIn }
   } catch (error) {
