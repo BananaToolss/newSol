@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Api, Raydium, TxVersion,
   ApiV3PoolInfoStandardItem,
@@ -26,7 +26,8 @@ import { initSdk, txVersion } from '@/Dex/Raydium'
 import { PumpFunSDK } from "@/Dex/Pump";
 import { getTxLink, addPriorityFees } from '@/utils'
 import { isValidAmm, isValidCpmm } from '../Raydium/RemoveLiquidity/utils'
-import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp, getSolPrice } from './utils';
+import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp } from './utils';
+import { pumpFunSwap, RaydiumSwap, getRayDiumPrice, getPumpPrice } from './Trade'
 import {
   SwapBotPage,
   LeftPage,
@@ -43,9 +44,6 @@ interface LogsType {
 }
 const BASE_NUMBER = 10000
 const HASH_COLOR = '#51d38e'
-const isAMM = false
-const AMM_POOL = 'CGjmakq9tEteMMsBNmhyCBeM3Spqax58VYyFpa9XERw9'
-const CPMM_POOL = 'DZtjekDo2LEgCnhsWmCzUcqG7cZstFHyp7biG1A8nhzQ'
 
 const options = [
   { value: '1', label: '不捆绑' },
@@ -53,11 +51,6 @@ const options = [
   { value: '3', label: '捆绑3个地址' },
   { value: '4', label: '捆绑4个地址' },
 ]
-
-const priorityFees = {
-  unitLimit: 5_000_000,
-  unitPrice: 200_000,
-}
 
 function SwapBot() {
   const { connection } = useConnection();
@@ -74,7 +67,6 @@ function SwapBot() {
   const [jitoFee, setJitoFee] = useState<number>(0)
   const [jitoRpc, setJitoRpc] = useState('')
   const [logsArr, setLogsArr] = useState<LogsType[]>([])
-
   const [config, setConfig] = useState({
     modeType: 1, //模式 1拉盘 2砸盘 3刷量
     thread: '1', //线程数
@@ -86,7 +78,6 @@ function SwapBot() {
     targetPrice: '1', //目标价格
     loop: '2', //刷量次数
   })
-
   const [info, setInfo] = useState({
     _totalSol: 0,
     _totalTokenB: 0,
@@ -97,31 +88,14 @@ function SwapBot() {
   const [currentIndex, setCurrentIndex] = useState(0) //执行次数
   const [isStart, setIsStart] = useState(false)
   const [isStop, setIsStop] = useState(false)
-  const [tokenPoolId, setTokenPoolId] = useState('')
-
   const [tokenPrice, setTokenPrice] = useState('') //代币价格
 
   useEffect(() => {
-    setCurrentIndex(0)
     if (token) getTonePrice()
   }, [dexCount, token, baseToken])
   useEffect(() => {
     getInfo()
   }, [walletConfig])
-  useEffect(() => {
-    if (currentIndex > 0) {
-      if (isStop) {
-        logsArrChange('任务暂停执行', '#ac20fa')
-        setIsStart(false)
-        return
-      }
-      setTimeout(() => {
-        pumpFun(currentIndex)
-      }, Number(config.spaceTime) * 1000)
-    }
-
-  }, [currentIndex])
-
 
   const configChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value })
@@ -149,22 +123,24 @@ function SwapBot() {
   const optionsChange = (value: string) => {
     setJitoBindNum(Number(value))
   }
+
+  const provider = new AnchorProvider(connection, wallet, {
+    commitment: "finalized",
+  });
+  let sdk: PumpFunSDK = new PumpFunSDK(provider);
+
   const getTonePrice = async () => {
     try {
+      let price = ''
       if (dexCount === 1) {
-        const mint1 = new PublicKey(token.address)
-        const mint2 = new PublicKey(baseToken.address)
         const account = Keypair.generate()
         const raydium = await initSdk({ owner: account.publicKey, connection: connection })
-        const { poolId, isAmm, price } = await rayDiumGetPool(raydium, mint1, mint2)
-        console.log(poolId, isAmm, price, 'poolID')
-        setTokenPoolId(poolId)
-        setTokenPrice(price)
+        price = await getRayDiumPrice(raydium, new PublicKey(token.address), new PublicKey(baseToken.address))
       }
       if (dexCount === 2) {
-        const _price = await getPumpPrice()
-        setTokenPrice(_price)
+        price = await getPumpPrice(sdk, new PublicKey(baseToken.address))
       }
+      setTokenPrice(price)
     } catch (error) {
       console.log(error)
     }
@@ -194,472 +170,70 @@ function SwapBot() {
     })
   }
 
+  const workersRef = useRef<any[]>([]);
+  const tRef = useRef(true);
+  const indexRef = useRef<number>(0);
+  const TaskRef = useRef<NodeJS.Timeout>(null);
+
   const startClick = async () => {
     try {
-      // if (walletConfig.length === 0) return logsArrChange('请导入钱包私钥', 'red')
-      // if (!config.minAmount) return logsArrChange('请填写购买数量', 'red')
-      // if (Number(config.amountType) === 3 && !config.maxAmount) return logsArrChange('请填写购买数量', 'red')
+      if (walletConfig.length === 0) return logsArrChange('请导入钱包私钥', 'red')
+      if (!config.minAmount) return logsArrChange('请填写购买数量', 'red')
+      if (Number(config.amountType) === 3 && !config.maxAmount) return logsArrChange('请填写购买数量', 'red')
+      if (Number(config.modeType) !== 3 && !config.targetPrice) return logsArrChange('请填写目标价格')
       setIsStop(false)
       setIsStart(true)
+      const _walletConfig = [...walletConfig]
+      const raydiums: Raydium[] = []
       if (dexCount === 1) {
-        Raydium(0)
+        console.log('钱包准备中')
+        for (let i = 0; i < _walletConfig.length; i++) {
+          const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[i].privateKey))
+          let raydium: Raydium | null
+          try {
+            raydium = await initSdk({ owner: account, connection: connection })
+          } catch (error) {
+            console.log(`钱包${i + 1}加载失败`)
+          }
+          if (raydium) raydiums.push(raydium)
+          await delay(150)
+        }
+        console.log(`钱包准备就绪`)
       }
-      if (dexCount === 2) {
-        pumpFun(0)
-      }
+
+      tRef.current = true;
+      if (TaskRef.current) clearInterval(TaskRef.current)
+      indexRef.current = 1;
+      let waitingForConfirmation: boolean; //执行中
+      let walletIndex = 0; //执行钱包下标
+      let times = 0;
+      let walletIndexes = 0
+      let round = 0
+      const rounds: any[] = []
+
+
+      TaskRef.current = setInterval(async () => {
+        if (waitingForConfirmation) {
+          console.log("还在交易中");
+          return;
+        }
+        waitingForConfirmation = true;
+        const raydium = raydiums[walletIndex]
+        const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey));
+        if (Number(config.thread) <= 1) {
+          let _tokenPrice = '0'
+          if (Number(config.modeType) === 1) {
+
+          } else {
+
+          }
+        }
+
+      }, 1000)
+
     } catch (error) {
       console.log(error)
       setIsStart(false)
-    }
-  }
-  //pump代币价格获取
-  const getPumpPrice = async () => {
-    try {
-      const provider = new AnchorProvider(connection, wallet, {
-        commitment: "finalized",
-      });
-      let sdk: PumpFunSDK = new PumpFunSDK(provider);
-      const BseToken = new PublicKey(baseToken.address)
-      const tokenPool = await sdk.getBondingCurveAccount(BseToken)
-      const solPrice = await getSolPrice()
-      const capSOL = tokenPool.getMarketCapSOL()
-      const _price = ethers.utils.formatEther(capSOL)
-      const price = ethers.utils.parseEther(_price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
-      const _pri = ethers.utils.formatEther(price)
-      return _pri
-    } catch (error) {
-      console.log(error, 'error')
-      return ''
-    }
-  }
-  //raydium获取池子地址,池子类型，价格
-  const rayDiumGetPool = async (raydium: Raydium, mint1: PublicKey, mint2: PublicKey) => {
-    try {
-      let price = '' //价格
-      let programId = '' //池子类型
-      let poolId = isAMM ? AMM_POOL : CPMM_POOL //dev
-      if (isMainnet) {
-        const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1, mint2 })
-        poolId = tokenPool.data[0].id
-
-        const data = await raydium.api.fetchPoolById({ ids: poolId })
-        const poolInfo = data[0]
-        const _price = !poolInfo ? 0 : poolInfo.mintA.address === SOL_TOKEN
-          ? 1 / poolInfo.price
-          : poolInfo.price;
-        price = _price.toFixed(18)
-        programId = poolInfo.programId
-      } else {
-        if (isAMM) {
-          const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId })
-          const poolInfo = data.poolInfo
-          const _price =
-            poolInfo.mintA.address == token.address
-              ? poolInfo.mintAmountA / poolInfo.mintAmountB
-              : poolInfo.mintAmountB / poolInfo.mintAmountA;
-          price = _price.toFixed(18)
-          console.log(price, 'price')
-          programId = poolInfo.programId
-        } else {
-          const data = await raydium.cpmm.getPoolInfoFromRpc(CPMM_POOL);
-          const poolInfoCpmm = data.poolInfo;
-          const _price =
-            poolInfoCpmm.mintA.address == token.address
-              ? poolInfoCpmm.mintAmountA / poolInfoCpmm.mintAmountB
-              : poolInfoCpmm.mintAmountB / poolInfoCpmm.mintAmountA;
-          price = _price.toFixed(18)
-          programId = poolInfoCpmm.programId
-        }
-      }
-      if (!isValidAmm(programId) && !isValidCpmm(programId)) throw new Error('target pool is not AMM pool and Cpmm Pool')
-      let isAmm = true
-      if (isValidCpmm(programId)) isAmm = false
-      const solPrice = await getSolPrice()
-      const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
-      const _pri = ethers.utils.formatEther(_price)
-
-      return { poolId, isAmm, price: _pri }
-    } catch (error) {
-      return null
-    }
-  }
-
-  const getTokenSymbol = (address: string) => {
-    if (baseToken.address === address) {
-      return baseToken.symbol
-    } else {
-      return token.symbol
-    }
-  }
-
-  const Raydium = async (index: number) => {
-    const walletIndex = 0
-    const _walletConfig = [...walletConfig]
-    const raydiums: Raydium[] = []
-    try {
-      console.log('钱包准备中')
-      for (let i = 0; i < _walletConfig.length; i++) {
-        const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[i].privateKey))
-        let raydium: Raydium | null
-        try {
-          raydium = await initSdk({ owner: account, connection: connection })
-        } catch (error) {
-          console.log(`钱包${i + 1}加载失败`)
-        }
-        if (raydium) raydiums.push(raydium)
-        await delay(140)
-      }
-      console.log(`钱包准备就绪`)
-
-      const mint1 = new PublicKey(token.address)
-      const mint2 = new PublicKey(baseToken.address)
-      const raydium = raydiums[walletIndex]
-
-      const Token = new PublicKey(baseToken.address)
-      const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
-      const { balance, amountIn } = await getAmountIn(account, Token)
-      console.log(balance, amountIn, 'balance, amountIn')
-      if (amountIn == 0 || balance == 0) {
-        // setCurrentIndex(item => item + 1)
-        return
-      }
-
-
-      let poolInfo: ApiV3PoolInfoStandardItem | undefined;
-      let poolKeys: AmmV4Keys | undefined;
-      let rpcData: AmmRpcData;
-
-      let poolInfoCpmm: ApiV3PoolInfoStandardItemCpmm | undefined;
-      let poolKeysCpmm: CpmmKeys | undefined;
-      let rpcDataCpmm: CpmmRpcData;
-
-      let price = ''
-      let programId = ''
-
-      if (isMainnet) {
-        const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1, mint2 })
-        const poolId = tokenPool.data[0].id
-        const data = await raydium.api.fetchPoolById({ ids: poolId })
-        const poolInfo = data[0]
-        const _price = !poolInfo ? 0 : poolInfo.mintA.address === SOL_TOKEN
-          ? 1 / poolInfo.price
-          : poolInfo.price;
-        price = _price.toFixed(18)
-        programId = poolInfo.programId
-        if (isValidAmm(poolInfo.programId)) {
-          poolKeys = await raydium.liquidity.getAmmPoolKeys(poolId);
-          rpcData = await raydium.liquidity.getRpcPoolInfo(poolId);
-        }
-        if (isValidCpmm(poolInfo.programId)) {
-          rpcDataCpmm = await raydium.cpmm.getRpcPoolInfo(poolInfo.id, true);
-        }
-      } else {
-        if (isAMM) {
-          const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId: AMM_POOL })
-          poolInfo = data.poolInfo;
-          poolKeys = data.poolKeys;
-          rpcData = data.poolRpcData;
-          programId = poolInfo.programId
-          const _price =
-            poolInfo.mintA.address == token.address
-              ? poolInfo.mintAmountA / poolInfo.mintAmountB
-              : poolInfo.mintAmountB / poolInfo.mintAmountA;
-          price = _price.toFixed(18)
-        } else {
-          const data = await raydium.cpmm.getPoolInfoFromRpc(CPMM_POOL);
-          poolInfoCpmm = data.poolInfo;
-          poolKeysCpmm = data.poolKeys;
-          rpcDataCpmm = data.rpcData;
-          programId = poolInfoCpmm.programId
-          const _price =
-            poolInfoCpmm.mintA.address == token.address
-              ? poolInfoCpmm.mintAmountA / poolInfoCpmm.mintAmountB
-              : poolInfoCpmm.mintAmountB / poolInfoCpmm.mintAmountA;
-          price = _price.toFixed(18)
-        }
-      }
-      if (!isValidAmm(programId) && !isValidCpmm(programId)) throw new Error('target pool is not AMM pool and Cpmm Pool')
-      console.log(price, 'price')
-      if (isValidAmm(programId)) { //amm池子
-        const [baseReserve, quoteReserve, status] = [
-          rpcData.baseReserve,
-          rpcData.quoteReserve,
-          rpcData.status.toNumber(),
-        ];
-
-        if (poolInfo.mintA.address !== baseToken.address && poolInfo.mintB.address !== baseToken.address)
-          return messageApi.error('input mint does not match pool')
-
-        const baseIn = (baseToken.address === poolInfo.mintB.address);
-
-        let mintIn, mintOut;
-        if (Number(config.modeType) === 1) {        // 买入
-          [mintIn, mintOut] = baseIn
-            ? [poolInfo.mintA, poolInfo.mintB]
-            : [poolInfo.mintB, poolInfo.mintA];
-        } else {       // 卖出
-          [mintIn, mintOut] = baseIn
-            ? [poolInfo.mintB, poolInfo.mintA]
-            : [poolInfo.mintA, poolInfo.mintB];
-        }
-
-        const out = raydium.liquidity.computeAmountOut({
-          poolInfo: {
-            ...poolInfo,
-            baseReserve,
-            quoteReserve,
-            status,
-            version: 4,
-          },
-          amountIn: new BN(amountIn * 10 ** (mintIn.decimals)), //判断精度
-          mintIn: mintIn.address,
-          mintOut: mintOut.address,
-          slippage: Number(config.slippage) / 100, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%
-        });
-
-        logsArrChange(`花费 ${amountIn} ${mintIn.symbol || getTokenSymbol(mintIn.address)}`)
-        //交易
-        const execute = await raydium.liquidity.swap({
-          poolInfo,
-          poolKeys,
-          amountIn: new BN(amountIn * 10 ** (mintIn.decimals)),
-          amountOut: out.minAmountOut,
-          fixedSide: "in",
-          inputMint: mintIn.address,
-          txVersion,
-          computeBudgetConfig: {
-            units: priorityFees.unitLimit,
-            microLamports: priorityFees.unitPrice,
-          },
-        });
-
-        const transaction = execute.transaction;
-        const Tx = new Transaction();
-        const instructions = transaction.message.compiledInstructions.map((instruction: any) => {
-          return new TransactionInstruction({
-            keys: instruction.accountKeyIndexes.map((index: any) => ({
-              pubkey: transaction.message.staticAccountKeys[index],
-              isSigner: transaction.message.isAccountSigner(index),
-              isWritable: transaction.message.isAccountWritable(index),
-            })),
-            programId: transaction.message.staticAccountKeys[instruction.programIdIndex],
-            data: Buffer.from(instruction.data),
-          });
-        });
-        instructions.forEach((instruction: any) => Tx.add(instruction));
-        if (true) {
-          Tx.add(
-            SystemProgram.transfer({
-              fromPubkey: account.publicKey,
-              toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-              lamports: SWAP_BOT_FEE * LAMPORTS_PER_SOL,
-            })
-          );
-        }
-        const { blockhash } = await connection.getLatestBlockhash('processed');
-        Tx.recentBlockhash = blockhash;
-        const finalTxId = await sendAndConfirmTransaction(connection, Tx, [account],
-          { commitment: 'processed', skipPreflight: true });
-        const confirmed = await connection.confirmTransaction(
-          finalTxId,
-          "processed"
-        );
-        console.log(getTxLink(finalTxId))
-      } else if (isValidCpmm(programId)) {
-
-        if (baseToken.address !== poolInfoCpmm.mintA.address && baseToken.address !== poolInfoCpmm.mintB.address)
-          throw new Error('input mint does not match pool')
-
-        let mintIn: ApiV3Token;
-        if (Number(config.modeType) === 1) {
-          mintIn = poolInfoCpmm.mintA.address == baseToken.address ? poolInfoCpmm.mintB : poolInfoCpmm.mintA;
-        } else {
-          mintIn = poolInfoCpmm.mintA.address == baseToken.address ? poolInfoCpmm.mintA : poolInfoCpmm.mintB;
-        }
-        const baseIn = mintIn.address === poolInfoCpmm.mintA.address;
-        console.log(baseIn, 'baseIn', mintIn.address)
-
-        const swapRes = CurveCalculator.swap(
-          new BN(amountIn * 10 ** (mintIn.decimals)), //判断精度,
-          baseIn ? rpcDataCpmm.baseReserve : rpcDataCpmm.quoteReserve,
-          baseIn ? rpcDataCpmm.quoteReserve : rpcDataCpmm.baseReserve,
-          rpcDataCpmm.configInfo!.tradeFeeRate
-        );
-        const swapResult = await raydium.cpmm.swap({
-          poolInfo: poolInfoCpmm,
-          poolKeys: poolKeysCpmm,
-          swapResult: swapRes,
-          inputAmount: new BN(amountIn * 10 ** (mintIn.decimals)),
-          slippage: Number(config.slippage) / 100, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%),
-          baseIn,
-          computeBudgetConfig: {
-            units: priorityFees.unitLimit,
-            microLamports: priorityFees.unitPrice,
-          },
-        });
-
-        // 提取交易对象
-        const transaction = swapResult.transaction as Transaction;
-        // 创建新的 Transaction 对象
-        const combinedTransaction = new Transaction();
-        combinedTransaction.add(transaction)
-        // 添加手续费转账指令
-        if (true) {
-          combinedTransaction.add(
-            SystemProgram.transfer({
-              fromPubkey: account.publicKey,
-              toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-              lamports: SWAP_BOT_FEE * LAMPORTS_PER_SOL,
-            })
-          );
-        }
-        const { blockhash } = await connection.getLatestBlockhash('processed');
-        // 设置最近区块哈希
-        combinedTransaction.recentBlockhash = blockhash;
-        // 发送并确认合并后的交易
-        const finalTxId = await sendAndConfirmTransaction(connection, combinedTransaction, [account],
-          { commitment: 'processed', skipPreflight: true });
-        const confirmed = await connection.confirmTransaction(
-          finalTxId,
-          "processed"
-        );
-        console.log(` ${getTxLink(finalTxId)}`);
-      }
-
-
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  /**
-   * Pump专区
-   */
-
-  //输出数量
-  const getAmountIn = async (account: Keypair, BseToken: PublicKey) => {
-    try {
-      let balance = await connection.getBalance(account.publicKey)
-      const Solb = balance / LAMPORTS_PER_SOL
-
-      let amountIn = 0
-      if (Number(config.modeType) === 1 || Number(config.modeType) === 3) { //拉盘
-        if (config.amountType === 1) {
-          amountIn = Number(config.minAmount)
-        } else if (config.amountType === 2) {
-          amountIn = balance * Number(config.minAmount) / 100
-        } else if (config.amountType === 3) {
-          const min = Number(config.minAmount) * BASE_NUMBER
-          const max = Number(config.maxAmount) * BASE_NUMBER
-          amountIn = getRandomNumber(min, max) / BASE_NUMBER
-        }
-        amountIn = amountIn < Solb ? amountIn : 0
-      }
-      if (Number(config.modeType) === 2) { //砸盘
-        const tokenB = await getSPLBalance(connection, BseToken, account.publicKey)
-        if (config.amountType === 1) {
-          amountIn = Number(config.minAmount)
-        } else if (config.amountType === 2) {
-          amountIn = tokenB * Number(config.minAmount) / 100
-        } else if (config.amountType === 3) {
-          const min = Number(config.minAmount) * BASE_NUMBER
-          const max = Number(config.maxAmount) * BASE_NUMBER
-          amountIn = getRandomNumber(min, max) / BASE_NUMBER
-        }
-        amountIn = amountIn < tokenB ? amountIn : 0
-      }
-      return { balance, amountIn }
-    } catch (error) {
-      return { balance: 0, amountIn: 0 }
-    }
-  }
-  const pumpFun = async (index: number) => {
-    const _walletConfig = [...walletConfig]
-    if (Number(config.modeType === 3)) { //刷量
-      const _total = _walletConfig.length * Number(config.loop)
-      if (index >= _total) {
-        setCurrentIndex(0)
-        setIsStart(false)
-        logsArrChange('刷量任务完成', '#1890ff')
-        return
-      }
-    }
-    const walletIndex = index % _walletConfig.length
-    try {
-      const provider = new AnchorProvider(connection, wallet, {
-        commitment: "finalized",
-      });
-      let sdk: PumpFunSDK = new PumpFunSDK(provider);
-
-      const Token = new PublicKey(baseToken.address)
-      let _price = '0'
-      if (Number(config.modeType) !== 3) {
-        _price = await getPumpPrice()
-        setTokenPrice(_price)
-        logsArrChange(`代币价格：${_price}`, '#eb9630')
-      }
-      if (Number(config.modeType) === 1) {
-        if (ethers.utils.parseEther(_price).gte(ethers.utils.parseEther(config.targetPrice))) {
-          setCurrentIndex(0)
-          setIsStart(false)
-          logsArrChange('拉盘任务完成', '#1890ff')
-          return
-        }
-      }
-      if (Number(config.modeType) === 2) {
-        if (ethers.utils.parseEther(_price).lte(ethers.utils.parseEther(config.targetPrice))) {
-          setCurrentIndex(0)
-          setIsStart(false)
-          logsArrChange('砸盘任务完成', '#1890ff')
-          return
-        }
-      }
-
-      const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
-      const _slippage = BigInt(Number(config.slippage) * 100)
-      const { balance, amountIn } = await getAmountIn(account, Token)
-      if (amountIn == 0 || balance == 0) {
-        setCurrentIndex(item => item + 1)
-        return
-      }
-
-      const newTx = new Transaction()
-      if (Number(config.modeType) === 1 || Number(config.modeType) === 3) {
-        logsArrChange(`钱包${walletIndex + 1} ,买入${amountIn}sol`)
-        const { buyTx, buyAmount } = await sdk.buy(account, Token, BigInt((amountIn * LAMPORTS_PER_SOL).toFixed(0)), _slippage)
-        newTx.add(buyTx)
-        if (Number(config.modeType) === 3) {
-          logsArrChange(`钱包${walletIndex + 1},卖出${buyAmount} ${token.symbol}`)
-          const sellTx = await sdk.sell(account, Token, buyAmount, _slippage)
-          newTx.add(sellTx)
-        }
-      } else if (Number(config.modeType) === 2) {
-        logsArrChange(`钱包${walletIndex + 1},卖出${amountIn} ${token.symbol}`)
-        const sellTx = await sdk.sell(account, Token, BigInt((amountIn * 1000000).toFixed(0)), _slippage)
-        newTx.add(sellTx)
-      }
-
-      newTx.add(
-        SystemProgram.transfer({
-          fromPubkey: account.publicKey,
-          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-          lamports: PUMP_SWAP_BOT_FEE * LAMPORTS_PER_SOL,
-        })
-      );
-
-      //增加费用，减少失败
-      const versionedTx = await addPriorityFees(connection, newTx, account.publicKey);
-      versionedTx.sign([account])
-      const sig = await connection.sendTransaction(versionedTx, {
-        skipPreflight: false,
-      });
-      logsArrChange(`${getTxLink(sig)}`, HASH_COLOR, true)
-
-      setCurrentIndex(item => item + 1)
-    } catch (error) {
-      console.log(error)
-      logsArrChange(`执行失败`, 'red')
-      setCurrentIndex(item => item + 1)
     }
   }
 

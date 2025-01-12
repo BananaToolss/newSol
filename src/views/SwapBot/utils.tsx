@@ -1,18 +1,7 @@
 import { getAssociatedTokenAddressSync, } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { SOL_TOKEN } from '@/config/Token';
-import { fetcher } from '@/utils'
 
-export const getSolPrice = async () => {
-  try {
-    const url = `https://api.jup.ag/price/v2?ids=${SOL_TOKEN}`
-    const resut = await fetcher(url)
-    const price = resut.data[SOL_TOKEN].price
-    return price
-  } catch (error) {
-    return '200'
-  }
-}
 
 export function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
