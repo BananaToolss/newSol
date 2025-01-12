@@ -211,6 +211,8 @@ function SwapBot() {
       let round = 0
       const rounds: any[] = []
 
+      const QueteToken = new PublicKey(token.address)
+      const BaseToken = new PublicKey(baseToken.address)
 
       TaskRef.current = setInterval(async () => {
         if (waitingForConfirmation) {
@@ -221,11 +223,21 @@ function SwapBot() {
         const raydium = raydiums[walletIndex]
         const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey));
         if (Number(config.thread) <= 1) {
+          logsArrChange(`开始执行钱包${account.publicKey.toBase58()}`)
           let _tokenPrice = '0'
-          if (Number(config.modeType) === 1) {
-
+          if (Number(dexCount) === 1) {
+            _tokenPrice = await getRayDiumPrice(raydium, QueteToken, BaseToken)
           } else {
-
+            _tokenPrice = await getPumpPrice(sdk, BaseToken)
+          }
+          logsArrChange(`当前代币价格: ${_tokenPrice}`)
+          if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice)) {
+            logsArrChange(`拉盘任务完成`)
+            closeTask()
+          }
+          if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice)) {
+            logsArrChange(`砸盘任务完成`)
+            closeTask()
           }
         }
 
@@ -237,6 +249,15 @@ function SwapBot() {
     }
   }
 
+  const closeTask = () => {
+    setIsStart(false)
+    if (TaskRef) clearInterval(TaskRef.current)
+    workersRef.current.forEach((worker, index) => {
+      worker.postMessage({ task: 'CLOSE' })
+      worker.terminate()
+    })
+    workersRef.current = null
+  }
   const stopClick = () => {
     setIsStop(true)
     setIsStart(false)
