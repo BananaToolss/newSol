@@ -44,7 +44,7 @@ const BASE_NUMBER = 10000
 const HASH_COLOR = '#51d38e'
 const isAMM = false
 const AMM_POOL = 'CGjmakq9tEteMMsBNmhyCBeM3Spqax58VYyFpa9XERw9'
-const CPMM_POOL = 'CGjmakq9tEteMMsBNmhyCBeM3Spqax58VYyFpa9XERw9'
+const CPMM_POOL = 'DZtjekDo2LEgCnhsWmCzUcqG7cZstFHyp7biG1A8nhzQ'
 
 const options = [
   { value: '1', label: '不捆绑' },
@@ -249,15 +249,26 @@ function SwapBot() {
         price = _price.toFixed(18)
         programId = poolInfo.programId
       } else {
-        const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId })
-        const poolInfo = data.poolInfo
-        const _price =
-          poolInfo.mintA.address == token.address
-            ? poolInfo.mintAmountA / poolInfo.mintAmountB
-            : poolInfo.mintAmountB / poolInfo.mintAmountA;
-        price = _price.toFixed(18)
-        console.log(price, 'price')
-        programId = poolInfo.programId
+        if (isAMM) {
+          const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId })
+          const poolInfo = data.poolInfo
+          const _price =
+            poolInfo.mintA.address == token.address
+              ? poolInfo.mintAmountA / poolInfo.mintAmountB
+              : poolInfo.mintAmountB / poolInfo.mintAmountA;
+          price = _price.toFixed(18)
+          console.log(price, 'price')
+          programId = poolInfo.programId
+        } else {
+          const data = await raydium.cpmm.getPoolInfoFromRpc(CPMM_POOL);
+          const poolInfoCpmm = data.poolInfo;
+          const _price =
+            poolInfoCpmm.mintA.address == token.address
+              ? poolInfoCpmm.mintAmountA / poolInfoCpmm.mintAmountB
+              : poolInfoCpmm.mintAmountB / poolInfoCpmm.mintAmountA;
+          price = _price.toFixed(18)
+          programId = poolInfoCpmm.programId
+        }
       }
       if (!isValidAmm(programId) && !isValidCpmm(programId)) throw new Error('target pool is not AMM pool and Cpmm Pool')
       let isAmm = true
