@@ -50,3 +50,11 @@ export const RAYAMM: Token_Type = {
   image: getImage('raydium.png'),
   balance: ''
 }
+export const CPMM: Token_Type = {
+  address: '6egE8H5cf8Zxsy68HS7NLrBf7UNSBnmokYeNUX6tzfYq',
+  name: 'CPMM',
+  symbol: 'CPMM',
+  decimals: 9,
+  image: getImage('banana.png'),
+  balance: ''
+}
