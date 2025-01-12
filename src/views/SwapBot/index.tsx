@@ -63,6 +63,7 @@ function SwapBot() {
     minAmount: '',
     maxAmount: '',
     targetPrice: '', //目标价格
+    loop: '2', //刷量次数
   })
 
   const [info, setInfo] = useState({
@@ -80,9 +81,9 @@ function SwapBot() {
   useEffect(() => {
     getSprice()
   }, [])
-  useEffect(()=> {
+  useEffect(() => {
     setCurrentIndex(0)
-  },[dexCount])
+  }, [dexCount])
   useEffect(() => {
     if (token && solPrice) getPumpPrice()
   }, [token, solPrice])
@@ -309,7 +310,18 @@ function SwapBot() {
   }
 
   const pumpFun = async (index: number) => {
+    console.log(index, 'index')
     const _walletConfig = [...walletConfig]
+    if (Number(config.modeType === 3)) { //刷量
+      const _total = _walletConfig.length * Number(config.loop)
+      if (index >= _total) {
+        setCurrentIndex(0)
+        setIsStart(false)
+        logsArrChange('刷量任务完成', '#1890ff')
+        return
+      }
+    }
+
     const walletIndex = index % _walletConfig.length
 
     try {
@@ -330,7 +342,7 @@ function SwapBot() {
         if (ethers.utils.parseEther(_pri).gte(ethers.utils.parseEther(config.targetPrice))) {
           setCurrentIndex(0)
           setIsStart(false)
-          logsArrChange('拉盘任务完成', '#51d38e')
+          logsArrChange('拉盘任务完成', '#1890ff')
           return
         }
       }
@@ -338,7 +350,7 @@ function SwapBot() {
         if (ethers.utils.parseEther(_pri).lte(ethers.utils.parseEther(config.targetPrice))) {
           setCurrentIndex(0)
           setIsStart(false)
-          logsArrChange('砸盘任务完成', '#51d38e')
+          logsArrChange('砸盘任务完成', '#1890ff')
           return
         }
       }
@@ -480,7 +492,7 @@ function SwapBot() {
           <div className='box mt-3'>
             <div className='header'>机器人管理</div>
 
-            <div className='flex mt-5'>
+            <div className='flex items-center mt-5'>
               <div className='font-semibold'>模式：</div>
               <Radio.Group onChange={modeTypeChange} value={config.modeType}>
                 <Radio value={1}>拉盘</Radio>
@@ -488,6 +500,14 @@ function SwapBot() {
                 <Radio value={3}>防夹刷量</Radio>
               </Radio.Group>
             </div>
+            {config.modeType === 3 &&
+              <div className='flex items-center mt-3'>
+                <div>刷量次数：</div>
+                <div>
+                  <Input value={config.loop} onChange={configChange} name='loop' type='number' />
+                </div>
+              </div>
+            }
 
             <div className='mt-5 flex items-center'>
               <div className='font-semibold'>{config.modeType == 2 ? '数量' : '金额'}： </div>
