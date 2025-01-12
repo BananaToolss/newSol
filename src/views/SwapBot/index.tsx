@@ -16,7 +16,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { Header, SelectToken, Segmentd, WalletInfoCollection, JitoFee } from '@/components'
 import type { Token_Type, CollocetionType } from '@/type'
 import { SOL, PUMP, RAYAMM, SOL_TOKEN } from '@/config/Token'
-import { Input_Style, Button_Style, isMainnet, BANANATOOLS_ADDRESS } from '@/config'
+import { Input_Style, Button_Style, isMainnet, BANANATOOLS_ADDRESS, SWAP_BOT_FEE, PUMP_SWAP_BOT_FEE } from '@/config'
 import { initSdk, txVersion } from '@/Dex/Raydium'
 import { PumpFunSDK } from "@/Dex/Pump";
 import { getTxLink, addPriorityFees } from '@/utils'
@@ -421,7 +421,7 @@ function SwapBot() {
           SystemProgram.transfer({
             fromPubkey: account.publicKey,
             toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-            lamports: 0.01 * LAMPORTS_PER_SOL,
+            lamports: SWAP_BOT_FEE * LAMPORTS_PER_SOL,
           })
         );
       }
@@ -545,6 +545,14 @@ function SwapBot() {
         const sellTx = await sdk.sell(account, Token, BigInt((amountIn * 1000000).toFixed(0)), _slippage)
         newTx.add(sellTx)
       }
+
+      newTx.add(
+        SystemProgram.transfer({
+          fromPubkey: account.publicKey,
+          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+          lamports: PUMP_SWAP_BOT_FEE * LAMPORTS_PER_SOL,
+        })
+      );
 
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, newTx, account.publicKey);
