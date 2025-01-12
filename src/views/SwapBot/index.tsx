@@ -207,6 +207,7 @@ function SwapBot() {
             ? data.poolInfo.mintAmountA / data.poolInfo.mintAmountB
             : data.poolInfo.mintAmountB / data.poolInfo.mintAmountA;
         price = _price.toFixed(18);
+        console.log(price, 'devprice')
       }
       const solPrice = await getSolPrice()
       const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
@@ -240,7 +241,7 @@ function SwapBot() {
 
   const rayDiumGetPool = async (raydium: Raydium, mint1: PublicKey, mint2: PublicKey) => {
     try {
-      let poolId = 'AWRmPJjhk5onj5DAKhybg8Z6k3hAYNe7jgazE9dy1KbF' //dev
+      let poolId = '23miCdKG2WNVS3AUZ55ErSNRFRXNx2ZWHw4g4ChRVeYC' //dev
       if (isMainnet) {
         const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1, mint2 })
         poolId = tokenPool.data[0].id
@@ -274,6 +275,8 @@ function SwapBot() {
       const mint2 = new PublicKey(baseToken.address)
       const raydium = raydiums[walletIndex]
       const poolID = await rayDiumGetPool(raydium, mint1, mint2)
+      const _price = await getRaydiumPrice(raydium, poolID)
+      console.log(_price, '_price')
 
       const Token = new PublicKey(baseToken.address)
       const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
