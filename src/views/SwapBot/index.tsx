@@ -208,7 +208,6 @@ function SwapBot() {
             : data.poolInfo.mintAmountB / data.poolInfo.mintAmountA;
         price = _price.toFixed(18);
       }
-      console.log(price, 'price')
       const solPrice = await getSolPrice()
       const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
       const _pri = ethers.utils.formatEther(_price)
