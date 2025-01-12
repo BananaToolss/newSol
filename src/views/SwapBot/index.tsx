@@ -7,7 +7,7 @@ import { AnchorProvider } from "@coral-xyz/anchor";
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { Header, SelectToken, Segmentd, WalletInfoCollection, JitoFee } from '@/components'
 import type { Token_Type, CollocetionType } from '@/type'
-import { SOL, PUMP } from '@/config/Token'
+import { SOL, PUMP, RAYAMM, SOL_TOKEN } from '@/config/Token'
 import { Input_Style, Button_Style, isMainnet } from '@/config'
 import { initSdk } from '@/Dex/Raydium'
 import { PumpFunSDK } from "@/Dex/Pump";
@@ -19,9 +19,10 @@ import {
   Card
 } from './style'
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
+import { isValidAmm, isValidCpmm } from '../Raydium/RemoveLiquidity/utils'
 import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp, getSolPrice } from './utils';
 import { ethers } from 'ethers';
-import { getPoolPrice } from './usePoolPrice'
+
 
 interface LogsType {
   time: string
@@ -44,7 +45,7 @@ function SwapBot() {
   const { connection } = useConnection();
   const wallet = useWallet()
   const [api, contextHolder1] = notification.useNotification();
-  const [baseToken, setBseToken] = useState<Token_Type>(PUMP) //
+  const [baseToken, setBseToken] = useState<Token_Type>(RAYAMM) //
   const [token, setToken] = useState<Token_Type>(SOL)
   const [dexCount, setDexCount] = useState(1) // 1raydium 2pump
   const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
@@ -136,11 +137,10 @@ function SwapBot() {
         const mint2 = new PublicKey(baseToken.address)
         const account = Keypair.generate()
         const raydium = await initSdk({ owner: account.publicKey, connection: connection })
-        const poolID = await rayDiumGetPool(raydium, mint1, mint2)
-        console.log(poolID, 'poolID')
-        setTokenPoolId(poolID)
-        const _price = await getRaydiumPrice(raydium, poolID)
-        setTokenPrice(_price)
+        const { poolId, isAmm, price } = await rayDiumGetPool(raydium, mint1, mint2)
+        console.log(poolId, isAmm, price, 'poolID')
+        setTokenPoolId(poolId)
+        setTokenPrice(price)
       }
       if (dexCount === 2) {
         const _price = await getPumpPrice()
@@ -193,31 +193,6 @@ function SwapBot() {
       setIsStart(false)
     }
   }
-  //raydium获取价格
-  const getRaydiumPrice = async (raydium: Raydium, poolId: string) => {
-    try {
-      let price = ''
-      if (isMainnet) {
-        const _price = await getPoolPrice(poolId)
-        price = _price.toFixed(18)
-      } else {
-        const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId });
-        console.log(data, 'data')
-        const _price =
-          data.poolInfo.mintA.address == token.address
-            ? data.poolInfo.mintAmountA / data.poolInfo.mintAmountB
-            : data.poolInfo.mintAmountB / data.poolInfo.mintAmountA;
-        price = _price.toFixed(18);
-      }
-      const solPrice = await getSolPrice()
-      const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
-      const _pri = ethers.utils.formatEther(_price)
-      return _pri
-    } catch (error) {
-      console.log(error, 'error')
-      return ''
-    }
-  }
   //pump代币价格获取
   const getPumpPrice = async () => {
     try {
@@ -238,17 +213,43 @@ function SwapBot() {
       return ''
     }
   }
-  //raydium获取池子地址
+  //raydium获取池子地址,池子类型，价格
   const rayDiumGetPool = async (raydium: Raydium, mint1: PublicKey, mint2: PublicKey) => {
     try {
+      let price = '' //价格
+      let programId = '' //池子类型
       let poolId = DEV_POOL //dev
       if (isMainnet) {
         const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1, mint2 })
         poolId = tokenPool.data[0].id
+
+        const data = await raydium.api.fetchPoolById({ ids: poolId })
+        const poolInfo = data[0]
+        const _price = !poolInfo ? 0 : poolInfo.mintA.address === SOL_TOKEN
+          ? 1 / poolInfo.price
+          : poolInfo.price;
+        price = _price.toFixed(18)
+        programId = poolInfo.programId
+      } else {
+        const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId })
+        const poolInfo = data.poolInfo
+        const _price =
+          poolInfo.mintA.address == token.address
+            ? poolInfo.mintAmountA / poolInfo.mintAmountB
+            : poolInfo.mintAmountB / poolInfo.mintAmountA;
+        price = _price.toFixed(18)
+        programId = poolInfo.programId
       }
-      return poolId
+      if (!isValidAmm(programId) && !isValidCpmm(programId)) throw new Error('target pool is not AMM pool and Cpmm Pool')
+      let isAmm = true
+      if (isValidCpmm(programId)) isAmm = false
+      const solPrice = await getSolPrice()
+      const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
+      const _pri = ethers.utils.formatEther(_price)
+
+      return { poolId, isAmm, price: _pri }
     } catch (error) {
-      return ''
+      return null
     }
   }
 
@@ -274,9 +275,8 @@ function SwapBot() {
       const mint1 = new PublicKey(token.address)
       const mint2 = new PublicKey(baseToken.address)
       const raydium = raydiums[walletIndex]
-      const poolID = await rayDiumGetPool(raydium, mint1, mint2)
-      const _price = await getRaydiumPrice(raydium, poolID)
-      console.log(_price, '_price')
+      const { poolId, isAmm, price } = await rayDiumGetPool(raydium, mint1, mint2)
+      console.log(poolId, isAmm, price, '_price')
 
       const Token = new PublicKey(baseToken.address)
       const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey))
@@ -333,7 +333,6 @@ function SwapBot() {
     }
   }
   const pumpFun = async (index: number) => {
-    console.log(index, 'index')
     const _walletConfig = [...walletConfig]
     if (Number(config.modeType === 3)) { //刷量
       const _total = _walletConfig.length * Number(config.loop)
@@ -352,9 +351,12 @@ function SwapBot() {
       let sdk: PumpFunSDK = new PumpFunSDK(provider);
 
       const Token = new PublicKey(baseToken.address)
-      const _price = await getPumpPrice()
-      setTokenPrice(_price)
-      logsArrChange(`代币价格：${_price}`, '#eb9630')
+      let _price = '0'
+      if (Number(config.modeType) !== 3) {
+        _price = await getPumpPrice()
+        setTokenPrice(_price)
+        logsArrChange(`代币价格：${_price}`, '#eb9630')
+      }
       if (Number(config.modeType) === 1) {
         if (ethers.utils.parseEther(_price).gte(ethers.utils.parseEther(config.targetPrice))) {
           setCurrentIndex(0)

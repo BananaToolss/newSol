@@ -41,3 +41,12 @@ export const PUMP: Token_Type = {
   image: getImage('pump.svg'),
   balance: ''
 }
+
+export const RAYAMM: Token_Type = {
+  address: 'HB9aBU1BbjUJUSp6CqPniF6JevhuPuEEx6xwgjshEeS2',
+  name: 'RAYAMM',
+  symbol: 'RAYAMM',
+  decimals: 9,
+  image: getImage('raydium.png'),
+  balance: ''
+}
