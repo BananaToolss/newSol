@@ -238,7 +238,7 @@ function SwapBot() {
       return ''
     }
   }
-
+  //raydium获取池子地址
   const rayDiumGetPool = async (raydium: Raydium, mint1: PublicKey, mint2: PublicKey) => {
     try {
       let poolId = DEV_POOL //dev
