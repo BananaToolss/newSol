@@ -33,7 +33,7 @@ const priorityFees = {
 }
 const BASE_NUMBER = 10000
 
-export const pumpFunSwap = async (
+export const PumpFunSwap = async (
   connection: Connection,
   sdk: PumpFunSDK,
   account: Keypair,

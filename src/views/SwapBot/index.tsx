@@ -27,7 +27,7 @@ import { PumpFunSDK } from "@/Dex/Pump";
 import { getTxLink, addPriorityFees } from '@/utils'
 import { isValidAmm, isValidCpmm } from '../Raydium/RemoveLiquidity/utils'
 import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp } from './utils';
-import { pumpFunSwap, RaydiumSwap, getRayDiumPrice, getPumpPrice } from './Trade'
+import { PumpFunSwap, RaydiumSwap, getRayDiumPrice, getPumpPrice, getAmountIn } from './Trade'
 import {
   SwapBotPage,
   LeftPage,
@@ -205,7 +205,7 @@ function SwapBot() {
       if (TaskRef.current) clearInterval(TaskRef.current)
       indexRef.current = 1;
       let waitingForConfirmation: boolean; //执行中
-      let walletIndex = 0; //执行钱包下标
+
       let times = 0;
       let walletIndexes = 0
       let round = 0
@@ -215,32 +215,74 @@ function SwapBot() {
       const BaseToken = new PublicKey(baseToken.address)
 
       TaskRef.current = setInterval(async () => {
-        if (waitingForConfirmation) {
-          console.log("还在交易中");
-          return;
-        }
-        waitingForConfirmation = true;
-        const raydium = raydiums[walletIndex]
-        const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndex].privateKey));
-        if (Number(config.thread) <= 1) {
+        try {
+          if (waitingForConfirmation) {
+            console.log("还在交易中");
+            return;
+          }
+          waitingForConfirmation = true;
+          const raydium = raydiums[walletIndexes]
+          const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndexes].privateKey));
           logsArrChange(`开始执行钱包${account.publicKey.toBase58()}`)
-          let _tokenPrice = '0'
-          if (Number(dexCount) === 1) {
-            _tokenPrice = await getRayDiumPrice(raydium, QueteToken, BaseToken)
+          if (Number(config.thread) <= 1) {
+            let _tokenPrice = '0'
+            if (Number(dexCount) === 1) {
+              _tokenPrice = await getRayDiumPrice(raydium, QueteToken, BaseToken)
+            } else {
+              _tokenPrice = await getPumpPrice(sdk, BaseToken)
+            }
+            logsArrChange(`当前代币价格: ${_tokenPrice}`)
+            if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice)) {
+              logsArrChange(`拉盘任务完成`)
+              closeTask()
+            }
+            if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice)) {
+              logsArrChange(`砸盘任务完成`)
+              closeTask()
+            }
+          }
+          let state = true
+          const { balance, amountIn } = await getAmountIn(connection, account, BaseToken,
+            Number(config.modeType), Number(config.amountType), Number(config.minAmount), Number(config.maxAmount))
+          if (balance === 0 || amountIn === 0) {
+            state = false
+            logsArrChange(`${account.publicKey.toBase58()}余额不足，跳过该钱包`)
+          }
+          let signer = ''
+          if (Number(config.thread) <= 1 && state) {
+            if (Number(config.modeType) === 1) {
+              logsArrChange(`花费${amountIn} ${token.symbol}购买`)
+            } else if (Number(config.modeType) == 2) {
+              logsArrChange(`出售${amountIn} ${baseToken.symbol}`)
+            } else {
+              logsArrChange(`使用${amountIn} ${token.symbol}刷量`)
+            }
+            if (dexCount === 1) {
+              signer = await RaydiumSwap(connection, raydium, account, Number(config.modeType), QueteToken, BaseToken, amountIn,
+                Number(config.slippage) / 100,)
+            } else {
+              signer = await PumpFunSwap(connection, sdk, account, Number(config.modeType), BaseToken,
+                amountIn * baseToken.decimals, BigInt(Number(config.slippage) * 100))
+            }
+          }
+          if (signer) {
+            logsArrChange(`${getTxLink(signer)}`, HASH_COLOR, true)
           } else {
-            _tokenPrice = await getPumpPrice(sdk, BaseToken)
+            logsArrChange(`交易失败`, 'red')
           }
-          logsArrChange(`当前代币价格: ${_tokenPrice}`)
-          if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice)) {
-            logsArrChange(`拉盘任务完成`)
-            closeTask()
-          }
-          if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice)) {
-            logsArrChange(`砸盘任务完成`)
-            closeTask()
+        } catch (error) {
+          console.error("获取交易失败:", error);
+        } finally {
+          logsArrChange(`暂停${config.spaceTime}秒`)
+          await delay(Number(config.spaceTime));
+          waitingForConfirmation = false;
+          if (walletIndexes == _walletConfig.length - 1) {
+            walletIndexes = 0;
+            round = 1;
+          } else {
+            walletIndexes++
           }
         }
-
       }, 1000)
 
     } catch (error) {
@@ -261,6 +303,7 @@ function SwapBot() {
   const stopClick = () => {
     setIsStop(true)
     setIsStart(false)
+    closeTask()
   }
 
   useEffect(() => {
@@ -417,8 +460,8 @@ function SwapBot() {
 
         </LeftPage>
         <RightPage>
-          <WalletInfoCollection tokenAddr={token ? token.address : null} config={walletConfig}
-            setConfig={setWalletConfig} isBot baseToken={baseToken.address} />
+          <WalletInfoCollection tokenAddr={token ? baseToken.address : null} config={walletConfig}
+            setConfig={setWalletConfig} isBot baseToken={token.address} />
           <div className='logs'>
             <div className='header'>
               <div>交易日志</div>
