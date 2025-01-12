@@ -220,6 +220,7 @@ function SwapBot() {
             console.log("还在交易中");
             return;
           }
+          if (isStop) console.log('任务暂停')
           waitingForConfirmation = true;
           const raydium = raydiums[walletIndexes]
           const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndexes].privateKey));
@@ -265,16 +266,14 @@ function SwapBot() {
                 amountIn * baseToken.decimals, BigInt(Number(config.slippage) * 100))
             }
           }
+          if (isStop) console.log('任务暂停')
           if (signer) {
             logsArrChange(`${getTxLink(signer)}`, HASH_COLOR, true)
           } else {
-            logsArrChange(`交易失败`, 'red')
+            if (state) logsArrChange(`交易失败`, 'red')
           }
-        } catch (error) {
-          console.error("获取交易失败:", error);
-        } finally {
           logsArrChange(`暂停${config.spaceTime}秒`)
-          await delay(Number(config.spaceTime));
+          await delay(Number(config.spaceTime) * 1000);
           waitingForConfirmation = false;
           if (walletIndexes == _walletConfig.length - 1) {
             walletIndexes = 0;
@@ -282,6 +281,10 @@ function SwapBot() {
           } else {
             walletIndexes++
           }
+        } catch (error) {
+          console.error("获取交易失败:", error);
+        } finally {
+
         }
       }, 1000)
 
