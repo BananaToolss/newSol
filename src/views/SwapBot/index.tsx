@@ -31,6 +31,7 @@ interface LogsType {
 }
 const BASE_NUMBER = 10000
 const HASH_COLOR = '#51d38e'
+const DEV_POOL = 'CGjmakq9tEteMMsBNmhyCBeM3Spqax58VYyFpa9XERw9'
 
 const options = [
   { value: '1', label: '不捆绑' },
@@ -240,7 +241,7 @@ function SwapBot() {
 
   const rayDiumGetPool = async (raydium: Raydium, mint1: PublicKey, mint2: PublicKey) => {
     try {
-      let poolId = 'CGjmakq9tEteMMsBNmhyCBeM3Spqax58VYyFpa9XERw9' //dev
+      let poolId = DEV_POOL //dev
       if (isMainnet) {
         const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1, mint2 })
         poolId = tokenPool.data[0].id
