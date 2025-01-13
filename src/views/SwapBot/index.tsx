@@ -228,7 +228,9 @@ function SwapBot() {
             eventName: 'START',
             total: Math.ceil(_walletConfig.length / Number(config.thread)),
             threadIndex: index,
-            spaceTime: Number(config.spaceTime) * 1000
+            spaceTime: (Number(config.modeType) === 2 && Number(config.amountType) === 2 &&
+              Number(config.minAmount) === 100) ?
+              1000000 * 1000 : Number(config.spaceTime) * 1000
           })
           workersRef.current[index].onmessage = (e) => {
             console.log(e.data, '接收数据')
@@ -289,7 +291,7 @@ function SwapBot() {
         }
         let _tokenPrice = ''
         let signer = ''
-        console.log(balance, amountIn, state, ' balance, amountIn ')
+        console.log(`${addressHandler(account.publicKey.toBase58())}`, balance, amountIn, state, ' balance')
         if (state) {
           if (Number(config.modeType) === 1) {
             logsArrChange(`花费${amountIn} ${token.symbol}购买`)
@@ -317,17 +319,17 @@ function SwapBot() {
           if (state) logsArrChange(`交易失败`, 'red', false, addressHandler(account.publicKey.toBase58()))
         }
 
-        logsArrChange(`当前代币价格: ${_tokenPrice}`)
-        if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice)) {
+        if (_tokenPrice) logsArrChange(`当前代币价格: ${_tokenPrice}`)
+        if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice) && _tokenPrice) {
           logsArrChange(`拉盘任务完成`)
           stopClick()
         }
-        if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice)) {
+        if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice) && _tokenPrice) {
           logsArrChange(`砸盘任务完成`)
           stopClick()
         }
 
-        logsArrChange(`暂停${config.spaceTime}秒`)
+        if (Number(config.thread) <= 0) logsArrChange(`暂停${config.spaceTime}秒`)
         await delay(Number(config.spaceTime) * 1000);
         resolve(true)
       } catch (error) {

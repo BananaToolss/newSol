@@ -273,7 +273,6 @@ export const RaydiumCPMMSwap = async (
       mintIn = poolInfoCpmm.mintA.address == BaseToken.toBase58() ? poolInfoCpmm.mintA : poolInfoCpmm.mintB;
     }
     const baseIn = mintIn.address === poolInfoCpmm.mintA.address;
-    console.log(baseIn, 'baseIn', mintIn.address)
     const swapRes = CurveCalculator.swap(
       new BN(amountIn * 10 ** (mintIn.decimals)), //判断精度,
       baseIn ? rpcDataCpmm.baseReserve : rpcDataCpmm.quoteReserve,
@@ -384,9 +383,7 @@ export const getRayDiumPrice = async (
         price = _price.toFixed(18)
       }
     }
-    console.log(price, 'price')
     const solPrice = await getSolPrice()
-    console.log(solPrice, 'solPrice')
     const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
     const _pri = ethers.utils.formatEther(_price)
     console.log(_pri, '_pri')
@@ -424,7 +421,6 @@ export const getAmountIn = async (
     }
     if (modeType === 2) { //砸盘
       const tokenB = await getSPLBalance(connection, BseToken, account.publicKey)
-      console.log(tokenB, minAmount)
       if (amountType === 1) {
         amountIn = minAmount
       } else if (amountType === 2) {
@@ -434,8 +430,8 @@ export const getAmountIn = async (
         const max = maxAmount * BASE_NUMBER
         amountIn = getRandomNumber(min, max) / BASE_NUMBER
       }
-      amountIn = amountIn <= (tokenB + 0.00001) ? amountIn : 0
-      console.log(amountIn, 'amountIn')
+      amountIn = amountIn <= tokenB ? amountIn : 0
+      amountIn = amountIn <= + 0.00001 ? 0 : amountIn
     }
     return { balance, amountIn }
   } catch (error) {
