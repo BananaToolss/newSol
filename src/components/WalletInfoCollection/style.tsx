@@ -93,5 +93,8 @@ export const WalletInfoPage = styled.div`
     .ba {
       margin: 6px;
     }
+    .buttonSwapper {
+      width: 100%;
+    }
   }
 `
