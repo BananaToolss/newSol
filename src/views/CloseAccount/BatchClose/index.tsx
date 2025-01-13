@@ -60,9 +60,8 @@ function BrunToken() {
 
       <BurnPage>
 
-        <div className='flex'>
+        <div className='flex mb-5'>
           <Segmented options={SegmentedOptions} size='large' />
-          <Button>导入钱包</Button>
         </div>
 
 

@@ -95,7 +95,7 @@ function WalletInfo(props: PropsType) {
           address: walletPubkey.toBase58(),
           allAccount: accountList.value.length,
           emptyAccount: emptyArr.length,
-          value: Number(accountList.value.length * 0.002039).toFixed(6),
+          value: Number(emptyArr.length * 0.002039).toFixed(6),
           check: false,
           state: false
         }
