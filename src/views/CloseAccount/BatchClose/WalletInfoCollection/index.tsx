@@ -1,5 +1,5 @@
 import { useState, SetStateAction, Dispatch, useEffect } from 'react'
-import { Button, message, notification, Tag, Checkbox, Spin } from 'antd'
+import { Button, message, notification, Tag, Checkbox, Switch } from 'antd'
 import type { CheckboxChangeEvent } from 'antd'
 import {
   Keypair,
@@ -24,32 +24,31 @@ import { SOL_TOKEN } from '@/config/Token';
 import type { CollocetionType } from '@/type'
 import PrivateKeyPage from './PrivateKeyPage'
 import { delay, SliceAddress } from "@/utils";
+import { ConfigType } from '../index'
 import {
   WalletInfoPage
 } from './style'
 
 
 interface PropsType {
-
+  config: ConfigType[]
+  setConfig: Dispatch<SetStateAction<ConfigType[]>>
 }
 
 function WalletInfo(props: PropsType) {
-
+  const { config, setConfig } = props
 
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
 
-  const [config, setConfig] = useState([])
+
   const [selectedItems, setSelectedItems] = useState<any[]>([])
 
 
   const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
   const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    privateChange()
-  }, [config])
+  const [isOptionsAll, setIsOptionsAll] = useState(false)
 
   const privateChange = () => {
     const _privateKeys = []
@@ -71,6 +70,7 @@ function WalletInfo(props: PropsType) {
   const getWalletsInfo = async (keys?: string[]) => {
     try {
       setSelectedItems([])
+
       const config = keys ? keys : privateKeys
       const _config = []
       setIsLoading(true)
@@ -91,13 +91,16 @@ function WalletInfo(props: PropsType) {
             emptyArr.push(tokenAccountPubkey.toString())
           }
         });
-        const accountConfig = {
+        const accountConfig: ConfigType = {
+          privateKey: config[index],
           address: walletPubkey.toBase58(),
-          allAccount: accountList.value.length,
-          emptyAccount: emptyArr.length,
+          allAccount: accountList.value.length.toString(),
+          emptyAccount: emptyArr.length.toString(),
           value: Number(emptyArr.length * 0.002039).toFixed(6),
-          check: false,
-          state: false
+          value1: Number(accountList.value.length * 0.002039).toFixed(6),
+          isCheck: false,
+          state: false,
+          emptyAccounts: emptyArr
         }
         _config.push(accountConfig)
         await delay(40)
@@ -112,7 +115,7 @@ function WalletInfo(props: PropsType) {
   }
 
   const deleteClick = (account: string, index: number) => {
-    const _config = config.filter(item => item.walletAddr !== account)
+    const _config = config.filter(item => item.address !== account)
     setConfig(_config)
   }
 
@@ -155,15 +158,6 @@ function WalletInfo(props: PropsType) {
     messageApi.success('copy success')
   }
 
-  const selectZero = () => {
-    const _config = [...config]
-    _config.map(item => {
-      item.tokenBalance == 0 ? item.isCheck = true : item.isCheck = false
-      return item
-    })
-    setConfig(_config)
-  }
-
   const selectOther = () => {
     const _config = [...config]
     _config.map(item => {
@@ -187,10 +181,12 @@ function WalletInfo(props: PropsType) {
       <div className='flex items-center btns'>
         <div className='buttonSwapper'>
           <PrivateKeyPage privateKeys={privateKeys} callBack={privateKeyCallBack} title='导入钱包' />
-          <Button className={`${Button_Style1} ml-2 baba`} onClick={() => getWalletsInfo()}>获取余额</Button>
+          <Button className={`${Button_Style1} ml-2 baba`} onClick={() => getWalletsInfo()}>刷新账户信息</Button>
         </div>
         <div className='flex items-center h-100 flex-wrap'>
-          <Button onClick={selectZero} className='ba'>选择余额为0</Button>
+          <Switch checked={!isOptionsAll} onChange={(e) => setIsOptionsAll(!isOptionsAll)} /> <div className='text-sm ml-1 mr-2'>仅回收空账户</div>
+          <Switch checked={isOptionsAll} onChange={(e) => setIsOptionsAll(!isOptionsAll)} /> <div className='text-sm ml-1 mr-2'>回收所有账户</div>
+
           <Button className='ml-2 ba' onClick={selectOther}>反选</Button>
           <Button className='ml-2 ba'><DeleteOutlined onClick={deleteCheck} /></Button>
         </div>
@@ -210,7 +206,7 @@ function WalletInfo(props: PropsType) {
         {!isLoading &&
           <div className='waletSwapper'>
             {config.map((item, index) => (
-              <div className='walletInfo' key={item.walletAddr}>
+              <div className='walletInfo' key={item.address}>
                 <div>
                   <span>
                     <Checkbox className='mr-2' checked={item.isCheck} onChange={itemOnCheckChange} name={`${index}`} />

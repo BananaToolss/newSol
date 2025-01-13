@@ -99,7 +99,9 @@ function App() {
                         }
                     });
                     if (arr.length == 0) {
-                        setMessages(prev => [...prev, { addr: walletPubkey.toString(), all: accountList.value.length, empty: arr.length, value: arr.length * 0.002 * 0.9, state: false, check: false }])
+                        setMessages(prev => [...prev, { addr: walletPubkey.toString(), 
+                            all: accountList.value.length, empty: arr.length, value: arr.length * 0.002 * 0.9,
+                             state: false, check: false }])
                     } else {
                         setMessages(prev => [...prev, { addr: walletPubkey.toString(), all: accountList.value.length, empty: arr.length, value: arr.length * 0.002 * 0.9, state: true, check: false }])
                     }

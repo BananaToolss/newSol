@@ -20,8 +20,19 @@ import WalletInfoCollection from './WalletInfoCollection';
 const SegmentedOptions = [
   { label: "多钱包", value: 1 },
   { label: "单钱包", value: 2 },
-
 ]
+
+export interface ConfigType {
+  privateKey: string
+  address: string
+  allAccount: string
+  emptyAccount: string
+  value: string
+  value1: string
+  isCheck: boolean
+  state: boolean
+  emptyAccounts: any[]
+}
 
 function BrunToken() {
   const { t } = useTranslation()
@@ -31,23 +42,20 @@ function BrunToken() {
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
   const [token, setToken] = useState<Token_Type>(null)
   const [burnAmount, setBurnAmount] = useState('')
-  const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
+  const [walletConfig, setWalletConfig] = useState<ConfigType[]>([]) //钱包信息
 
   const [isBurning, setIsBurning] = useState<boolean>(false);
   const [signature, setSignature] = useState("");
   const [error, setError] = useState('');
 
-  const burnAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBurnAmount(e.target.value)
-  }
-  const backClick = (_token: Token_Type) => {
-    setToken(_token)
-  }
-
-
 
   const burnClick = async () => {
+    try {
+      const _config = walletConfig.filter(item => item.isCheck)
+      
+    } catch (error) {
 
+    }
   }
 
 
@@ -65,7 +73,7 @@ function BrunToken() {
         </div>
 
 
-        <WalletInfoCollection />
+        <WalletInfoCollection config={walletConfig} setConfig={setWalletConfig} />
 
 
         <div className='btn'>
