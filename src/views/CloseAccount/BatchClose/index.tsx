@@ -1,21 +1,21 @@
 import { useState } from 'react'
 import { Button, notification, Input, message, Segmented } from 'antd'
-import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, Keypair } from "@solana/web3.js";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useTranslation } from "react-i18next";
 import {
-  burnChecked, createBurnCheckedInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID,
+  burnChecked, createCloseAccountInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import type { Token_Type } from '@/type'
-import { getAllToken } from '@/utils/newSol'
-import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, BURN_FEE } from '@/config'
-import type { TOKEN_TYPE, CollocetionType } from '@/type'
+import { getTxLink, addPriorityFees } from '@/utils'
+import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, BURN_FEE, base } from '@/config'
 import { Page } from '@/styles';
 import { Header, SelectToken, Result } from '@/components'
 import { BurnPage } from './style'
 import { signAllTransactions } from '@metaplex-foundation/umi';
 import WalletInfoCollection from './WalletInfoCollection';
+import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 
 const SegmentedOptions = [
   { label: "多钱包", value: 1 },
@@ -52,9 +52,28 @@ function BrunToken() {
   const burnClick = async () => {
     try {
       const _config = walletConfig.filter(item => item.isCheck)
-      
+      console.log(_config, '_config')
+      for (let index = 0; index < _config.length; index++) {
+        const emptArr = _config[index].emptyAccounts
+        const account = Keypair.fromSecretKey(bs58.decode(_config[index].privateKey))
+        let Tx = new Transaction()
+        const sigers = []
+        for (let j = 0; index < emptArr.length; index++) {
+          Tx.add(createCloseAccountInstruction(
+            new PublicKey(emptArr[j]),
+            publicKey,
+            account.publicKey
+          ))
+        }
+        const latestBlockHash = await connection.getLatestBlockhash();
+        Tx.recentBlockhash = latestBlockHash.blockhash;
+        Tx.feePayer = account.publicKey;
+        // sigers.push(wallet2)
+        const singerTrue = await sendAndConfirmTransaction(connection, Tx, [account], { commitment: 'processed' });
+        console.log(singerTrue, 'singerTrue')
+      }
     } catch (error) {
-
+      console.log(error, 'error')
     }
   }
 

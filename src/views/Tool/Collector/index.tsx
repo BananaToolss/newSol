@@ -232,6 +232,8 @@ function Authority() {
             }
           })
 
+          const latestBlockHash = await connection.getLatestBlockhash();
+          tx.recentBlockhash = latestBlockHash.blockhash;
           tx.feePayer = _accounts[0].publicKey
           // sigers.push(accounts[0])
 
