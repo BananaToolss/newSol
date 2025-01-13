@@ -182,7 +182,12 @@ function SwapBot() {
       if (walletConfig.length === 0) return logsArrChange('请导入钱包私钥', 'red')
       if (!config.minAmount) return logsArrChange('请填写购买数量', 'red')
       if (Number(config.amountType) === 3 && !config.maxAmount) return logsArrChange('请填写购买数量', 'red')
-      if (Number(config.modeType) !== 3 && !config.targetPrice) return logsArrChange('请填写目标价格')
+      if (Number(config.modeType) !== 3 && !config.targetPrice) return logsArrChange('请填写目标价格', 'red')
+      if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(tokenPrice))
+        return logsArrChange('拉盘目标价格需要大于当前价格', 'red')
+      if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(tokenPrice))
+        return logsArrChange('砸盘目标价格需要小于当前价格', 'red')
+
       setIsStop(false)
       setIsStart(true)
       const _walletConfig = [...walletConfig]
