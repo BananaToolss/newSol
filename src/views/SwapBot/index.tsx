@@ -228,15 +228,17 @@ function SwapBot() {
             eventName: 'START',
             total: Math.ceil(_walletConfig.length / Number(config.thread)),
             threadIndex: index,
-            spaceTime: (Number(config.modeType) === 2 && Number(config.amountType) === 2 &&
-              Number(config.minAmount) === 100) ?
-              1000000 * 1000 : Number(config.spaceTime) * 1000
+            spaceTime:  Number(config.spaceTime) * 1000
           })
           workersRef.current[index].onmessage = (e) => {
             console.log(e.data, '接收数据')
             const { walletIndex, threadIndex } = e.data
             // let walletIndex = 0
-            threadFun(_walletConfig, walletIndex, raydiums[walletIndex], solPrice, QueteToken, BaseToken)
+            try {
+              threadFun(_walletConfig, walletIndex, raydiums[walletIndex], solPrice, QueteToken, BaseToken)
+            } catch (error) {
+              console.log(error, 'error')
+            }
           }
         }
       } else {
