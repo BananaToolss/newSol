@@ -215,7 +215,6 @@ function SwapBot() {
       const solPrice = await getSolPrice()
 
       if (Number(config.thread) >= 1) {
-        console.log(workersRef, 'workersRef')
         for (let index = 0; index < Number(config.thread); index++) {
           workersRef.current[index] = new Worker(url, { name: `${index}` })
           workersRef.current[index].postMessage({
@@ -283,7 +282,7 @@ function SwapBot() {
         let _tokenPrice = ''
         let signer = ''
         console.log(balance, amountIn, state, ' balance, amountIn ')
-        if (Number(config.thread) <= 1 && state) {
+        if (Number(config.thread) >= 1 && state) {
           if (Number(config.modeType) === 1) {
             logsArrChange(`花费${amountIn} ${token.symbol}购买`)
           } else if (Number(config.modeType) == 2) {
