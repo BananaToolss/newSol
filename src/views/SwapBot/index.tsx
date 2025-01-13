@@ -11,7 +11,7 @@ import {
 } from '@raydium-io/raydium-sdk-v2'
 import { Radio, Input, Select, Switch, Button, notification, message } from 'antd'
 import type { RadioChangeEvent } from 'antd';
-import { Keypair, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL, TransactionInstruction } from '@solana/web3.js';
+import { Keypair, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL, TransactionInstruction, Connection } from '@solana/web3.js';
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { ethers } from 'ethers';
 import bs58 from "bs58";
@@ -21,11 +21,10 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { Header, SelectToken, Segmentd, WalletInfoCollection, JitoFee } from '@/components'
 import type { Token_Type, CollocetionType } from '@/type'
 import { SOL, PUMP, RAYAMM, SOL_TOKEN, CPMM } from '@/config/Token'
-import { Input_Style, Button_Style, isMainnet, BANANATOOLS_ADDRESS, SWAP_BOT_FEE, PUMP_SWAP_BOT_FEE } from '@/config'
+import { Input_Style, Button_Style, network } from '@/config'
 import { initSdk, txVersion } from '@/Dex/Raydium'
 import { PumpFunSDK } from "@/Dex/Pump";
-import { getTxLink, addPriorityFees } from '@/utils'
-import { isValidAmm, isValidCpmm } from '../Raydium/RemoveLiquidity/utils'
+import { getTxLink, addPriorityFees, addressHandler } from '@/utils'
 import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp } from './utils';
 import { PumpFunSwap, RaydiumSwap, getRayDiumPrice, getPumpPrice, getAmountIn, getSolPrice } from './Trade'
 import {
@@ -41,6 +40,7 @@ interface LogsType {
   label: string
   color?: string
   isLink?: boolean
+  account?: string
 }
 const BASE_NUMBER = 10000
 const HASH_COLOR = '#51d38e'
@@ -112,8 +112,8 @@ function SwapBot() {
   const tokenClick = (_token: Token_Type) => {
     setToken(_token)
   }
-  const logsArrChange = (label: string, color?: string, isLink?: boolean,) => {
-    const obj: LogsType = { time: getCurrentTimestamp(), label, color, isLink }
+  const logsArrChange = (label: string, color?: string, isLink?: boolean, account?: string) => {
+    const obj: LogsType = { time: getCurrentTimestamp(), label, color, isLink, account }
     setLogsArr(item => [...item, obj])
   }
   const jitoCallBack = (jitoFee_: number, jitoRpc_: string) => {
@@ -271,14 +271,14 @@ function SwapBot() {
     return new Promise(async (resolve, reject) => {
       try {
         const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[index].privateKey));
-        logsArrChange(`开始执行钱包${account.publicKey.toBase58()}`)
+        logsArrChange(`开始执行钱包${addressHandler(account.publicKey.toBase58())}`)
 
         let state = true
         const { balance, amountIn } = await getAmountIn(connection, account, BaseToken,
           Number(config.modeType), Number(config.amountType), Number(config.minAmount), Number(config.maxAmount))
         if (balance === 0 || amountIn === 0) {
           state = false
-          logsArrChange(`${account.publicKey.toBase58()}余额不足，跳过该钱包`, '#f9d236')
+          logsArrChange(`${addressHandler(account.publicKey.toBase58())}余额不足，跳过该钱包`, '#f9d236')
         }
         let _tokenPrice = ''
         let signer = ''
@@ -305,7 +305,7 @@ function SwapBot() {
         }
         if (isStop) console.log('任务暂停')
         if (signer) {
-          logsArrChange(signer, HASH_COLOR, true)
+          logsArrChange(signer, HASH_COLOR, true, addressHandler(account.publicKey.toBase58()))
         } else {
           if (state) logsArrChange(`交易失败`, 'red')
         }
@@ -313,11 +313,11 @@ function SwapBot() {
         logsArrChange(`当前代币价格: ${_tokenPrice}`)
         if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice)) {
           logsArrChange(`拉盘任务完成`)
-          closeTask()
+          stopClick()
         }
         if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice)) {
           logsArrChange(`砸盘任务完成`)
-          closeTask()
+          stopClick()
         }
 
         logsArrChange(`暂停${config.spaceTime}秒`)
@@ -513,7 +513,9 @@ function SwapBot() {
               {logsArr.map((item, index) => (
                 item.isLink ?
                   <div key={index}>{item.time}: 交易hash--
-                    <a href={getTxLink(item.label)} target='_blank' style={{ color: '#51d38e' }}>{item.label}</a>
+                    <a href={getTxLink(item.label)} target='_blank' style={{ color: '#51d38e' }}>
+                      {item.account}： {item.label}
+                    </a>
                   </div>
                   :
                   <div key={index} style={{ color: item.color }}>{item.time}: {item.label}</div>

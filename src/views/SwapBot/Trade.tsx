@@ -151,6 +151,7 @@ export const RaydiumSwap = async (
     }
     return { signature, price }
   } catch (error) {
+    console.log(error,'RaydiumSwap')
     return null
   }
 }
@@ -245,6 +246,7 @@ export const RaydiumAMMSwap = async (
       { commitment: 'processed', skipPreflight: true });
     return finalTxId
   } catch (error) {
+    console.log(error,'RaydiumAMMSwap')
     return null
   }
 }
@@ -313,6 +315,7 @@ export const RaydiumCPMMSwap = async (
       { commitment: 'processed', skipPreflight: true });
     return finalTxId
   } catch (error) {
+    console.log(error,'RaydiumCPMMSwap')
     return null
   }
 }
