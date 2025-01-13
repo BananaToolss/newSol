@@ -7,6 +7,7 @@ import BurnToken from '@/views/Token/Burn'
 import FreezeAccount from '@/views/Token/FreezeAccount'
 import MintToken from '@/views/Token/MintToken'
 import CloseAccount from '@/views/CloseAccount'
+import BatchClose from '@/views/CloseAccount/BatchClose'
 import CreateBuy from '@/views/Pump/CreateBuy'
 import NotFound from '@/views/NotFound'
 import Multisend from "@/views/Tool/Multisend"
@@ -26,7 +27,6 @@ const Routers = () => {
       children: [
         { path: '/', element: <CreateToken /> },
         { index: true, element: <Navigate to='token/create' /> },
-        { path: "closeAccount", element: <CloseAccount /> },
         { path: '/404', element: <NotFound /> },
         { path: '*', element: <Navigate to="/404" replace /> },
         { path: '/swapbot', element: <SwapBot />, },
@@ -77,7 +77,14 @@ const Routers = () => {
         { path: "createwallet", element: <CreateWallet /> },
       ]
     },
-
+    {
+      path: '/close',
+      element: <Home />,
+      children: [
+        { path: "account", element: <CloseAccount /> },
+        { path: "batch", element: <BatchClose /> },
+      ]
+    },
   ])
 
   return router

@@ -27,6 +27,9 @@ export const IsAddress = (address: string) => {
   }
 }
 
+export function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 // 获取当前时间并格式化为 YYYY-MM-DD HH:mm:ss
 export const getCurrentTimestamp = () => {
   const now = new Date();
