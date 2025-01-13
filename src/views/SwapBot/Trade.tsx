@@ -24,7 +24,7 @@ import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp } from './ut
 import { getTxLink, addPriorityFees } from '@/utils'
 import { isValidAmm, isValidCpmm } from '../Raydium/RemoveLiquidity/utils'
 
-const isAMM = false
+const isAMM = true
 const AMM_POOL = 'CGjmakq9tEteMMsBNmhyCBeM3Spqax58VYyFpa9XERw9'
 const CPMM_POOL = 'DZtjekDo2LEgCnhsWmCzUcqG7cZstFHyp7biG1A8nhzQ'
 const priorityFees = {
@@ -169,6 +169,7 @@ export const RaydiumAMMSwap = async (
   rpcData: AmmRpcData,
 ) => {
   try {
+    console.log(rpcData.status.toNumber(), ' rpcData.status.toNumber()')
     const [baseReserve, quoteReserve, status] = [
       rpcData.baseReserve,
       rpcData.quoteReserve,
@@ -201,7 +202,6 @@ export const RaydiumAMMSwap = async (
       mintOut: mintOut.address,
       slippage: slippage, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%
     });
-
     //交易
     const execute = await raydium.liquidity.swap({
       poolInfo,
@@ -231,6 +231,49 @@ export const RaydiumAMMSwap = async (
       });
     });
     instructions.forEach((instruction: any) => Tx.add(instruction));
+
+    const Tx1 = new Transaction();
+    if (modeType === 3) {
+      const sell = raydium.liquidity.computeAmountOut({
+        poolInfo: {
+          ...poolInfo,
+          baseReserve,
+          quoteReserve,
+          status,
+          version: 4,
+        },
+        amountIn: out.minAmountOut, //判断精度
+        mintIn: mintOut.address,
+        mintOut: mintIn.address,
+        slippage: slippage, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%
+      });
+      const execute1 = await raydium.liquidity.swap({
+        poolInfo,
+        poolKeys,
+        amountIn: out.minAmountOut,
+        amountOut: sell.minAmountOut,
+        fixedSide: "in",
+        inputMint: mintOut.address,
+        txVersion,
+        computeBudgetConfig: {
+          units: priorityFees.unitLimit,
+          microLamports: priorityFees.unitPrice,
+        },
+      });
+      const transaction1 = execute1.transaction;
+      const instructions1 = transaction1.message.compiledInstructions.map((instruction: any) => {
+        return new TransactionInstruction({
+          keys: instruction.accountKeyIndexes.map((index: any) => ({
+            pubkey: transaction1.message.staticAccountKeys[index],
+            isSigner: transaction1.message.isAccountSigner(index),
+            isWritable: transaction1.message.isAccountWritable(index),
+          })),
+          programId: transaction1.message.staticAccountKeys[instruction.programIdIndex],
+          data: Buffer.from(instruction.data),
+        });
+      });
+      instructions1.forEach((instruction: any) => Tx1.add(instruction));
+    }
     if (true) {
       Tx.add(
         SystemProgram.transfer({
@@ -242,9 +285,13 @@ export const RaydiumAMMSwap = async (
     }
     const { blockhash } = await connection.getLatestBlockhash('processed');
     Tx.recentBlockhash = blockhash;
-    const finalTxId = await sendAndConfirmTransaction(connection, Tx, [account],
+    const finalTxId = sendAndConfirmTransaction(connection, Tx, [account],
       { commitment: 'processed', skipPreflight: true });
-    return finalTxId
+    if (modeType === 3) {
+      const finalTxId1 = sendAndConfirmTransaction(connection, Tx1, [account],
+        { commitment: 'processed', skipPreflight: true });
+    }
+    return await finalTxId
   } catch (error) {
     console.log(error, 'RaydiumAMMSwap')
     return null

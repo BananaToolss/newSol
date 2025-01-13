@@ -57,9 +57,9 @@ function SwapBot() {
   const wallet = useWallet()
   const [messageApi, contextHolder] = message.useMessage();
   const [api, contextHolder1] = notification.useNotification();
-  const [baseToken, setBseToken] = useState<Token_Type>(PUMP) //
+  const [baseToken, setBseToken] = useState<Token_Type>(RAYAMM) //
   const [token, setToken] = useState<Token_Type>(SOL)
-  const [dexCount, setDexCount] = useState(2) // 1raydium 2pump
+  const [dexCount, setDexCount] = useState(1) // 1raydium 2pump
   const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
 
   const [isJito, setIsJito] = useState(false)
