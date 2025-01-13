@@ -150,7 +150,6 @@ function CloseAccount() {
           skipPreflight: true
         });
         console.log(signature, 'signature')
-        // await confirmTransaction(connection, signature);
         const confirmed = await connection.confirmTransaction(
           signature,
           "processed"
