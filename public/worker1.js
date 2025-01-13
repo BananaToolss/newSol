@@ -1,13 +1,11 @@
 
 onmessage = async function (event) {
-    const { eventName, total, thread, threadIndex, spaceTime } = event.data;
-    // if (eventName === 'CLOSE') {
-    //     self.close();
-    //     return;
-    // }
-    console.log(e, 'event')
-    postMessage({ k: 1 })
-
+    // console.log(event.data, 'event.data')
+    const { eventName, total, threadIndex, spaceTime } = event.data;
+    for (let index = threadIndex * total; index < (threadIndex + 1) * total; index++) {
+        postMessage({ walletIndex: index, threadIndex })
+        // await delay(spaceTime);
+    }
 }
 // self.onmessage = (event) => {
 //     const { eventName, total, thread, threadIndex, spaceTime } = event.data;
@@ -29,7 +27,7 @@ onmessage = async function (event) {
 //     }
 // }
 
-// function delay(ms) {
-//     return new Promise(resolve => setTimeout(resolve, ms));
-// }
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 

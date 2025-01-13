@@ -176,7 +176,9 @@ function SwapBot() {
 
   const startClick = async () => {
     try {
-      setIsStop(false)
+      if (workersRef.current) {
+        workersRef.current = [1]
+      }
       if (walletConfig.length === 0) return logsArrChange('请导入钱包私钥', 'red')
       if (!config.minAmount) return logsArrChange('请填写购买数量', 'red')
       if (Number(config.amountType) === 3 && !config.maxAmount) return logsArrChange('请填写购买数量', 'red')
@@ -201,130 +203,147 @@ function SwapBot() {
         console.log(`钱包准备就绪`)
       }
 
-
+      const url = `${window.location.origin}/worker1.js`
       if (TaskRef.current) clearInterval(TaskRef.current)
 
       let waitingForConfirmation: boolean; //执行中
       let walletIndexes = 0
       let round = 0
-      const rounds: any[] = []
 
       const QueteToken = new PublicKey(token.address)
       const BaseToken = new PublicKey(baseToken.address)
       const solPrice = await getSolPrice()
 
-      TaskRef.current = setInterval(async () => {
-        try {
-          if (waitingForConfirmation) {
-            console.log("还在交易中");
-            return;
+      if (Number(config.thread) > 1) {
+        console.log(workersRef, 'workersRef')
+        for (let index = 0; index < Number(config.thread); index++) {
+          workersRef.current[index] = new Worker(url, { name: `${index}` })
+          workersRef.current[index].postMessage({
+            eventName: 'START',
+            total: Math.ceil(_walletConfig.length / Number(config.thread)),
+            threadIndex: index,
+            spaceTime: Number(config.spaceTime) * 1000
+          })
+          workersRef.current[index].onmessage = (e) => {
+            console.log(e.data, '接收数据')
+            const { walletIndex, threadIndex } = e.data
+            // let walletIndex = 0
+            threadFun(_walletConfig, walletIndex, raydiums[walletIndex], solPrice, QueteToken, BaseToken)
           }
-          if (isStop) console.log('任务暂停')
-          waitingForConfirmation = true;
-          const raydium = raydiums[walletIndexes]
-          const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[walletIndexes].privateKey));
-          logsArrChange(`开始执行钱包${account.publicKey.toBase58()}`)
-
-          let state = true
-          const { balance, amountIn } = await getAmountIn(connection, account, BaseToken,
-            Number(config.modeType), Number(config.amountType), Number(config.minAmount), Number(config.maxAmount))
-          if (balance === 0 || amountIn === 0) {
-            state = false
-            logsArrChange(`${account.publicKey.toBase58()}余额不足，跳过该钱包`, '#f9d236')
-          }
-          let _tokenPrice = ''
-          let signer = ''
-          if (Number(config.thread) <= 1 && state) {
-            if (Number(config.modeType) === 1) {
-              logsArrChange(`花费${amountIn} ${token.symbol}购买`)
-            } else if (Number(config.modeType) == 2) {
-              logsArrChange(`出售${amountIn} ${baseToken.symbol}`)
-            } else {
-              logsArrChange(`使用${amountIn} ${token.symbol}刷量`)
-            }
-            if (dexCount === 1) {
-              const { signature, price } = await RaydiumSwap(connection, raydium, account, Number(config.modeType), QueteToken, BaseToken, amountIn,
-                Number(config.slippage) / 100,)
-              signer = signature
-              const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
-              _tokenPrice = ethers.utils.formatEther(_price)
-            } else {
-              signer = await PumpFunSwap(connection, sdk, account, Number(config.modeType), BaseToken,
-                amountIn * baseToken.decimals, BigInt(Number(config.slippage) * 100))
-              _tokenPrice = await getPumpPrice(sdk, new PublicKey(baseToken.address), solPrice)
-            }
-          } else {
-            console.log('first')
-            const url = `${window.location.origin}/worker1.js`
-            console.log(config.thread)
-            for (let index = 0; index < Number(config.thread); index++) {
-              workersRef.current[index] = new Worker(url)
-              console.log({
-                eventName: 'START',
-                total: _walletConfig.length,
-                thread: config.thread,
-                threadIndex: index,
-                spaceTime: config.spaceTime
-              })
-              workersRef.current[index].postMessage({
-                eventName: 'START',
-                total: _walletConfig.length,
-                thread: config.thread,
-                threadIndex: index,
-                spaceTime: config.spaceTime
-              })
-            }
-          }
-          if (isStop) console.log('任务暂停')
-          if (signer) {
-            logsArrChange(signer, HASH_COLOR, true)
-          } else {
-            if (state) logsArrChange(`交易失败`, 'red')
-          }
-
-          logsArrChange(`当前代币价格: ${_tokenPrice}`)
-          if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice)) {
-            logsArrChange(`拉盘任务完成`)
-            closeTask()
-          }
-          if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice)) {
-            logsArrChange(`砸盘任务完成`)
-            closeTask()
-          }
-
-          logsArrChange(`暂停${config.spaceTime}秒`)
-          await delay(Number(config.spaceTime) * 1000);
-          waitingForConfirmation = false;
-          if (walletIndexes == _walletConfig.length - 1) {
-            walletIndexes = 0;
-            round = 1;
-          } else {
-            walletIndexes++
-          }
-        } catch (error) {
-          console.error("获取交易失败:", error);
-        } finally {
-
         }
-      }, 1000)
+      } else {
+        TaskRef.current = setInterval(async () => {
+          try {
+            if (waitingForConfirmation) {
+              console.log("还在交易中");
+              return;
+            }
+            if (isStop) console.log('任务暂停')
+            waitingForConfirmation = true;
+            console.log(walletIndexes, '开始walletIndexes')
+            try {
+              await threadFun(_walletConfig, walletIndexes, raydiums[walletIndexes], solPrice, QueteToken, BaseToken)
+            } catch (error) {
+            }
 
+            waitingForConfirmation = false;
+            if (walletIndexes == _walletConfig.length - 1) {
+              walletIndexes = 0;
+              round = 1;
+            } else {
+              walletIndexes++
+            }
+          } catch (error) {
+            console.error("获取交易失败:", error);
+          }
+        }, 1000)
+      }
     } catch (error) {
       console.log(error)
       setIsStart(false)
     }
   }
 
+  const threadFun = (_walletConfig: CollocetionType[], index: number, raydium: Raydium | null, solPrice: string,
+    QueteToken: PublicKey,
+    BaseToken: PublicKey,
+  ) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[index].privateKey));
+        logsArrChange(`开始执行钱包${account.publicKey.toBase58()}`)
+
+        let state = true
+        const { balance, amountIn } = await getAmountIn(connection, account, BaseToken,
+          Number(config.modeType), Number(config.amountType), Number(config.minAmount), Number(config.maxAmount))
+        if (balance === 0 || amountIn === 0) {
+          state = false
+          logsArrChange(`${account.publicKey.toBase58()}余额不足，跳过该钱包`, '#f9d236')
+        }
+        let _tokenPrice = ''
+        let signer = ''
+        console.log(balance, amountIn, state, ' balance, amountIn ')
+        if (Number(config.thread) <= 1 && state) {
+          if (Number(config.modeType) === 1) {
+            logsArrChange(`花费${amountIn} ${token.symbol}购买`)
+          } else if (Number(config.modeType) == 2) {
+            logsArrChange(`出售${amountIn} ${baseToken.symbol}`)
+          } else {
+            logsArrChange(`使用${amountIn} ${token.symbol}刷量`)
+          }
+          if (dexCount === 1) {
+            const { signature, price } = await RaydiumSwap(connection, raydium, account, Number(config.modeType), QueteToken, BaseToken, amountIn,
+              Number(config.slippage) / 100,)
+            signer = signature
+            const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
+            _tokenPrice = ethers.utils.formatEther(_price)
+          } else {
+            signer = await PumpFunSwap(connection, sdk, account, Number(config.modeType), BaseToken,
+              amountIn * baseToken.decimals, BigInt(Number(config.slippage) * 100))
+            _tokenPrice = await getPumpPrice(sdk, new PublicKey(baseToken.address), solPrice)
+          }
+        }
+        if (isStop) console.log('任务暂停')
+        if (signer) {
+          logsArrChange(signer, HASH_COLOR, true)
+        } else {
+          if (state) logsArrChange(`交易失败`, 'red')
+        }
+
+        logsArrChange(`当前代币价格: ${_tokenPrice}`)
+        if (Number(config.modeType) === 1 && Number(config.targetPrice) <= Number(_tokenPrice)) {
+          logsArrChange(`拉盘任务完成`)
+          closeTask()
+        }
+        if (Number(config.modeType) === 2 && Number(config.targetPrice) >= Number(_tokenPrice)) {
+          logsArrChange(`砸盘任务完成`)
+          closeTask()
+        }
+
+        logsArrChange(`暂停${config.spaceTime}秒`)
+        await delay(Number(config.spaceTime) * 1000);
+        resolve(true)
+      } catch (error) {
+        console.log(error, 'error')
+        logsArrChange(`${error.toString()}`, 'red')
+        reject(false)
+      }
+    })
+  }
+
   const closeTask = () => {
     setIsStart(false)
+    logsArrChange(`停止任务`, '#ffca28')
     if (TaskRef) clearInterval(TaskRef.current)
-    workersRef.current.forEach((worker, index) => {
-      worker.postMessage({ task: 'CLOSE' })
+    if (workersRef.current) workersRef.current.forEach((worker, index) => {
+      worker.postMessage({ eventName: 'CLOSE' })
       worker.terminate()
     })
-    workersRef.current = null
+    workersRef.current = []
+    console.log(workersRef.current)
   }
   const stopClick = () => {
-    setIsStop(true)
+    setIsStop(false)
     setIsStart(false)
     closeTask()
   }
