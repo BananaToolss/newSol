@@ -179,7 +179,7 @@ export const RaydiumAMMSwap = async (
       throw new Error('target pool is not AMM pool and Cpmm Pool')
     const baseIn = (BaseToken.toBase58() === poolInfo.mintB.address);
     let mintIn, mintOut;
-    if (modeType === 1) {        // 买入
+    if (modeType === 1 || modeType === 3) {        // 买入
       [mintIn, mintOut] = baseIn
         ? [poolInfo.mintA, poolInfo.mintB]
         : [poolInfo.mintB, poolInfo.mintA];
@@ -285,13 +285,16 @@ export const RaydiumAMMSwap = async (
     }
     const { blockhash } = await connection.getLatestBlockhash('processed');
     Tx.recentBlockhash = blockhash;
-    const finalTxId = sendAndConfirmTransaction(connection, Tx, [account],
+
+    let finalTxId = sendAndConfirmTransaction(connection, Tx, [account],
       { commitment: 'processed', skipPreflight: true });
+    let finalTxId1 = ''
     if (modeType === 3) {
-      const finalTxId1 = sendAndConfirmTransaction(connection, Tx1, [account],
+      finalTxId1 = await sendAndConfirmTransaction(connection, Tx1, [account],
         { commitment: 'processed', skipPreflight: true });
     }
-    return await finalTxId
+    const sig = modeType === 3 ? finalTxId1 : await finalTxId
+    return sig
   } catch (error) {
     console.log(error, 'RaydiumAMMSwap')
     return null
