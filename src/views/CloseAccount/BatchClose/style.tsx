@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 export const BurnPage = styled.div`
-  width: 80%;
+  width: 100%;
  
   @media screen and (max-width:968px) {
     width: 100%;

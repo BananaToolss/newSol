@@ -39,7 +39,7 @@ export const WalletInfoPage = styled.div`
     border-radius: 10px 10px 0 0;
     overflow: hidden;
     div:not(:last-child), div:not(:first-child) {
-      width: 20%;
+      width: 16%;
       padding: 10px 0;
     }
     div:last-child, div:first-child  {
@@ -54,7 +54,7 @@ export const WalletInfoPage = styled.div`
     justify-content: space-between;
     border-bottom: 1px solid #e2e8f0;
     div:not(:last-child), div:not(:first-child) {
-      width: 20%;
+      width: 16%;
       padding: 10px;
     }
     div:last-child, div:first-child {

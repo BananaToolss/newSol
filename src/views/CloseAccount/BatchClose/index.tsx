@@ -8,6 +8,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import type { Token_Type } from '@/type'
+import { getAllToken } from '@/utils/newSol'
 import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, BURN_FEE } from '@/config'
 import type { TOKEN_TYPE, CollocetionType } from '@/type'
 import { Page } from '@/styles';
@@ -65,7 +66,7 @@ function BrunToken() {
         </div>
 
 
-        <WalletInfoCollection config={walletConfig} setConfig={setWalletConfig} tokenAddr='' />
+        <WalletInfoCollection />
 
 
         <div className='btn'>
