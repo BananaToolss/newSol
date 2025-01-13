@@ -290,7 +290,7 @@ function WalletInfo(props: PropsType) {
           <Button className={`${Button_Style1} ml-2 baba`} onClick={() => getWalletsInfo()}>获取余额</Button>
         </div>
         <div className='flex items-center h-100 flex-wrap'>
-          <Button onClick={selectZero}>选择余额为0</Button>
+          <Button onClick={selectZero} className='ba'>选择余额为0</Button>
           <Button className='ml-2 ba' onClick={selectmoreZero}>选择余额大于0</Button>
           <Button className='ml-2 ba' onClick={selectOther}>反选</Button>
           {!isBot && <Button className='ml-2 ba' onClick={selectError}>选择失败</Button>}

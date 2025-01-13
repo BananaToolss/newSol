@@ -61,4 +61,17 @@ export const WalletInfoPage = styled.div`
     font-size: 14px;
     margin: 20px 0;
   }
+
+  @media screen and (max-width:968px) { 
+    .wallet {
+      width: 100%;
+      overflow: scroll;
+    }
+    .walletHeader, .walletInfo {
+      width: 200%;
+    }
+    .gt {
+      margin: 10px 0;
+    }
+  }
 `

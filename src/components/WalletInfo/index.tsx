@@ -113,7 +113,7 @@ function WalletInfo(props: PropsType) {
       {/* <div className='header'>钱包信息</div> */}
       <div className='buttonSwapper'>
         <PrivateKeyPage privateKeys={privateKeys} callBack={privateKeyCallBack} title='导入钱包' />
-        <Button className={`${Button_Style1}`} onClick={() => getWalletsInfo()}>获取余额</Button>
+        <Button className={`${Button_Style1} gt`} onClick={() => getWalletsInfo()}>获取余额</Button>
       </div>
 
       <div className='autoInput'>

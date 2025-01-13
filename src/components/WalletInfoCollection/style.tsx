@@ -83,6 +83,7 @@ export const WalletInfoPage = styled.div`
     .btns {
       flex-direction: column;
       margin-bottom: 10px;
+      padding: 10px;
     }
     .baba {
       margin-left: 0;
