@@ -174,11 +174,11 @@ function WalletInfo(props: PropsType) {
             isCheck: true,
             privateKey: _privateKeys[i],
             walletAddr: accountsArr[i].toBase58(),
-            balance: solBalance ? solBalance : 0,
-            tokenBalance: tokenBalance ? tokenBalance : 0,
+            balance: solBalance ? Number(solBalance.toFixed(4)) : 0,
+            tokenBalance: tokenBalance ? Number(tokenBalance.toFixed(4)) : 0,
             assiciaAccount: associaArr[i] ? associaArr[i] : null,
             state: 0,
-            baseTBalace: baseTokenB ? baseTokenB : 0,
+            baseTBalace: baseTokenB ? Number(baseTokenB.toFixed(4)) : 0,
             baseAssiciaAccount: baseAccouns[i] ? baseAccouns[i] : null,
           }
         )

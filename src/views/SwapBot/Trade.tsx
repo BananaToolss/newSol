@@ -151,7 +151,7 @@ export const RaydiumSwap = async (
     }
     return { signature, price }
   } catch (error) {
-    console.log(error,'RaydiumSwap')
+    console.log(error, 'RaydiumSwap')
     return null
   }
 }
@@ -246,7 +246,7 @@ export const RaydiumAMMSwap = async (
       { commitment: 'processed', skipPreflight: true });
     return finalTxId
   } catch (error) {
-    console.log(error,'RaydiumAMMSwap')
+    console.log(error, 'RaydiumAMMSwap')
     return null
   }
 }
@@ -315,7 +315,7 @@ export const RaydiumCPMMSwap = async (
       { commitment: 'processed', skipPreflight: true });
     return finalTxId
   } catch (error) {
-    console.log(error,'RaydiumCPMMSwap')
+    console.log(error, 'RaydiumCPMMSwap')
     return null
   }
 }
@@ -389,7 +389,7 @@ export const getRayDiumPrice = async (
     console.log(solPrice, 'solPrice')
     const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
     const _pri = ethers.utils.formatEther(_price)
-    console.log(_pri,'_pri')
+    console.log(_pri, '_pri')
     return _pri
   } catch (error) {
     return null
@@ -434,7 +434,7 @@ export const getAmountIn = async (
         const max = maxAmount * BASE_NUMBER
         amountIn = getRandomNumber(min, max) / BASE_NUMBER
       }
-      amountIn = amountIn <= tokenB ? amountIn : 0
+      amountIn = amountIn <= (tokenB + 0.00001) ? amountIn : 0
       console.log(amountIn, 'amountIn')
     }
     return { balance, amountIn }
