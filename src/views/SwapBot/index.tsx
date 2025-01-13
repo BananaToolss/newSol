@@ -214,7 +214,7 @@ function SwapBot() {
       const BaseToken = new PublicKey(baseToken.address)
       const solPrice = await getSolPrice()
 
-      if (Number(config.thread) > 1) {
+      if (Number(config.thread) >= 1) {
         console.log(workersRef, 'workersRef')
         for (let index = 0; index < Number(config.thread); index++) {
           workersRef.current[index] = new Worker(url, { name: `${index}` })
