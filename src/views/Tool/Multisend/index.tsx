@@ -24,7 +24,7 @@ import {
 import { ethers, BigNumber } from 'ethers'
 import { useTranslation } from "react-i18next";
 import { Header } from '@/components'
-import { useIsMobile } from '@/hooks';
+import { isMobile } from 'react-device-detect'
 import { Button_Style, BANANATOOLS_ADDRESS, MULTISEND_FEE, Input_Style } from '@/config'
 import { IsAddress, addPriorityFees, addressHandler } from '@/utils'
 import { Page } from '@/styles';
@@ -55,7 +55,6 @@ function Multisend() {
   const { connection } = useConnection();
   const wallet = useWallet();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
-  const isMobile = useIsMobile()
   const [textValue, setTextValue] = useState('')
   const [balance, setBalance] = useState('')
   const [needAmount, setNeedAmount] = useState('')
@@ -540,7 +539,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
                 <div className='t1'>交易总数</div>
               </div>
               <div className='item'>
-                <div className='t2'>{token.balance ?? ''}</div>
+                <div className='t2'>{Number(token.balance).toFixed(4) ?? ''}</div>
                 <div className='t1'>代币余额</div>
               </div>
             </SENDINFO>

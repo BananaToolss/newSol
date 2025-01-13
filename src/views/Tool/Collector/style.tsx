@@ -96,4 +96,14 @@ export const CollectorPage = styled.div`
       border-radius: 6px;
     }
   }
+  @media screen and (max-width:968px) {  
+    .infobox {
+      flex-direction: column;
+    }
+    .info_item  {
+      margin-left: 0;
+      margin-bottom: 6px;
+    }
+  }
+
 `

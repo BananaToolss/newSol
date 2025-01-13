@@ -16,10 +16,11 @@ export const WalletInfoPage = styled.div`
     font-size: 14px;
     padding: 20px;
     margin-bottom: 20px;
+    overflow: scroll;
   }
   .waletSwapper {
     max-height: 400px;
-    overflow-y: scroll;
+    /* overflow-y: scroll; */
   }
   .btns {
     padding: 20px 20px 0;
@@ -72,5 +73,15 @@ export const WalletInfoPage = styled.div`
     align-items: center;
     font-size: 14px;
     margin: 20px 0;
+  }
+  @media screen and (max-width:968px) { 
+    .walletHeader, .walletInfo {
+      width: 200%;
+      overflow: scroll;
+    }
+    .btns {
+      flex-direction: column;
+      margin-bottom: 10px;
+    }
   }
 `

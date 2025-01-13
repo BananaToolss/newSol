@@ -128,7 +128,7 @@ function WalletInfo(props: PropsType) {
           <div>地址</div>
           <div>SOL余额</div>
           <div>购买数量(SOL)</div>
-          <div>移除数量</div>
+          <div>移除</div>
         </div>
         {isLoading && <LoadingOut title='钱包信息加载中...' />}
         {!isLoading &&

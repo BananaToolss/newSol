@@ -74,6 +74,13 @@ export const SENDINFO = styled.div`
 
      }
    }
+   @media screen and (max-width:968px) { 
+    flex-direction: column;
+    .item {
+      width: 100%;
+      margin-bottom: 3px;
+    }
+  }
 `
 export const ERROR_PAGE = styled.div`
 border: 1px solid red;

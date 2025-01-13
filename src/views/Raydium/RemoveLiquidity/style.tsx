@@ -39,4 +39,9 @@ export const CreatePool = styled.div`
       width: 80%;
     }
   }
+  @media screen and (max-width:968px) { 
+    .token {
+      flex-direction: column;
+    }
+  }
 `

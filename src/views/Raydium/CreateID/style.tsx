@@ -9,4 +9,9 @@ export const CreateIDPage = styled.div`
       flex: 1;
     }
   }
+  @media screen and (max-width:968px) { 
+    .token {
+      flex-direction: column;
+    }
+  }
 `

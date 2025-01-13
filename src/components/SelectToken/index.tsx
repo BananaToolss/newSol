@@ -155,7 +155,7 @@ const App = (props: PropsType) => {
             </div>
           </div>
           <div className='flex items-center'>
-            {!isBot && <div className='text-sm mr-4'>{token.balance}</div>}
+            {!isBot && <div className='text-sm mr-4'>{Number(token.balance).toFixed(4)}</div>}
             <BsChevronDown />
           </div>
         </div> :
@@ -217,7 +217,7 @@ const App = (props: PropsType) => {
               <div className='ml-3 mr-2'>{addressHandler(item.address)}</div>
               <BsCopy onClick={() => copyClick(item.address)} />
             </div>
-            <div className='ml-1'>{item.balance}</div>
+            <div className='ml-1'>{Number(item.balance).toFixed(4)}</div>
 
           </AllTokenItem>
         ))
