@@ -190,7 +190,9 @@ function SwapBot() {
 
       setIsStop(false)
       setIsStart(true)
-      const _walletConfig = [...walletConfig]
+      const _config = [...walletConfig]
+      const _walletConfig = _config.filter(item => item.isCheck)
+      console.log(_walletConfig)
       const raydiums: Raydium[] = []
       if (dexCount === 1) {
         console.log('钱包准备中')
@@ -274,6 +276,7 @@ function SwapBot() {
   ) => {
     return new Promise(async (resolve, reject) => {
       try {
+        if (!_walletConfig[index]) return
         const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[index].privateKey));
         logsArrChange(`开始执行钱包${addressHandler(account.publicKey.toBase58())}`)
 
@@ -287,7 +290,7 @@ function SwapBot() {
         let _tokenPrice = ''
         let signer = ''
         console.log(balance, amountIn, state, ' balance, amountIn ')
-        if (Number(config.thread) >= 1 && state) {
+        if (state) {
           if (Number(config.modeType) === 1) {
             logsArrChange(`花费${amountIn} ${token.symbol}购买`)
           } else if (Number(config.modeType) == 2) {
@@ -311,7 +314,7 @@ function SwapBot() {
         if (signer) {
           logsArrChange(signer, HASH_COLOR, true, addressHandler(account.publicKey.toBase58()))
         } else {
-          if (state) logsArrChange(`交易失败`, 'red')
+          if (state) logsArrChange(`交易失败`, 'red', false, addressHandler(account.publicKey.toBase58()))
         }
 
         logsArrChange(`当前代币价格: ${_tokenPrice}`)
@@ -522,7 +525,7 @@ function SwapBot() {
                     </a>
                   </div>
                   :
-                  <div key={index} style={{ color: item.color }}>{item.time}: {item.label}</div>
+                  <div key={index} style={{ color: item.color }}>{item.time}: {item.account}{item.label}</div>
               ))}
             </div>
           </div>
