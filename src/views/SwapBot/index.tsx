@@ -450,10 +450,10 @@ function SwapBot() {
                 <Input value={config.slippage} onChange={configChange} name='slippage' />
               </div>
             </div>
-            <div className='flex mt-5'>
+            {/* <div className='flex mt-5'>
               <div className='mr-2'>jito MEV模式</div>
               <Switch checked={isJito} onChange={(e) => setIsJito(e)} />
-            </div>
+            </div> */}
             {isJito &&
               <div className='mt-3'>
                 <div className='flex items-center mb-4'>
