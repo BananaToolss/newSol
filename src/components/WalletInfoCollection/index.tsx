@@ -287,14 +287,14 @@ function WalletInfo(props: PropsType) {
       <div className='flex items-center btns'>
         <div className='buttonSwapper'>
           <PrivateKeyPage privateKeys={privateKeys} callBack={privateKeyCallBack} title='导入钱包' />
-          <Button className={`${Button_Style1} ml-2`} onClick={() => getWalletsInfo()}>获取余额</Button>
+          <Button className={`${Button_Style1} ml-2 baba`} onClick={() => getWalletsInfo()}>获取余额</Button>
         </div>
         <div className='flex items-center h-100 flex-wrap'>
           <Button onClick={selectZero}>选择余额为0</Button>
-          <Button className='ml-2' onClick={selectmoreZero}>选择余额大于0</Button>
-          <Button className='ml-2' onClick={selectOther}>反选</Button>
-          {!isBot && <Button className='ml-2' onClick={selectError}>选择失败</Button>}
-          <Button className='ml-2'><DeleteOutlined onClick={deleteCheck} /></Button>
+          <Button className='ml-2 ba' onClick={selectmoreZero}>选择余额大于0</Button>
+          <Button className='ml-2 ba' onClick={selectOther}>反选</Button>
+          {!isBot && <Button className='ml-2 ba' onClick={selectError}>选择失败</Button>}
+          <Button className='ml-2 ba'><DeleteOutlined onClick={deleteCheck} /></Button>
         </div>
       </div>
 

@@ -10,7 +10,33 @@ export const SwapBotPage = styled.div`
       width: 30%;
       box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
     }
-}
+   }
+   @media screen and (max-width:968px) {
+    .swap {
+      flex-direction: column;
+    }
+    .bb1{
+      flex-direction: column;
+      align-items: start;
+    }
+    .bb2 {
+      margin-right: 0;
+      margin-bottom: 10px;
+    }
+    .box1 {
+      margin:0;
+      margin-bottom: 10px;
+    }
+    .stop {
+      margin-top: 10px;
+    }
+    .fee {
+      margin-bottom: 10px;
+    }
+    .bw100 {
+      width: 100%;
+    }
+   }
 `
 export const LeftPage = styled.div`
   width: 45%;
@@ -35,6 +61,9 @@ export const LeftPage = styled.div`
       padding-bottom: 10px;
     }
   }
+  @media screen and (max-width:968px) {
+     width: 100%;
+   }
 `
 
 export const RightPage = styled.div`
@@ -50,6 +79,7 @@ export const RightPage = styled.div`
      border-radius: 6px;
      padding: 20px 10px;
      height: 100%;
+     min-height: 200px;
      .header {
       padding-bottom: 10px;
       border-bottom: 1px solid #cccccc;

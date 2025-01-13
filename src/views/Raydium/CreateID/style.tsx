@@ -13,5 +13,8 @@ export const CreateIDPage = styled.div`
     .token {
       flex-direction: column;
     }
+    .tokenItem {
+      margin: 10px 0;
+    }
   }
 `

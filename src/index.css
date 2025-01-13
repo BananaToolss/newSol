@@ -157,6 +157,12 @@ input:disabled {
   color: #959698;
   margin-top: 6px;
 }
+.ant-pro-card .ant-pro-card-body {
+  padding-inline: 20px
+}
+.ant-upload-wrapper .ant-upload-select {
+  margin: 0 auto;
+}
 
 @media screen and (max-width:968px) {
   .page {

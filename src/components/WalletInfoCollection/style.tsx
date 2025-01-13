@@ -20,6 +20,7 @@ export const WalletInfoPage = styled.div`
   }
   .waletSwapper {
     max-height: 400px;
+    min-height: 200px;
     /* overflow-y: scroll; */
   }
   .btns {
@@ -82,6 +83,14 @@ export const WalletInfoPage = styled.div`
     .btns {
       flex-direction: column;
       margin-bottom: 10px;
+    }
+    .baba {
+      margin-left: 0;
+      margin-top:10px;
+      margin-bottom: 10px;
+    }
+    .ba {
+      margin: 6px;
     }
   }
 `

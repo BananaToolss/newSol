@@ -21,7 +21,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { Header, SelectToken, Segmentd, WalletInfoCollection, JitoFee } from '@/components'
 import type { Token_Type, CollocetionType } from '@/type'
 import { SOL, PUMP, RAYAMM, SOL_TOKEN, CPMM } from '@/config/Token'
-import { Input_Style, Button_Style, network } from '@/config'
+import { Input_Style, Button_Style, SWAP_BOT_FEE } from '@/config'
 import { initSdk, txVersion } from '@/Dex/Raydium'
 import { PumpFunSDK } from "@/Dex/Pump";
 import { getTxLink, addPriorityFees, addressHandler } from '@/utils'
@@ -396,8 +396,8 @@ function SwapBot() {
         <LeftPage>
           <div className='box'>
             <div className='header'>账号概览</div>
-            <div className='flex justify-between mt-4'>
-              <div className='box1 mr-4'>
+            <div className='flex justify-between mt-4 bb1'>
+              <div className='box1 mr-4 bw100'>
                 <div className='box1_header mb-3'>所有账户数量 {walletConfig.length}</div>
                 <div>
                   <div className='mb-1'>SOL余额：{info._totalSol}</div>
@@ -405,7 +405,7 @@ function SwapBot() {
                   <div className='mb-1'>Token余额：{info._totalTokenB}</div>
                 </div>
               </div>
-              <div className='box1'>
+              <div className='box1 bw100'>
                 <div className='box1_header mb-3'>启用账户数量 {info._seleNum}</div>
                 <div>
                   <div className='mb-1'>SOL余额：{info._seleSol}</div>
@@ -421,12 +421,12 @@ function SwapBot() {
               <div>兑换设置</div>
               <Segmentd count={dexCount} setCount={setDexCount} />
             </div>
-            <div className='flex justify-between mt-4'>
-              <div className='flex-1 mr-4'>
+            <div className='flex justify-between mt-4 bb1'>
+              <div className='flex-1 mr-4 bb2 bw100'>
                 <div>价值代币</div>
                 <SelectToken selecToken={token} callBack={tokenClick} isBot />
               </div>
-              <div className='flex-1'>
+              <div className='flex-1 bw100'>
                 <div>做市代币</div>
                 <SelectToken selecToken={baseToken} callBack={baseTokenClick} isBot />
               </div>
@@ -435,8 +435,8 @@ function SwapBot() {
 
           <div className='box mt-3'>
             <div className='header'>通用设置</div>
-            <div className='flex justify-between mt-4'>
-              <div className='flex-1 mr-4'>
+            <div className='flex justify-between mt-4 bb1'>
+              <div className='flex-1 mr-4 bb2'>
                 <div>多线程(多笔交易同时进行)</div>
                 <Input type='number' className={Input_Style}
                   value={config.thread} onChange={configChange} name='thread' />
@@ -489,7 +489,7 @@ function SwapBot() {
               </div>
             }
 
-            <div className='mt-5 flex items-center'>
+            <div className='mt-5 flex items-center bb1'>
               <div className='font-semibold'>{config.modeType == 2 ? '数量' : '金额'}： </div>
               <Radio.Group onChange={amountTypeChange} value={config.amountType}>
                 <Radio value={1}>固定</Radio>
@@ -525,10 +525,10 @@ function SwapBot() {
           <div className='btn mt-5'>
             <div className='buttonSwapper mt-4'>
               <Button className={Button_Style} onClick={startClick} loading={isStart}>开始执行</Button>
-              <Button className={Button_Style} onClick={stopClick}>停止</Button>
+              <Button className={`${Button_Style} stop`} onClick={stopClick}>停止</Button>
 
             </div>
-            <div className='fee'>全网最低服务费0.002SOL每笔交易</div>
+            <div className='fee'>全网最低服务费{SWAP_BOT_FEE}SOL每笔交易</div>
           </div>
 
         </LeftPage>
