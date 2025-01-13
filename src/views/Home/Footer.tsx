@@ -8,12 +8,12 @@ const Footer = () => {
     <DefaultFooter
       copyright="有任何问题请加入交流群进行反馈"
       links={[
-        {
-          key: 'github',
-          title: <BsTelegram />,
-          href: TELEGRAMLINK,
-          blankTarget: true,
-        },
+        // {
+        //   key: 'github',
+        //   title: <BsTelegram />,
+        //   href: TELEGRAMLINK,
+        //   blankTarget: true,
+        // },
         {
           key: 'Telegram',
           title: '@BananaTools',

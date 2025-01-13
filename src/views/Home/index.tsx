@@ -109,7 +109,7 @@ export default () => {
           //   <w3m-button />
           // ]
           return [
-            <Language/>,
+            <Language />,
             <WalletMultiButton />
           ]
         }}
@@ -128,8 +128,9 @@ export default () => {
                 <Button style={{ margin: '10px 0' }} type="primary" size='large'>官方文档</Button>
               </a>
               <div style={{ margin: '10px 0' }}>
-                <a href={TELEGRAMLINK} target="_blank">
-                  <BsTelegram style={{ marginRight: '4px' }} />@BananaTools
+                <a href={TELEGRAMLINK} target="_blank" className="flex justify-center items-center">
+                  <BsTelegram style={{ marginRight: '4px' }} />
+                  <div>@BananaTools</div>
                 </a>
               </div>
             </div>

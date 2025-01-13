@@ -148,6 +148,9 @@ input:disabled {
   color: #000;
 }
 
+.ant-pro-layout .ant-pro-sider .ant-layout-sider-children {
+  background-color: #fff;
+}
 
 .fee {
   font-size: 12px;
@@ -162,5 +165,9 @@ input:disabled {
 
   .ant-pro-page-container-children-container {
     padding-inline: 10px
+  }
+
+  .buttonSwapper button {
+    width: 100% !important;
   }
 }
