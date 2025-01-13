@@ -23,6 +23,7 @@ import { SOL_TOKEN } from '@/config/Token'
 import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp } from './utils';
 import { getTxLink, addPriorityFees } from '@/utils'
 import { isValidAmm, isValidCpmm } from '../Raydium/RemoveLiquidity/utils'
+import { rejects } from "assert";
 
 const isAMM = true
 const AMM_POOL = 'CGjmakq9tEteMMsBNmhyCBeM3Spqax58VYyFpa9XERw9'
@@ -33,7 +34,7 @@ const priorityFees = {
 }
 const BASE_NUMBER = 10000
 
-export const PumpFunSwap = async (
+export const PumpFunSwap = (
   connection: Connection,
   sdk: PumpFunSDK,
   account: Keypair,
@@ -42,40 +43,42 @@ export const PumpFunSwap = async (
   amountIn: number, //需要精度
   slippage: bigint,
 ) => {
-  try {
-    const newTx = new Transaction()
-    if (modeType === 1 || modeType === 3) {
-      const { buyTx, buyAmount } = await sdk.buy(account, BsetToken, BigInt((amountIn).toFixed(0)), slippage)
-      newTx.add(buyTx)
-      if (modeType === 3) {
-        const sellTx = await sdk.sell(account, BsetToken, buyAmount, slippage)
+  return new Promise(async (resolve: (value: string) => void, reject) => {
+    try {
+      const newTx = new Transaction()
+      if (modeType === 1 || modeType === 3) {
+        const { buyTx, buyAmount } = await sdk.buy(account, BsetToken, BigInt((amountIn).toFixed(0)), slippage)
+        newTx.add(buyTx)
+        if (modeType === 3) {
+          const sellTx = await sdk.sell(account, BsetToken, buyAmount, slippage)
+          newTx.add(sellTx)
+        }
+      } else if (modeType === 2) {
+        const sellTx = await sdk.sell(account, BsetToken, BigInt((amountIn).toFixed(0)), slippage)
         newTx.add(sellTx)
       }
-    } else if (modeType === 2) {
-      const sellTx = await sdk.sell(account, BsetToken, BigInt((amountIn).toFixed(0)), slippage)
-      newTx.add(sellTx)
-    }
-    newTx.add(
-      SystemProgram.transfer({
-        fromPubkey: account.publicKey,
-        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: PUMP_SWAP_BOT_FEE * LAMPORTS_PER_SOL,
-      })
-    );
+      newTx.add(
+        SystemProgram.transfer({
+          fromPubkey: account.publicKey,
+          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+          lamports: PUMP_SWAP_BOT_FEE * LAMPORTS_PER_SOL,
+        })
+      );
 
-    //增加费用，减少失败
-    const versionedTx = await addPriorityFees(connection, newTx, account.publicKey);
-    versionedTx.sign([account])
-    const sig = await connection.sendTransaction(versionedTx, {
-      skipPreflight: false,
-    });
-    return sig
-  } catch (error) {
-    return null
-  }
+      //增加费用，减少失败
+      const versionedTx = await addPriorityFees(connection, newTx, account.publicKey);
+      versionedTx.sign([account])
+      const sig = await connection.sendTransaction(versionedTx, {
+        skipPreflight: false,
+      });
+      resolve(sig)
+    } catch (error) {
+      reject(error)
+    }
+  })
 }
 
-export const RaydiumSwap = async (
+export const RaydiumSwap = (
   connection: Connection,
   raydium: Raydium,
   account: Keypair,
@@ -85,78 +88,79 @@ export const RaydiumSwap = async (
   amountIn: number,//不需要精度
   slippage: number,
 ) => {
-  try {
-    let poolInfo: ApiV3PoolInfoStandardItem | undefined;
-    let poolKeys: AmmV4Keys | undefined;
-    let rpcData: AmmRpcData;
+  return new Promise(async (resolve: ({ signature, price }) => void, reject) => {
+    try {
+      let poolInfo: ApiV3PoolInfoStandardItem | undefined;
+      let poolKeys: AmmV4Keys | undefined;
+      let rpcData: AmmRpcData;
 
-    let poolInfoCpmm: ApiV3PoolInfoStandardItemCpmm | undefined;
-    let poolKeysCpmm: CpmmKeys | undefined;
-    let rpcDataCpmm: CpmmRpcData;
+      let poolInfoCpmm: ApiV3PoolInfoStandardItemCpmm | undefined;
+      let poolKeysCpmm: CpmmKeys | undefined;
+      let rpcDataCpmm: CpmmRpcData;
 
-    let programId = ''
-    let price = ''
+      let programId = ''
+      let price = ''
 
-    if (isMainnet) {
-      const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1: QuteToken, mint2: BaseToken })
-      const poolId = tokenPool.data[0].id
-      const data = await raydium.api.fetchPoolById({ ids: poolId })
-      const poolInfo = data[0]
-      programId = poolInfo.programId
-      if (isValidAmm(poolInfo.programId)) {
-        poolKeys = await raydium.liquidity.getAmmPoolKeys(poolId);
-        rpcData = await raydium.liquidity.getRpcPoolInfo(poolId);
-      }
-      if (isValidCpmm(poolInfo.programId)) {
-        rpcDataCpmm = await raydium.cpmm.getRpcPoolInfo(poolInfo.id, true);
-      }
-      const _price = !poolInfo ? 0 : poolInfo.mintA.address === SOL_TOKEN
-        ? 1 / poolInfo.price
-        : poolInfo.price;
-      price = _price.toFixed(18)
-    } else {
-      if (isAMM) {
-        const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId: AMM_POOL })
-        poolInfo = data.poolInfo;
-        poolKeys = data.poolKeys;
-        rpcData = data.poolRpcData;
+      if (isMainnet) {
+        const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1: QuteToken, mint2: BaseToken })
+        const poolId = tokenPool.data[0].id
+        const data = await raydium.api.fetchPoolById({ ids: poolId })
+        const poolInfo = data[0]
         programId = poolInfo.programId
-        const _price =
-          poolInfo.mintA.address == QuteToken.toBase58()
-            ? poolInfo.mintAmountA / poolInfo.mintAmountB
-            : poolInfo.mintAmountB / poolInfo.mintAmountA;
+        if (isValidAmm(poolInfo.programId)) {
+          poolKeys = await raydium.liquidity.getAmmPoolKeys(poolId);
+          rpcData = await raydium.liquidity.getRpcPoolInfo(poolId);
+        }
+        if (isValidCpmm(poolInfo.programId)) {
+          rpcDataCpmm = await raydium.cpmm.getRpcPoolInfo(poolInfo.id, true);
+        }
+        const _price = !poolInfo ? 0 : poolInfo.mintA.address === SOL_TOKEN
+          ? 1 / poolInfo.price
+          : poolInfo.price;
         price = _price.toFixed(18)
       } else {
-        const data = await raydium.cpmm.getPoolInfoFromRpc(CPMM_POOL);
-        poolInfoCpmm = data.poolInfo;
-        poolKeysCpmm = data.poolKeys;
-        rpcDataCpmm = data.rpcData;
-        programId = poolInfoCpmm.programId
-        const _price =
-          poolInfoCpmm.mintA.address == QuteToken.toBase58()
-            ? poolInfoCpmm.mintAmountA / poolInfoCpmm.mintAmountB
-            : poolInfoCpmm.mintAmountB / poolInfoCpmm.mintAmountA;
-        price = _price.toFixed(18)
+        if (isAMM) {
+          const data = await raydium.liquidity.getPoolInfoFromRpc({ poolId: AMM_POOL })
+          poolInfo = data.poolInfo;
+          poolKeys = data.poolKeys;
+          rpcData = data.poolRpcData;
+          programId = poolInfo.programId
+          const _price =
+            poolInfo.mintA.address == QuteToken.toBase58()
+              ? poolInfo.mintAmountA / poolInfo.mintAmountB
+              : poolInfo.mintAmountB / poolInfo.mintAmountA;
+          price = _price.toFixed(18)
+        } else {
+          const data = await raydium.cpmm.getPoolInfoFromRpc(CPMM_POOL);
+          poolInfoCpmm = data.poolInfo;
+          poolKeysCpmm = data.poolKeys;
+          rpcDataCpmm = data.rpcData;
+          programId = poolInfoCpmm.programId
+          const _price =
+            poolInfoCpmm.mintA.address == QuteToken.toBase58()
+              ? poolInfoCpmm.mintAmountA / poolInfoCpmm.mintAmountB
+              : poolInfoCpmm.mintAmountB / poolInfoCpmm.mintAmountA;
+          price = _price.toFixed(18)
+        }
       }
+      if (!isValidAmm(programId) && !isValidCpmm(programId)) throw new Error('target pool is not AMM pool and Cpmm Pool')
+      let signature = ''
+      if (isValidAmm(programId)) {
+        signature = await RaydiumAMMSwap(connection, raydium,
+          account, modeType, BaseToken, amountIn, slippage, poolInfo, poolKeys, rpcData)
+      }
+      if (isValidCpmm(programId)) {
+        signature = await RaydiumCPMMSwap(connection, raydium,
+          account, modeType, BaseToken, amountIn, slippage, poolInfoCpmm, poolKeysCpmm, rpcDataCpmm)
+      }
+      resolve({ signature, price })
+    } catch (error) {
+      reject(error)
     }
-    if (!isValidAmm(programId) && !isValidCpmm(programId)) throw new Error('target pool is not AMM pool and Cpmm Pool')
-    let signature = ''
-    if (isValidAmm(programId)) {
-      signature = await RaydiumAMMSwap(connection, raydium,
-        account, modeType, BaseToken, amountIn, slippage, poolInfo, poolKeys, rpcData)
-    }
-    if (isValidCpmm(programId)) {
-      signature = await RaydiumCPMMSwap(connection, raydium,
-        account, modeType, BaseToken, amountIn, slippage, poolInfoCpmm, poolKeysCpmm, rpcDataCpmm)
-    }
-    return { signature, price }
-  } catch (error) {
-    console.log(error, 'RaydiumSwap')
-    return null
-  }
+  })
 }
 
-export const RaydiumAMMSwap = async (
+export const RaydiumAMMSwap = (
   connection: Connection,
   raydium: Raydium,
   account: Keypair,
@@ -168,73 +172,29 @@ export const RaydiumAMMSwap = async (
   poolKeys: AmmV4Keys,
   rpcData: AmmRpcData,
 ) => {
-  try {
-    console.log(rpcData.status.toNumber(), ' rpcData.status.toNumber()')
-    const [baseReserve, quoteReserve, status] = [
-      rpcData.baseReserve,
-      rpcData.quoteReserve,
-      rpcData.status.toNumber(),
-    ];
-    if (poolInfo.mintA.address !== BaseToken.toBase58() && poolInfo.mintB.address !== BaseToken.toBase58())
-      throw new Error('target pool is not AMM pool and Cpmm Pool')
-    const baseIn = (BaseToken.toBase58() === poolInfo.mintB.address);
-    let mintIn, mintOut;
-    if (modeType === 1 || modeType === 3) {        // 买入
-      [mintIn, mintOut] = baseIn
-        ? [poolInfo.mintA, poolInfo.mintB]
-        : [poolInfo.mintB, poolInfo.mintA];
-    } else {       // 卖出
-      [mintIn, mintOut] = baseIn
-        ? [poolInfo.mintB, poolInfo.mintA]
-        : [poolInfo.mintA, poolInfo.mintB];
-    }
+  return new Promise(async (resolve: (value: string) => void, reject) => {
+    try {
+      console.log(rpcData.status.toNumber(), ' rpcData.status.toNumber()')
+      const [baseReserve, quoteReserve, status] = [
+        rpcData.baseReserve,
+        rpcData.quoteReserve,
+        rpcData.status.toNumber(),
+      ];
+      if (poolInfo.mintA.address !== BaseToken.toBase58() && poolInfo.mintB.address !== BaseToken.toBase58())
+        throw new Error('target pool is not AMM pool and Cpmm Pool')
+      const baseIn = (BaseToken.toBase58() === poolInfo.mintB.address);
+      let mintIn, mintOut;
+      if (modeType === 1 || modeType === 3) {        // 买入
+        [mintIn, mintOut] = baseIn
+          ? [poolInfo.mintA, poolInfo.mintB]
+          : [poolInfo.mintB, poolInfo.mintA];
+      } else {       // 卖出
+        [mintIn, mintOut] = baseIn
+          ? [poolInfo.mintB, poolInfo.mintA]
+          : [poolInfo.mintA, poolInfo.mintB];
+      }
 
-    const out = raydium.liquidity.computeAmountOut({
-      poolInfo: {
-        ...poolInfo,
-        baseReserve,
-        quoteReserve,
-        status,
-        version: 4,
-      },
-      amountIn: new BN(amountIn * 10 ** (mintIn.decimals)), //判断精度
-      mintIn: mintIn.address,
-      mintOut: mintOut.address,
-      slippage: slippage, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%
-    });
-    //交易
-    const execute = await raydium.liquidity.swap({
-      poolInfo,
-      poolKeys,
-      amountIn: new BN(amountIn * 10 ** (mintIn.decimals)),
-      amountOut: out.minAmountOut,
-      fixedSide: "in",
-      inputMint: mintIn.address,
-      txVersion,
-      computeBudgetConfig: {
-        units: priorityFees.unitLimit,
-        microLamports: priorityFees.unitPrice,
-      },
-    });
-
-    const transaction = execute.transaction;
-    const Tx = new Transaction();
-    const instructions = transaction.message.compiledInstructions.map((instruction: any) => {
-      return new TransactionInstruction({
-        keys: instruction.accountKeyIndexes.map((index: any) => ({
-          pubkey: transaction.message.staticAccountKeys[index],
-          isSigner: transaction.message.isAccountSigner(index),
-          isWritable: transaction.message.isAccountWritable(index),
-        })),
-        programId: transaction.message.staticAccountKeys[instruction.programIdIndex],
-        data: Buffer.from(instruction.data),
-      });
-    });
-    instructions.forEach((instruction: any) => Tx.add(instruction));
-
-    const Tx1 = new Transaction();
-    if (modeType === 3) {
-      const sell = raydium.liquidity.computeAmountOut({
+      const out = raydium.liquidity.computeAmountOut({
         poolInfo: {
           ...poolInfo,
           baseReserve,
@@ -242,66 +202,111 @@ export const RaydiumAMMSwap = async (
           status,
           version: 4,
         },
-        amountIn: out.minAmountOut, //判断精度
-        mintIn: mintOut.address,
-        mintOut: mintIn.address,
+        amountIn: new BN(amountIn * 10 ** (mintIn.decimals)), //判断精度
+        mintIn: mintIn.address,
+        mintOut: mintOut.address,
         slippage: slippage, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%
       });
-      const execute1 = await raydium.liquidity.swap({
+      //交易
+      const execute = await raydium.liquidity.swap({
         poolInfo,
         poolKeys,
-        amountIn: out.minAmountOut,
-        amountOut: sell.minAmountOut,
+        amountIn: new BN(amountIn * 10 ** (mintIn.decimals)),
+        amountOut: out.minAmountOut,
         fixedSide: "in",
-        inputMint: mintOut.address,
+        inputMint: mintIn.address,
         txVersion,
         computeBudgetConfig: {
           units: priorityFees.unitLimit,
           microLamports: priorityFees.unitPrice,
         },
       });
-      const transaction1 = execute1.transaction;
-      const instructions1 = transaction1.message.compiledInstructions.map((instruction: any) => {
+
+      const transaction = execute.transaction;
+      const Tx = new Transaction();
+      const instructions = transaction.message.compiledInstructions.map((instruction: any) => {
         return new TransactionInstruction({
           keys: instruction.accountKeyIndexes.map((index: any) => ({
-            pubkey: transaction1.message.staticAccountKeys[index],
-            isSigner: transaction1.message.isAccountSigner(index),
-            isWritable: transaction1.message.isAccountWritable(index),
+            pubkey: transaction.message.staticAccountKeys[index],
+            isSigner: transaction.message.isAccountSigner(index),
+            isWritable: transaction.message.isAccountWritable(index),
           })),
-          programId: transaction1.message.staticAccountKeys[instruction.programIdIndex],
+          programId: transaction.message.staticAccountKeys[instruction.programIdIndex],
           data: Buffer.from(instruction.data),
         });
       });
-      instructions1.forEach((instruction: any) => Tx1.add(instruction));
-    }
-    if (true) {
-      Tx.add(
-        SystemProgram.transfer({
-          fromPubkey: account.publicKey,
-          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-          lamports: SWAP_BOT_FEE * LAMPORTS_PER_SOL,
-        })
-      );
-    }
-    const { blockhash } = await connection.getLatestBlockhash('processed');
-    Tx.recentBlockhash = blockhash;
+      instructions.forEach((instruction: any) => Tx.add(instruction));
 
-    let finalTxId = sendAndConfirmTransaction(connection, Tx, [account],
-      { commitment: 'processed', skipPreflight: true });
-    let finalTxId1 = ''
-    if (modeType === 3) {
-      finalTxId1 = await sendAndConfirmTransaction(connection, Tx1, [account],
+      const Tx1 = new Transaction();
+      if (modeType === 3) {
+        const sell = raydium.liquidity.computeAmountOut({
+          poolInfo: {
+            ...poolInfo,
+            baseReserve,
+            quoteReserve,
+            status,
+            version: 4,
+          },
+          amountIn: out.minAmountOut, //判断精度
+          mintIn: mintOut.address,
+          mintOut: mintIn.address,
+          slippage: slippage, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%
+        });
+        const execute1 = await raydium.liquidity.swap({
+          poolInfo,
+          poolKeys,
+          amountIn: out.minAmountOut,
+          amountOut: sell.minAmountOut,
+          fixedSide: "in",
+          inputMint: mintOut.address,
+          txVersion,
+          computeBudgetConfig: {
+            units: priorityFees.unitLimit,
+            microLamports: priorityFees.unitPrice,
+          },
+        });
+        const transaction1 = execute1.transaction;
+        const instructions1 = transaction1.message.compiledInstructions.map((instruction: any) => {
+          return new TransactionInstruction({
+            keys: instruction.accountKeyIndexes.map((index: any) => ({
+              pubkey: transaction1.message.staticAccountKeys[index],
+              isSigner: transaction1.message.isAccountSigner(index),
+              isWritable: transaction1.message.isAccountWritable(index),
+            })),
+            programId: transaction1.message.staticAccountKeys[instruction.programIdIndex],
+            data: Buffer.from(instruction.data),
+          });
+        });
+        instructions1.forEach((instruction: any) => Tx1.add(instruction));
+      }
+      if (true) {
+        Tx.add(
+          SystemProgram.transfer({
+            fromPubkey: account.publicKey,
+            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+            lamports: SWAP_BOT_FEE * LAMPORTS_PER_SOL,
+          })
+        );
+      }
+      const { blockhash } = await connection.getLatestBlockhash('processed');
+      Tx.recentBlockhash = blockhash;
+
+      let finalTxId = sendAndConfirmTransaction(connection, Tx, [account],
         { commitment: 'processed', skipPreflight: true });
+      let finalTxId1 = ''
+      if (modeType === 3) {
+        finalTxId1 = await sendAndConfirmTransaction(connection, Tx1, [account],
+          { commitment: 'processed', skipPreflight: true });
+      }
+      const sig = modeType === 3 ? finalTxId1 : await finalTxId
+      resolve(sig)
+    } catch (error) {
+      reject(error)
     }
-    const sig = modeType === 3 ? finalTxId1 : await finalTxId
-    return sig
-  } catch (error) {
-    console.log(error, 'RaydiumAMMSwap')
-    return null
-  }
+  })
 }
 
-export const RaydiumCPMMSwap = async (
+export const RaydiumCPMMSwap = (
   connection: Connection,
   raydium: Raydium,
   account: Keypair,
@@ -313,60 +318,61 @@ export const RaydiumCPMMSwap = async (
   poolKeysCpmm: CpmmKeys,
   rpcDataCpmm: CpmmRpcData,
 ) => {
-  try {
-    if (BaseToken.toBase58() !== poolInfoCpmm.mintA.address && BaseToken.toBase58() !== poolInfoCpmm.mintB.address)
-      throw new Error('input mint does not match pool')
-    let mintIn: ApiV3Token;
-    if (modeType === 1) {
-      mintIn = poolInfoCpmm.mintA.address == BaseToken.toBase58() ? poolInfoCpmm.mintB : poolInfoCpmm.mintA;
-    } else {
-      mintIn = poolInfoCpmm.mintA.address == BaseToken.toBase58() ? poolInfoCpmm.mintA : poolInfoCpmm.mintB;
-    }
-    const baseIn = mintIn.address === poolInfoCpmm.mintA.address;
-    const swapRes = CurveCalculator.swap(
-      new BN(amountIn * 10 ** (mintIn.decimals)), //判断精度,
-      baseIn ? rpcDataCpmm.baseReserve : rpcDataCpmm.quoteReserve,
-      baseIn ? rpcDataCpmm.quoteReserve : rpcDataCpmm.baseReserve,
-      rpcDataCpmm.configInfo!.tradeFeeRate
-    );
-    const swapResult = await raydium.cpmm.swap({
-      poolInfo: poolInfoCpmm,
-      poolKeys: poolKeysCpmm,
-      swapResult: swapRes,
-      inputAmount: new BN(amountIn * 10 ** (mintIn.decimals)),
-      slippage: slippage, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%),
-      baseIn,
-      computeBudgetConfig: {
-        units: priorityFees.unitLimit,
-        microLamports: priorityFees.unitPrice,
-      },
-    });
-    // 提取交易对象
-    const transaction = swapResult.transaction as Transaction;
-    // 创建新的 Transaction 对象
-    const combinedTransaction = new Transaction();
-    combinedTransaction.add(transaction)
-    // 添加手续费转账指令
-    if (true) {
-      combinedTransaction.add(
-        SystemProgram.transfer({
-          fromPubkey: account.publicKey,
-          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-          lamports: SWAP_BOT_FEE * LAMPORTS_PER_SOL,
-        })
+  return new Promise(async (resolve: (value: string) => void, reject) => {
+    try {
+      if (BaseToken.toBase58() !== poolInfoCpmm.mintA.address && BaseToken.toBase58() !== poolInfoCpmm.mintB.address)
+        throw new Error('input mint does not match pool')
+      let mintIn: ApiV3Token;
+      if (modeType === 1) {
+        mintIn = poolInfoCpmm.mintA.address == BaseToken.toBase58() ? poolInfoCpmm.mintB : poolInfoCpmm.mintA;
+      } else {
+        mintIn = poolInfoCpmm.mintA.address == BaseToken.toBase58() ? poolInfoCpmm.mintA : poolInfoCpmm.mintB;
+      }
+      const baseIn = mintIn.address === poolInfoCpmm.mintA.address;
+      const swapRes = CurveCalculator.swap(
+        new BN(amountIn * 10 ** (mintIn.decimals)), //判断精度,
+        baseIn ? rpcDataCpmm.baseReserve : rpcDataCpmm.quoteReserve,
+        baseIn ? rpcDataCpmm.quoteReserve : rpcDataCpmm.baseReserve,
+        rpcDataCpmm.configInfo!.tradeFeeRate
       );
+      const swapResult = await raydium.cpmm.swap({
+        poolInfo: poolInfoCpmm,
+        poolKeys: poolKeysCpmm,
+        swapResult: swapRes,
+        inputAmount: new BN(amountIn * 10 ** (mintIn.decimals)),
+        slippage: slippage, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%),
+        baseIn,
+        computeBudgetConfig: {
+          units: priorityFees.unitLimit,
+          microLamports: priorityFees.unitPrice,
+        },
+      });
+      // 提取交易对象
+      const transaction = swapResult.transaction as Transaction;
+      // 创建新的 Transaction 对象
+      const combinedTransaction = new Transaction();
+      combinedTransaction.add(transaction)
+      // 添加手续费转账指令
+      if (true) {
+        combinedTransaction.add(
+          SystemProgram.transfer({
+            fromPubkey: account.publicKey,
+            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+            lamports: SWAP_BOT_FEE * LAMPORTS_PER_SOL,
+          })
+        );
+      }
+      const { blockhash } = await connection.getLatestBlockhash('processed');
+      // 设置最近区块哈希
+      combinedTransaction.recentBlockhash = blockhash;
+      // 发送并确认合并后的交易
+      const finalTxId = await sendAndConfirmTransaction(connection, combinedTransaction, [account],
+        { commitment: 'processed', skipPreflight: true });
+      resolve(finalTxId)
+    } catch (error) {
+      reject(error)
     }
-    const { blockhash } = await connection.getLatestBlockhash('processed');
-    // 设置最近区块哈希
-    combinedTransaction.recentBlockhash = blockhash;
-    // 发送并确认合并后的交易
-    const finalTxId = await sendAndConfirmTransaction(connection, combinedTransaction, [account],
-      { commitment: 'processed', skipPreflight: true });
-    return finalTxId
-  } catch (error) {
-    console.log(error, 'RaydiumCPMMSwap')
-    return null
-  }
+  })
 }
 
 export const getSolPrice = async () => {

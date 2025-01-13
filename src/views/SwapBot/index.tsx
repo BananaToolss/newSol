@@ -354,6 +354,9 @@ function SwapBot() {
       } catch (error) {
         console.log(error, 'error')
         logsArrChange(`${error.toString()}`, 'red')
+        if (error.toString() === 'Error: target pool is not AMM pool and Cpmm Pool') {
+          stopClick()
+        }
         reject(false)
       }
     })
