@@ -57,9 +57,9 @@ function SwapBot() {
   const wallet = useWallet()
   const [messageApi, contextHolder] = message.useMessage();
   const [api, contextHolder1] = notification.useNotification();
-  const [baseToken, setBseToken] = useState<Token_Type>(CPMM) //
+  const [baseToken, setBseToken] = useState<Token_Type>(PUMP) //
   const [token, setToken] = useState<Token_Type>(SOL)
-  const [dexCount, setDexCount] = useState(1) // 1raydium 2pump
+  const [dexCount, setDexCount] = useState(2) // 1raydium 2pump
   const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
 
   const [isJito, setIsJito] = useState(false)
@@ -69,8 +69,8 @@ function SwapBot() {
   const [logsArr, setLogsArr] = useState<LogsType[]>([])
   const [config, setConfig] = useState({
     modeType: 1, //模式 1拉盘 2砸盘 3刷量
-    thread: '1', //线程数
-    spaceTime: '0', //间隔时间
+    thread: '0', //线程数
+    spaceTime: '1', //间隔时间
     slippage: '5', //滑点
     amountType: 1, //1固定 2百分比 3随机
     minAmount: '0.01',
@@ -163,11 +163,11 @@ function SwapBot() {
       }
     })
     setInfo({
-      _totalSol,
-      _totalTokenB,
+      _totalSol: Number(_totalSol.toFixed(4)),
+      _totalTokenB: Number(_totalTokenB.toFixed(4)),
       _seleNum,
-      _seleSol,
-      _seleTokenB
+      _seleSol: Number(_seleSol.toFixed(4)),
+      _seleTokenB: Number(_seleTokenB.toFixed(4))
     })
   }
 
@@ -228,7 +228,7 @@ function SwapBot() {
             eventName: 'START',
             total: Math.ceil(_walletConfig.length / Number(config.thread)),
             threadIndex: index,
-            spaceTime:  Number(config.spaceTime) * 1000
+            spaceTime: Number(config.spaceTime) * 1000
           })
           workersRef.current[index].onmessage = (e) => {
             console.log(e.data, '接收数据')
@@ -302,6 +302,7 @@ function SwapBot() {
           } else {
             logsArrChange(`使用${amountIn} ${token.symbol}刷量`)
           }
+          console.log(amountIn, 'amountIn')
           if (dexCount === 1) {
             const { signature, price } = await RaydiumSwap(connection, raydium, account, Number(config.modeType), QueteToken, BaseToken, amountIn,
               Number(config.slippage) / 100,)
@@ -310,8 +311,10 @@ function SwapBot() {
             _tokenPrice = ethers.utils.formatEther(_price)
           } else {
             signer = await PumpFunSwap(connection, sdk, account, Number(config.modeType), BaseToken,
-              amountIn * baseToken.decimals, BigInt(Number(config.slippage) * 100))
-            _tokenPrice = await getPumpPrice(sdk, new PublicKey(baseToken.address), solPrice)
+              amountIn * 10 ** baseToken.decimals, BigInt(Number(config.slippage) * 100))
+            if(Number(config.modeType) !== 3) {
+              _tokenPrice = await getPumpPrice(sdk, new PublicKey(baseToken.address), solPrice)
+            }
           }
         }
         if (isStop) console.log('任务暂停')
