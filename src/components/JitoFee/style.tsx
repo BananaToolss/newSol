@@ -6,4 +6,17 @@ export const JitoPage = styled.div`
     height: 38px;
   }
 }
+@media screen and (max-width:968px) {
+   .segmentd {
+    flex-direction: column;
+    align-items: start;
+   }
+   .bbq {
+    margin: 10px 0;
+   }
+   .bba {
+    flex-direction: column;
+    align-items: start;
+   }
+}
 `

@@ -120,13 +120,13 @@ function JitoFee(props: PropsType) {
         <Segmented options={[JITOFEEARR[0].label, JITOFEEARR[1].label, JITOFEEARR[2].label]}
           value={transferType} onChange={transferTypeChange}
           size='large' />
-        <div className='ml-2 flex items-center'>
+        <div className='ml-2 flex items-center bbq'>
           <Input value={jitoFee} onChange={(e) => setJitoFee(Number(e.target.value))} />
           <div className='text-sm ml-1'>SOL</div>
         </div>
       </div>
 
-      <div className='flex items-center mt-5'>
+      <div className='flex items-center mt-5 bba'>
         <div className='text-sm mr-6'>Jito服务器:</div>
         <Select style={{ width: '300px' }} defaultValue={rpcOptions[0].value} onChange={selectionChange}>
           {rpcOptions.map((item, index) => (
