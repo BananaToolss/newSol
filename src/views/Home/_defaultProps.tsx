@@ -124,6 +124,11 @@ export default {
             name: 'Pump开盘并买入',
             icon: <img src={getImage('pumpcreate.svg')} width={16} height={16} />,
           },
+          {
+            path: 'swapbot',
+            name: 'Pump防夹刷量',
+            icon: <img src={getImage('pumpcreate.svg')} width={16} height={16} />,
+          },
           // {
           //   path: 'clone',
           //   name: '卖出并捆绑买入',

@@ -57,7 +57,7 @@ function SwapBot() {
   const wallet = useWallet()
   const [messageApi, contextHolder] = message.useMessage();
   const [api, contextHolder1] = notification.useNotification();
-  const [baseToken, setBseToken] = useState<Token_Type>(RAYAMM) //
+  const [baseToken, setBseToken] = useState<Token_Type>(PUMP) //
   const [token, setToken] = useState<Token_Type>(SOL)
   const [dexCount, setDexCount] = useState(1) // 1raydium 2pump
   const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
@@ -92,10 +92,19 @@ function SwapBot() {
 
   useEffect(() => {
     if (token) getTonePrice()
+    if (dexCount == 2) {
+      setConfig({ ...config, modeType: 1 })
+    }
   }, [dexCount, token, baseToken])
   useEffect(() => {
     getInfo()
   }, [walletConfig])
+  useEffect(() => {
+    if (window.location.hash && window.location.hash === '#/pump/swapbot') {
+      setDexCount(2)
+      setConfig({ ...config, modeType: 3 })
+    }
+  }, [window.location.hash])
 
   const configChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value })
@@ -215,7 +224,7 @@ function SwapBot() {
 
       let waitingForConfirmation: boolean; //执行中
       let walletIndexes = 0
-      let round = 0
+      let round = 0 //执行轮数
 
       const QueteToken = new PublicKey(token.address)
       const BaseToken = new PublicKey(baseToken.address)
@@ -259,7 +268,12 @@ function SwapBot() {
             waitingForConfirmation = false;
             if (walletIndexes == _walletConfig.length - 1) {
               walletIndexes = 0;
-              round = 1;
+              round += 1;
+              if (Number(config.modeType) === 3 && Number(config.loop) <= round) {
+                logsArrChange('刷量任务完成', HASH_COLOR)
+                stopClick()
+                waitingForConfirmation = true
+              }
             } else {
               walletIndexes++
             }
@@ -312,7 +326,7 @@ function SwapBot() {
           } else {
             signer = await PumpFunSwap(connection, sdk, account, Number(config.modeType), BaseToken,
               amountIn * 10 ** baseToken.decimals, BigInt(Number(config.slippage) * 100))
-            if(Number(config.modeType) !== 3) {
+            if (Number(config.modeType) !== 3) {
               _tokenPrice = await getPumpPrice(sdk, new PublicKey(baseToken.address), solPrice)
             }
           }
@@ -460,7 +474,7 @@ function SwapBot() {
               <Radio.Group onChange={modeTypeChange} value={config.modeType}>
                 <Radio value={1}>拉盘</Radio>
                 <Radio value={2}>砸盘</Radio>
-                <Radio value={3}>防夹刷量</Radio>
+                {dexCount === 2 && <Radio value={3}>防夹刷量</Radio>}
               </Radio.Group>
             </div>
             {config.modeType === 3 &&

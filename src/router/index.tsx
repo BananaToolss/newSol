@@ -24,7 +24,8 @@ const Routers = () => {
     {
       path: '/', element: <Home />,
       children: [
-        { path: '/', element: <App /> },
+        { path: '/', element: <CreateToken /> },
+        { index: true, element: <Navigate to='token/create' /> },
         { path: "closeAccount", element: <CloseAccount /> },
         { path: '/404', element: <NotFound /> },
         { path: '*', element: <Navigate to="/404" replace /> },
@@ -63,6 +64,7 @@ const Routers = () => {
       children: [
         { index: true, element: <Navigate to='create' /> },
         { path: "create", element: <CreateBuy /> },
+        { path: 'swapbot', element: <SwapBot />, },
       ]
     },
     {
