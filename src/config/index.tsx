@@ -40,6 +40,8 @@ export const PUMP_CREATE_FEE = 0.05// pump创建代币
 export const PUMP_CREATE_BIND_FEE = 0.01 //捆绑买入
 export const SWAP_BOT_FEE = 0.0001 //市值每笔收费
 export const PUMP_SWAP_BOT_FEE = 0.0001 //pump市值收费
+export const CLOSE_FEE = 1 //1%
+export const CLOSE_VALUE = 0.002039
 
 
 export const Input_Style = 'form-control block w-full px-4 py-2 text-lg font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none'

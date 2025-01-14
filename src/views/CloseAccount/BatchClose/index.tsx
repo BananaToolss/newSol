@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Button, notification, Input, message, Segmented } from 'antd'
-import { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, Keypair, TransactionInstruction } from "@solana/web3.js";
+import { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, Keypair, TransactionInstruction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useTranslation } from "react-i18next";
 import { createCloseAccountInstruction, createBurnCheckedInstruction } from '@solana/spl-token';
 import type { Token_Type } from '@/type'
 import { getTxLink, addPriorityFees } from '@/utils'
-import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, BURN_FEE, base } from '@/config'
+import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, CLOSE_FEE, CLOSE_VALUE } from '@/config'
 import { Page } from '@/styles';
 import { Header, SelectToken, Result } from '@/components'
 import { BurnPage } from './style'
@@ -100,7 +100,7 @@ function BrunToken() {
                   new PublicKey(accounInfo.associatedAccount),
                   new PublicKey(accounInfo.address),
                   account.publicKey,
-                  Number(accounInfo.balance) * (10 ** Number(accounInfo.decimals)),
+                  Number((Number(accounInfo.balance) * (10 ** Number(accounInfo.decimals))).toFixed(0)),
                   accounInfo.decimals,
                 )
               )
@@ -108,30 +108,45 @@ function BrunToken() {
             transaction.push(createCloseAccountInstruction(
               new PublicKey(accounInfo.associatedAccount),
               toAddress,
-              publicKey
+              account.publicKey
             ))
           }
         }
 
-        const maxLength = isOptionsAll ? 16 : 20
+        const maxLength = isOptionsAll ? 18 : 20
         for (let i = 0; i < Math.ceil(transaction.length / maxLength); i++) {
           let Tx = new Transaction()
           const _trans = transaction.slice(i * maxLength, (i + 1) * maxLength)
           _trans.forEach(item => {
             Tx.add(item)
           })
-          console.log(Tx, 'Tx')
+
+          const feeValue = Number((_trans.length * CLOSE_VALUE * CLOSE_FEE / 100).toFixed(6))
+          console.log(feeValue, 'feeValue')
+          const fee = SystemProgram.transfer({
+            fromPubkey: feePayer.publicKey,
+            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+            lamports: Number(((isOptionsAll ? feeValue / 2 : feeValue) * LAMPORTS_PER_SOL).toFixed(0)),
+          })
+          Tx.add(fee)
           const latestBlockHash = await connection.getLatestBlockhash();
           Tx.recentBlockhash = latestBlockHash.blockhash;
           Tx.feePayer = account.publicKey;
           sigers.push(account)
-          // sigers.push(feePayer)
-          const singerTrue = await sendAndConfirmTransaction(connection, Tx, sigers, { commitment: 'processed' });
-          console.log(singerTrue, 'singerTrue')
+          sigers.push(feePayer)
+          try {
+            const singerTrue = await sendAndConfirmTransaction(connection, Tx, sigers, { commitment: 'processed' });
+            console.log(singerTrue, 'singerTrue')
+          } catch (error) {
+            console.log(error)
+          }
+          // await delay(40)
         }
+        api.success({ message: "回收完成" })
       }
     } catch (error) {
       console.log(error, 'error')
+      api.error({ message: error.toString() })
     }
   }
 
@@ -168,7 +183,7 @@ function BrunToken() {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={burnClick} loading={isBurning}>开始回收</Button>
           </div>
-          <div className='fee'>全网最低服务费: {BURN_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: {CLOSE_FEE}%</div>
         </div>
 
         <Result signature={signature} error={error} />
