@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button, notification, Input, message, Segmented } from 'antd'
 import { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, Keypair } from "@solana/web3.js";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
@@ -14,6 +14,7 @@ import { Page } from '@/styles';
 import { Header, SelectToken, Result } from '@/components'
 import { BurnPage } from './style'
 import { signAllTransactions } from '@metaplex-foundation/umi';
+import { getClaimValue } from './WalletInfoCollection'
 import WalletInfoCollection from './WalletInfoCollection';
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 
@@ -31,6 +32,8 @@ export interface CloseConfigType {
   state: number
 }
 
+
+
 function BrunToken() {
   const { t } = useTranslation()
   const [api, contextHolder1] = notification.useNotification();
@@ -40,11 +43,36 @@ function BrunToken() {
   const [token, setToken] = useState<Token_Type>(null)
   const [burnAmount, setBurnAmount] = useState('')
   const [walletConfig, setWalletConfig] = useState<CloseConfigType[]>([]) //钱包信息
+  const [isOptionsAll, setIsOptionsAll] = useState(false)
 
   const [isBurning, setIsBurning] = useState<boolean>(false);
   const [signature, setSignature] = useState("");
   const [error, setError] = useState('');
 
+  const [info, setInfo] = useState({
+    _totalSol: 0,
+    _seleNum: 0,
+    _seleSol: 0,
+  })
+
+  useEffect(() => {
+    getInfo()
+  }, [walletConfig, isOptionsAll])
+
+  const getInfo = () => {
+    let _totalSol = 0
+    let _seleNum = 0
+    let _seleSol = 0
+    walletConfig.forEach(item => {
+      const balance = getClaimValue(item, isOptionsAll)
+      _totalSol += Number(balance)
+      if (item.isCheck) {
+        _seleNum += 1
+        _seleSol += Number(balance)
+      }
+    })
+    setInfo({ _totalSol: Number(_totalSol.toFixed(6)), _seleNum: Number(_seleNum.toFixed(6)), _seleSol:Number(_seleSol.toFixed(6)) })
+  }
 
   const burnClick = async () => {
     try {
@@ -89,8 +117,19 @@ function BrunToken() {
         </div>
 
 
-        <WalletInfoCollection config={walletConfig} setConfig={setWalletConfig} />
+        <WalletInfoCollection isOptionsAll={isOptionsAll} setIsOptionsAll={setIsOptionsAll}
+          config={walletConfig} setConfig={setWalletConfig} />
 
+        <div className='mt-5 infobox'>
+          <div className='info_item'>
+            <div>全部账户数量：{walletConfig.length}</div>
+            <div>全部可领取的SOL：{info._totalSol}</div>
+          </div>
+          <div className='info_item ml-3'>
+            <div>所选账户数量：{info._seleNum}</div>
+            <div>选中账户可领取的SOL：{info._seleSol}</div>
+          </div>
+        </div>
 
         <div className='btn'>
           <div className='buttonSwapper mt-4'>

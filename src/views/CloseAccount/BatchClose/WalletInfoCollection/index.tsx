@@ -1,5 +1,5 @@
 import { useState, SetStateAction, Dispatch, useEffect } from 'react'
-import { Button, message, notification, Tag, Checkbox, Switch } from 'antd'
+import { Button, message, notification, Tag, Checkbox, Switch, Modal } from 'antd'
 import type { CheckboxChangeEvent } from 'antd'
 import {
   Keypair,
@@ -13,7 +13,7 @@ import copy from 'copy-to-clipboard';
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { addressHandler } from '@/utils'
 import { LoadingOut } from '@/components'
-import { Button_Style1 } from '@/config'
+import { Button_Style1, Button_Style } from '@/config'
 import { SOL_TOKEN } from '@/config/Token';
 import type { Token_Type } from '@/type'
 import type { CloseConfigType } from '../index'
@@ -25,24 +25,32 @@ import {
 
 
 interface PropsType {
+  isOptionsAll: boolean
+  setIsOptionsAll: Dispatch<SetStateAction<boolean>>
   config: CloseConfigType[]
   setConfig: Dispatch<SetStateAction<CloseConfigType[]>>
 }
 
+export const getClaimValue = (item: CloseConfigType, isOptionsAll: boolean) => {
+  let balance = '0'
+  if (!isOptionsAll) {
+    balance = (item.emptyNumber * 0.002039).toFixed(6)
+  } else {
+    balance = (item.info.length * 0.002039).toFixed(6)
+  }
+  return balance
+}
+
 function WalletInfo(props: PropsType) {
-  const { config, setConfig } = props
+  const { isOptionsAll, setIsOptionsAll, config, setConfig } = props
 
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
 
-
-  const [selectedItems, setSelectedItems] = useState<any[]>([])
-
-
   const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
   const [isLoading, setIsLoading] = useState(false)
-  const [isOptionsAll, setIsOptionsAll] = useState(false)
+
 
   useEffect(() => {
     privateChange()
@@ -67,8 +75,6 @@ function WalletInfo(props: PropsType) {
 
   const getWalletsInfo = async (keys?: string[]) => {
     try {
-      setSelectedItems([])
-
       const config = keys ? keys : privateKeys
       const _config: CloseConfigType[] = []
       setIsLoading(true)
@@ -172,20 +178,39 @@ function WalletInfo(props: PropsType) {
     setConfig(_config)
   }
 
-  const getClaimValue = (item: CloseConfigType) => {
-    let balance = '0'
+  const isAlloptions = () => {
     if (!isOptionsAll) {
-      balance = (item.emptyNumber * 0.002039).toFixed(6)
-    } else {
-      balance = (item.info.length * 0.002039).toFixed(6)
+      showModal()
     }
-    return balance
+    setIsOptionsAll(!isOptionsAll)
+
   }
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleOk = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
 
   return (
     <WalletInfoPage>
       {contextHolder}
       {contextHolder1}
+
+      <Modal title="温馨提示" open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={null}>
+        <div className='text-lg mt-5 font-bold'>非空账户回收会燃烧Toke或NFT，请确保代币已无价值</div>
+        <div className='buttonSwapper mt-4 text-center'>
+          <Button className={Button_Style} onClick={handleOk}>确认</Button>
+        </div>
+      </Modal>
+
       <div className='header'>钱包信息</div>
 
       <div className='flex items-center btns'>
@@ -194,8 +219,8 @@ function WalletInfo(props: PropsType) {
           <Button className={`${Button_Style1} ml-2 baba`} onClick={() => getWalletsInfo()}>刷新账户信息</Button>
         </div>
         <div className='flex items-center h-100 flex-wrap'>
-          <Switch checked={!isOptionsAll} onChange={(e) => setIsOptionsAll(!isOptionsAll)} /> <div className='text-sm ml-1 mr-2'>仅回收空账户</div>
-          <Switch checked={isOptionsAll} onChange={(e) => setIsOptionsAll(!isOptionsAll)} /> <div className='text-sm ml-1 mr-2'>回收所有账户</div>
+          <Switch checked={!isOptionsAll} onChange={isAlloptions} /> <div className='text-sm ml-1 mr-2'>仅回收空账户</div>
+          <Switch checked={isOptionsAll} onChange={isAlloptions} /> <div className='text-sm ml-1 mr-2'>回收所有账户</div>
 
           <Button className='ml-2 ba' onClick={selectOther}>反选</Button>
           <Button className='ml-2 ba'><DeleteOutlined onClick={deleteCheck} /></Button>
@@ -229,7 +254,7 @@ function WalletInfo(props: PropsType) {
                 </div>
                 <div>{item.info.length}</div>
                 <div>{item.emptyNumber}</div>
-                <div>{getClaimValue(item)}</div>
+                <div>{getClaimValue(item, isOptionsAll)}</div>
                 <div>{!item.state ? <Button>未领取</Button> : <Tag color="#568ee6">成功</Tag>}
                 </div>
                 <div><DeleteOutlined onClick={() => deleteClick(item.account, index)} /></div>
