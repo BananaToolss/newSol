@@ -159,13 +159,13 @@ function BrunToken() {
             const singerTrue = await sendAndConfirmTransaction(connection, Tx, sigers, { commitment: 'processed' });
             console.log(singerTrue, 'singerTrue')
           } catch (error) {
-            console.log(error)
-            api.error({ message: error.toString() })
+            // console.log(error)
+            // api.error({ message: error.toString() })
           }
         }
-        api.success({ message: "回收完成" })
-        setIsBurning(false)
       }
+      api.success({ message: "回收完成" })
+      setIsBurning(false)
     } catch (error) {
       setIsBurning(false)
       console.log(error, 'error')
