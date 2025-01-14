@@ -15,6 +15,7 @@ import { Keypair, PublicKey, SystemProgram, Transaction, Commitment, LAMPORTS_PE
 import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { Input_Style, Button_Style, Text_Style, BANANATOOLS_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
 import { getTxLink, addPriorityFees } from '@/utils'
+import { useIsVip } from '@/hooks';
 import { getAsset } from '@/utils/sol'
 import type { TOKEN_TYPE } from '@/type'
 import { Vanity, UpdataImage, Header, Hint, Result } from '@/components'
@@ -33,6 +34,7 @@ function CreateToken() {
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
   const [isClone, setIsClone] = useState(false)
+  const vipConfig = useIsVip()
 
   const [config, setConfig] = useState<TOKEN_TYPE>({
     name: '',
@@ -226,12 +228,14 @@ function CreateToken() {
         )
       }
 
-      const fee = SystemProgram.transfer({
-        fromPubkey: publicKey,
-        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: CREATE_TOKEN_FEE * LAMPORTS_PER_SOL,
-      })
-      createNewTokenTransaction.add(fee)
+      if (!vipConfig.isVip) {
+        const fee = SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+          lamports: CREATE_TOKEN_FEE * LAMPORTS_PER_SOL,
+        })
+        createNewTokenTransaction.add(fee)
+      }
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, createNewTokenTransaction, publicKey);
 
@@ -504,7 +508,7 @@ function CreateToken() {
               <span>{t('Token Creator')}</span>
             </Button>
           </div>
-          <div className='fee'>全网最低服务费: {CREATE_TOKEN_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : CREATE_TOKEN_FEE} SOL</div>
         </div>
 
         <Result tokenAddress={tokenAddresss} signature={signature} error={error} />

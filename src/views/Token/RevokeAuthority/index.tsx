@@ -7,6 +7,7 @@ import {
 } from '@metaplex-foundation/mpl-token-metadata';
 import { PublicKey, Transaction, LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
 import { useTranslation } from "react-i18next";
+import { useIsVip } from '@/hooks';
 import { getMint, createSetAuthorityInstruction, AuthorityType } from '@solana/spl-token';
 import {
   Input_Style, Button_Style, BANANATOOLS_ADDRESS, AUTHORITY_FEE
@@ -26,7 +27,7 @@ function Authority() {
   const { publicKey, sendTransaction } = useWallet();
   const { connection } = useConnection();
   const [isSearch, setIsSearch] = useState(false)
-
+  const vipConfig = useIsVip()
   const [tokenAddr, setTokenAddr] = useState('')
 
   const [isAuthority, setIsAuthority] = useState({ //判断权限
@@ -157,12 +158,14 @@ function Authority() {
         tx.add(updateMetadataTransaction)
       }
 
-      const fee = SystemProgram.transfer({
-        fromPubkey: publicKey,
-        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: AUTHORITY_FEE * LAMPORTS_PER_SOL,
-      })
-      tx.add(fee)
+      if (!vipConfig.isVip) {
+        const fee = SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+          lamports: AUTHORITY_FEE * LAMPORTS_PER_SOL,
+        })
+        tx.add(fee)
+      }
 
       const result = await sendTransaction(tx, connection);
       const confirmed = await connection.confirmTransaction(
@@ -277,7 +280,7 @@ function Authority() {
               <span>放弃</span>
             </Button>
           </div>
-          <div className='fee'>全网最低服务费: {AUTHORITY_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : AUTHORITY_FEE} SOL</div>
         </div>
 
 

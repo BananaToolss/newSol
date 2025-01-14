@@ -10,6 +10,7 @@ import axios from 'axios'
 import {
   Keypair, Commitment, LAMPORTS_PER_SOL
 } from '@solana/web3.js';
+import { useIsVip } from '@/hooks';
 import { Input_Style, Button_Style, PUMP_CREATE_FEE, PUMP_CREATE_BIND_FEE } from '@/config'
 import type { TOKEN_TYPE, WalletConfigType } from '@/type'
 import { Vanity, UpdataImage, Header, Result, WalletInfo, JitoFee, Hint } from '@/components'
@@ -31,7 +32,7 @@ function CreateToken() {
   const [messageApi, contextHolder] = message.useMessage();
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
-
+  const vipConfig = useIsVip()
   const [config, setConfig] = useState<TOKEN_TYPE>({
     name: '',
     symbol: '',
@@ -120,6 +121,7 @@ function CreateToken() {
       }
 
       let result = await sdk.oneCreateAndBuy(
+        vipConfig.isVip,
         config.name,
         config.symbol,
         metadata_url,
@@ -382,8 +384,8 @@ function CreateToken() {
               <span>{t('Token Creator')}</span>
             </Button>
           </div>
-          <div className='fee'>全网最低服务费: {PUMP_CREATE_FEE} SOL</div>
-          <div className='fee'>捆绑买入每个地址收费: {PUMP_CREATE_BIND_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : PUMP_CREATE_FEE} SOL</div>
+          <div className='fee'>捆绑买入每个地址收费: {vipConfig.isVip ? 0 : PUMP_CREATE_BIND_FEE} SOL</div>
         </div>
 
         <Result tokenAddress={tokenAddress} signature={signature} error={error} />

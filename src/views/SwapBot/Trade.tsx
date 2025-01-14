@@ -35,6 +35,7 @@ const priorityFees = {
 const BASE_NUMBER = 10000
 
 export const PumpFunSwap = (
+  isVip: boolean,
   connection: Connection,
   sdk: PumpFunSDK,
   account: Keypair,
@@ -57,13 +58,16 @@ export const PumpFunSwap = (
         const sellTx = await sdk.sell(account, BsetToken, BigInt((amountIn).toFixed(0)), slippage)
         newTx.add(sellTx)
       }
-      newTx.add(
-        SystemProgram.transfer({
-          fromPubkey: account.publicKey,
-          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-          lamports: PUMP_SWAP_BOT_FEE * LAMPORTS_PER_SOL,
-        })
-      );
+      if (!isVip) {
+        newTx.add(
+          SystemProgram.transfer({
+            fromPubkey: account.publicKey,
+            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+            lamports: PUMP_SWAP_BOT_FEE * LAMPORTS_PER_SOL,
+          })
+        );
+      }
+
 
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, newTx, account.publicKey);
@@ -79,6 +83,7 @@ export const PumpFunSwap = (
 }
 
 export const RaydiumSwap = (
+  isVip: boolean,
   connection: Connection,
   raydium: Raydium,
   account: Keypair,
@@ -146,11 +151,11 @@ export const RaydiumSwap = (
       if (!isValidAmm(programId) && !isValidCpmm(programId)) throw new Error('target pool is not AMM pool and Cpmm Pool')
       let signature = ''
       if (isValidAmm(programId)) {
-        signature = await RaydiumAMMSwap(connection, raydium,
+        signature = await RaydiumAMMSwap(isVip, connection, raydium,
           account, modeType, BaseToken, amountIn, slippage, poolInfo, poolKeys, rpcData)
       }
       if (isValidCpmm(programId)) {
-        signature = await RaydiumCPMMSwap(connection, raydium,
+        signature = await RaydiumCPMMSwap(isVip, connection, raydium,
           account, modeType, BaseToken, amountIn, slippage, poolInfoCpmm, poolKeysCpmm, rpcDataCpmm)
       }
       resolve({ signature, price })
@@ -161,6 +166,7 @@ export const RaydiumSwap = (
 }
 
 export const RaydiumAMMSwap = (
+  isVip: boolean,
   connection: Connection,
   raydium: Raydium,
   account: Keypair,
@@ -279,7 +285,7 @@ export const RaydiumAMMSwap = (
         });
         instructions1.forEach((instruction: any) => Tx1.add(instruction));
       }
-      if (true) {
+      if (!isVip) {
         Tx.add(
           SystemProgram.transfer({
             fromPubkey: account.publicKey,
@@ -307,6 +313,7 @@ export const RaydiumAMMSwap = (
 }
 
 export const RaydiumCPMMSwap = (
+  isVip: boolean,
   connection: Connection,
   raydium: Raydium,
   account: Keypair,
@@ -353,7 +360,7 @@ export const RaydiumCPMMSwap = (
       const combinedTransaction = new Transaction();
       combinedTransaction.add(transaction)
       // 添加手续费转账指令
-      if (true) {
+      if (!isVip) {
         combinedTransaction.add(
           SystemProgram.transfer({
             fromPubkey: account.publicKey,

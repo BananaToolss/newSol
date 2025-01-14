@@ -10,6 +10,7 @@ import {
 import type { Token_Type } from '@/type'
 import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, BURN_FEE } from '@/config'
 import { getTxLink, addPriorityFees } from '@/utils'
+import { useIsVip } from '@/hooks';
 import { Page } from '@/styles';
 import { Header, SelectToken, Result } from '@/components'
 import { BurnPage } from './style'
@@ -23,7 +24,7 @@ function BrunToken() {
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
   const [token, setToken] = useState<Token_Type>(null)
   const [burnAmount, setBurnAmount] = useState('')
-
+  const vipConfig = useIsVip()
 
   const [isBurning, setIsBurning] = useState<boolean>(false);
   const [signature, setSignature] = useState("");
@@ -68,13 +69,15 @@ function BrunToken() {
       );
 
       Tx.add(burnInstruction)
+      if (!vipConfig.isVip) {
+        const fee = SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+          lamports: BURN_FEE * LAMPORTS_PER_SOL,
+        })
+        Tx.add(fee)
+      }
 
-      const fee = SystemProgram.transfer({
-        fromPubkey: publicKey,
-        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: BURN_FEE * LAMPORTS_PER_SOL,
-      })
-      Tx.add(fee)
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, Tx, publicKey)
 
@@ -114,7 +117,7 @@ function BrunToken() {
       <BurnPage>
         <div >
           <div className='title'>请选择代币</div>
-          <SelectToken callBack={backClick} selecToken={token}/>
+          <SelectToken callBack={backClick} selecToken={token} />
         </div>
         <div className='mt-5 '>
           <div className='title'>燃烧数量</div>
@@ -126,7 +129,7 @@ function BrunToken() {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={burnClick} loading={isBurning}>确认燃烧</Button>
           </div>
-          <div className='fee'>全网最低服务费: {BURN_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : BURN_FEE} SOL</div>
         </div>
 
         <Result signature={signature} error={error} />

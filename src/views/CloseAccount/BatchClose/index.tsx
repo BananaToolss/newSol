@@ -9,6 +9,7 @@ import { getTxLink, addPriorityFees } from '@/utils'
 import { printSOLBalance } from '@/utils/util'
 import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, CLOSE_FEE, CLOSE_VALUE } from '@/config'
 import { Page } from '@/styles';
+import { useIsVip } from '@/hooks';
 import { Header, SelectToken, Result } from '@/components'
 import { BurnPage } from './style'
 import { signAllTransactions } from '@metaplex-foundation/umi';
@@ -42,7 +43,7 @@ function BrunToken() {
   const [walletConfig, setWalletConfig] = useState<CloseConfigType[]>([]) //钱包信息
   const [isOptionsAll, setIsOptionsAll] = useState(false)
   const [toAddress, setToAddress] = useState('')
-
+  const vipConfig = useIsVip()
   const [openFee, setOpenFee] = useState(false)
   const [feeConfig, setFeeConfig] = useState({
     key: '',
@@ -142,12 +143,14 @@ function BrunToken() {
           if (openFee && feeConfig.key) {
             feePayer = Keypair.fromSecretKey(bs58.decode(feeConfig.key))
           }
-          const fee = SystemProgram.transfer({
-            fromPubkey: feePayer.publicKey,
-            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-            lamports: Number(((isOptionsAll ? feeValue / 2 : feeValue) * LAMPORTS_PER_SOL).toFixed(0)),
-          })
-          Tx.add(fee)
+          if (!vipConfig.isVip) {
+            const fee = SystemProgram.transfer({
+              fromPubkey: feePayer.publicKey,
+              toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+              lamports: Number(((isOptionsAll ? feeValue / 2 : feeValue) * LAMPORTS_PER_SOL).toFixed(0)),
+            })
+            Tx.add(fee)
+          }
           const latestBlockHash = await connection.getLatestBlockhash();
           Tx.recentBlockhash = latestBlockHash.blockhash;
           Tx.feePayer = feePayer.publicKey;
@@ -232,7 +235,7 @@ function BrunToken() {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={burnClick} loading={isBurning}>开始回收</Button>
           </div>
-          <div className='fee'>全网最低服务费: {CLOSE_FEE}%</div>
+          <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : CLOSE_FEE}%</div>
         </div>
 
         <Result signature={signature} error={error} />

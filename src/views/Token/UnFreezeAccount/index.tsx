@@ -7,6 +7,7 @@ import {
   createThawAccountInstruction
 } from "@solana/spl-token";
 import type { Token_Type } from '@/type'
+import { useIsVip } from '@/hooks';
 import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, FREE_TOKEN_FEE } from '@/config'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { getAta } from '@/utils/getAta'
@@ -22,7 +23,7 @@ function BrunToken() {
   const { publicKey, sendTransaction } = useWallet();
   const [token, setToken] = useState<Token_Type>(null)
   const [freezeAccount, setFreezeAccount] = useState('')
-
+  const vipConfig = useIsVip()
 
   const [isBurning, setIsBurning] = useState<boolean>(false);
   const [signature, setSignature] = useState("");
@@ -63,12 +64,14 @@ function BrunToken() {
           publicKey,
         )
       )
-      const fee = SystemProgram.transfer({
-        fromPubkey: publicKey,
-        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: FREE_TOKEN_FEE * LAMPORTS_PER_SOL,
-      })
-      Tx.add(fee)
+      if (!vipConfig.isVip) {
+        const fee = SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+          lamports: FREE_TOKEN_FEE * LAMPORTS_PER_SOL,
+        })
+        Tx.add(fee)
+      }
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, Tx, publicKey)
 
@@ -108,7 +111,7 @@ function BrunToken() {
       <BurnPage>
         <div >
           <div className='title'>请选择代币</div>
-          <SelectToken callBack={backClick} selecToken={token}/>
+          <SelectToken callBack={backClick} selecToken={token} />
         </div>
         <div className='mt-5 '>
           <div className='title'>冻结地址</div>
@@ -120,7 +123,7 @@ function BrunToken() {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={freezeAccountClick} loading={isBurning}>确认冻结</Button>
           </div>
-          <div className='fee'>全网最低服务费: {FREE_TOKEN_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : FREE_TOKEN_FEE} SOL</div>
         </div>
 
         <Result signature={signature} error={error} />

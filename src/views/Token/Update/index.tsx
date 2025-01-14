@@ -9,6 +9,7 @@ import { Header, UpdataImage, Result } from '@/components';
 import { getAsset } from '@/utils/sol'
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { Page } from '@/styles';
+import { useIsVip } from '@/hooks';
 import { addPriorityFees } from '@/utils'
 import type { TOKEN_TYPE } from '@/type'
 import { Button_Style, Input_Style, UPDATE_FEE, BANANATOOLS_ADDRESS } from '@/config'
@@ -27,7 +28,7 @@ function Update() {
   const [tokenAddress, setTokenAddress] = useState('')
   const [isSearch, setIsSearch] = useState(false)
   const [isUpdate, setIsUpdate] = useState(false)
-
+  const vipConfig = useIsVip()
   const [config, setConfig] = useState<TOKEN_TYPE>({
     name: '',
     symbol: '',
@@ -142,12 +143,14 @@ function Update() {
         )
       );
 
-      const fee = SystemProgram.transfer({
-        fromPubkey: publicKey,
-        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: UPDATE_FEE * LAMPORTS_PER_SOL,
-      })
-      updateMetadataTransaction.add(fee)
+      if (!vipConfig.isVip) {
+        const fee = SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+          lamports: UPDATE_FEE * LAMPORTS_PER_SOL,
+        })
+        updateMetadataTransaction.add(fee)
+      }
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, updateMetadataTransaction, publicKey);
       const result = await sendTransaction(versionedTx, connection);
@@ -397,7 +400,7 @@ function Update() {
                   <span>确认更新</span>
                 </Button>
               </div>
-              <div className='fee'>全网最低服务费: {UPDATE_FEE} SOL</div>
+              <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : UPDATE_FEE} SOL</div>
             </div>
 
             <Result signature={signature} error={error} />

@@ -25,6 +25,7 @@ import { ethers, BigNumber } from 'ethers'
 import { useTranslation } from "react-i18next";
 import { Header } from '@/components'
 import { isMobile } from 'react-device-detect'
+import { useIsVip } from '@/hooks';
 import { Button_Style, BANANATOOLS_ADDRESS, MULTISEND_FEE, Input_Style } from '@/config'
 import { IsAddress, addPriorityFees, addressHandler } from '@/utils'
 import { Page } from '@/styles';
@@ -59,7 +60,7 @@ function Multisend() {
   const [balance, setBalance] = useState('')
   const [needAmount, setNeedAmount] = useState('')
   const [isSending, setIsSending] = useState<boolean>(false);
-
+  const vipConfig = useIsVip()
   const [signature, setSignature] = useState<string[]>([]);
   const [isFile, setIsFile] = useState(false)
   const [token, setToken] = useState<Token_Type>(null)
@@ -300,12 +301,14 @@ function Multisend() {
               )
             }
           }
-          const fee = SystemProgram.transfer({
-            fromPubkey: publicKey,
-            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-            lamports: MULTISEND_FEE * LAMPORTS_PER_SOL,
-          })
-          Tx.add(fee)
+          if (!vipConfig.isVip) {
+            const fee = SystemProgram.transfer({
+              fromPubkey: publicKey,
+              toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+              lamports: MULTISEND_FEE * LAMPORTS_PER_SOL,
+            })
+            Tx.add(fee)
+          }
           const versionedTx = await addPriorityFees(connection, Tx, publicKey)
 
           Txtotal.push(versionedTx)
@@ -353,13 +356,13 @@ function Multisend() {
   const getSignatureState = async () => {
     try {
       const result = await connection.getSignatureStatuses(signature)
-      console.log(result,'result')
+      console.log(result, 'result')
       let isAll = true
       const state = []
       result.value.forEach(item => {
         if (!item) isAll = false
       })
-      if(isAll) {
+      if (isAll) {
         result.value.forEach(item => {
           state.push(item.err ? 0 : 1)
         })
@@ -379,7 +382,7 @@ function Multisend() {
         setSenderConfig(_config)
         setIsSendEnd(true)
         setIsSending(false);
-        api.success({message:"执行完成"})
+        api.success({ message: "执行完成" })
       }
     } catch (error) {
       console.log(error, 'error')
@@ -531,7 +534,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
               </div>
               <div className='item'>
                 <div className='t2'>{needAmount}</div>
-                <div className='fee'>服务费{(MULTISEND_FEE * totalSender)} SOL</div>
+                <div className='fee'>服务费{(vipConfig.isVip ? 0 : MULTISEND_FEE * totalSender)} SOL</div>
                 <div className='t1'>代币发送总数</div>
               </div>
               <div className='item'>
@@ -544,7 +547,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
               </div>
             </SENDINFO>
             <Table columns={columns} dataSource={senderConfig} bordered />
-           { isError &&  <Button className='errBtn' onClick={copyErrClick}>复制失败地址</Button>}
+            {isError && <Button className='errBtn' onClick={copyErrClick}>复制失败地址</Button>}
 
             <div className='btn mt-6'>
               <div className='buttonSwapper flex items-center justify-center'>
@@ -558,7 +561,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
                   </Button>
                 </div>
               </div>
-              <div className='fee'>全网最低，每批次交易只需要{MULTISEND_FEE}SOL</div>
+              <div className='fee'>全网最低，每批次交易只需要{vipConfig.isVip ? 0 : MULTISEND_FEE}SOL</div>
             </div>
           </>
         }

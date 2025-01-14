@@ -9,7 +9,7 @@ import {
   CREATE_CPMM_POOL_PROGRAM,
   CREATE_CPMM_POOL_FEE_ACC
 } from '@raydium-io/raydium-sdk-v2'
-import * as BufferLayout from 'buffer-layout';
+import { useIsVip } from '@/hooks';
 import BN from 'bn.js'
 import { initSdk, txVersion } from '@/Dex/Raydium'
 import { getTxLink, addPriorityFees } from '@/utils'
@@ -24,7 +24,7 @@ function CreateLiquidity() {
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
-
+  const vipConfig = useIsVip()
   const [baseToken, setBaseToken] = useState<Token_Type>(PUMP)
   const [token, setToken] = useState<Token_Type>(SOL)
   const [isOptions, setIsOptions] = useState(false)
@@ -121,12 +121,14 @@ function CreateLiquidity() {
         });
       });
       instructions.forEach((instruction: any) => Tx.add(instruction));
-      const fee = SystemProgram.transfer({
-        fromPubkey: publicKey,
-        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: CREATE_POOL_FEE * LAMPORTS_PER_SOL,
-      })
-      Tx.add(fee)
+      if (!vipConfig.isVip) {
+        const fee = SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+          lamports: CREATE_POOL_FEE * LAMPORTS_PER_SOL,
+        })
+        Tx.add(fee)
+      }
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, Tx, publicKey)
       const signature = await sendTransaction(versionedTx, connection);
@@ -192,7 +194,7 @@ function CreateLiquidity() {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={createClick} loading={isCreate}>创建</Button>
           </div>
-          <div className='fee'>全网最低服务费: {CREATE_POOL_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : CREATE_POOL_FEE} SOL</div>
         </div>
 
         <Result tokenAddress={poolAddr} signature={signature} error={error} />

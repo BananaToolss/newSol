@@ -19,7 +19,7 @@ import { initSdk, RaydiumApi } from '@/Dex/Raydium'
 import { Input_Style, Button_Style, REMOVE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
 import { Page } from '@/styles'
 import { getAsset } from '@/utils/sol'
-import { getAt } from '@/utils/getAta'
+import { useIsVip } from '@/hooks';
 import { getTxLink, addPriorityFees, getImage } from '@/utils'
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
@@ -55,7 +55,7 @@ function CreateLiquidity() {
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
-
+  const vipConfig = useIsVip()
   const [token, setToken] = useState<Token_Type>(null)
   const [isCreate, setIsCreate] = useState(false)
   const [poolAddr, setPoolAddr] = useState('')
@@ -264,12 +264,14 @@ function CreateLiquidity() {
           });
         });
         instructions.forEach((instruction: any) => Tx.add(instruction));
-        const fee = SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-          lamports: REMOVE_POOL_FEE * LAMPORTS_PER_SOL,
-        })
-        Tx.add(fee)
+        if (!vipConfig.isVip) {
+          const fee = SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+            lamports: REMOVE_POOL_FEE * LAMPORTS_PER_SOL,
+          })
+          Tx.add(fee)
+        }
         //增加费用，减少失败
         const versionedTx = await addPriorityFees(connection, Tx, publicKey)
         const signature = await sendTransaction(versionedTx, connection);
@@ -376,7 +378,7 @@ function CreateLiquidity() {
                   <div className='buttonSwapper mt-4'>
                     <Button className={Button_Style} onClick={() => createClick(item)} loading={isCreate}>移除</Button>
                   </div>
-                  <div className='fee'>全网最低服务费: {REMOVE_POOL_FEE} SOL</div>
+                  <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : REMOVE_POOL_FEE} SOL</div>
                 </div>
               </div>
             </div>

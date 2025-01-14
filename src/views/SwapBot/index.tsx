@@ -1,17 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   Api, Raydium, TxVersion,
-  ApiV3PoolInfoStandardItem,
-  AmmV4Keys, AmmRpcData,
-  ApiV3PoolInfoStandardItemCpmm,
-  CpmmRpcData,
-  CpmmKeys,
-  ApiV3Token,
-  CurveCalculator
 } from '@raydium-io/raydium-sdk-v2'
 import { Radio, Input, Select, Switch, Button, notification, message } from 'antd'
 import type { RadioChangeEvent } from 'antd';
-import { Keypair, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL, TransactionInstruction, Connection } from '@solana/web3.js';
+import { Keypair, PublicKey, } from '@solana/web3.js';
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { ethers } from 'ethers';
 import bs58 from "bs58";
@@ -25,6 +18,7 @@ import { Input_Style, Button_Style, SWAP_BOT_FEE } from '@/config'
 import { initSdk, txVersion } from '@/Dex/Raydium'
 import { PumpFunSDK } from "@/Dex/Pump";
 import { getTxLink, addPriorityFees, addressHandler } from '@/utils'
+import { useIsVip } from '@/hooks';
 import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp } from './utils';
 import { PumpFunSwap, RaydiumSwap, getRayDiumPrice, getPumpPrice, getAmountIn, getSolPrice } from './Trade'
 import {
@@ -61,7 +55,7 @@ function SwapBot() {
   const [token, setToken] = useState<Token_Type>(SOL)
   const [dexCount, setDexCount] = useState(1) // 1raydium 2pump
   const [walletConfig, setWalletConfig] = useState<CollocetionType[]>([]) //钱包信息
-
+  const vipConfig = useIsVip()
   const [isJito, setIsJito] = useState(false)
   const [jitoBindNum, setJitoBindNum] = useState(2)
   const [jitoFee, setJitoFee] = useState<number>(0)
@@ -318,13 +312,13 @@ function SwapBot() {
           }
           console.log(amountIn, 'amountIn')
           if (dexCount === 1) {
-            const { signature, price } = await RaydiumSwap(connection, raydium, account, Number(config.modeType), QueteToken, BaseToken, amountIn,
+            const { signature, price } = await RaydiumSwap(vipConfig.isVip, connection, raydium, account, Number(config.modeType), QueteToken, BaseToken, amountIn,
               Number(config.slippage) / 100,)
             signer = signature
             const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
             _tokenPrice = ethers.utils.formatEther(_price)
           } else {
-            signer = await PumpFunSwap(connection, sdk, account, Number(config.modeType), BaseToken,
+            signer = await PumpFunSwap(vipConfig.isVip, connection, sdk, account, Number(config.modeType), BaseToken,
               amountIn * 10 ** baseToken.decimals, BigInt(Number(config.slippage) * 100))
             if (Number(config.modeType) !== 3) {
               _tokenPrice = await getPumpPrice(sdk, new PublicKey(baseToken.address), solPrice)
@@ -528,7 +522,7 @@ function SwapBot() {
               <Button className={`${Button_Style} stop`} onClick={stopClick}>停止</Button>
 
             </div>
-            <div className='fee'>全网最低服务费{SWAP_BOT_FEE}SOL每笔交易</div>
+            <div className='fee'>全网最低服务费{vipConfig.isVip ? 0 : SWAP_BOT_FEE}SOL每笔交易</div>
           </div>
 
         </LeftPage>

@@ -157,6 +157,7 @@ export class PumpFunSDK {
 
   // 捆绑买入
   async oneCreateAndBuy(
+    isVip: boolean,
     name: string,
     symbol: string,
     metadata_url: string,
@@ -239,14 +240,16 @@ export class PumpFunSDK {
         }
       }
 
-      const _fee = (PUMP_CREATE_BIND_FEE * buyers.length) + PUMP_CREATE_FEE
-      console.log(_fee * LAMPORTS_PER_SOL, 'ffrr')
-      const fee = SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: _fee * LAMPORTS_PER_SOL,
-      })
-      walletTx.add(fee)
+      if (!isVip) {
+        const _fee = (PUMP_CREATE_BIND_FEE * buyers.length) + PUMP_CREATE_FEE
+        console.log(_fee * LAMPORTS_PER_SOL, 'ffrr')
+        const fee = SystemProgram.transfer({
+          fromPubkey: wallet.publicKey,
+          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+          lamports: _fee * LAMPORTS_PER_SOL,
+        })
+        walletTx.add(fee)
+      }
 
       if (buyers.length <= 1) { //只有有个小号钱包，直接购买
         console.log('只有有个小号钱包，直接购买', signers)

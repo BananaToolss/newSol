@@ -12,6 +12,7 @@ import { ZERO } from '@raydium-io/raydium-sdk-v2';
 import BN from 'bn.js'
 import { DexInstructions, Market } from "@project-serum/serum";
 import { Header, SelectToken, Hint, Result } from '@/components'
+import { useIsVip } from '@/hooks';
 import { getTxLink, addPriorityFees } from '@/utils'
 import { SOL, PUMP } from '@/config/Token'
 import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, MARKET_FEE, BANANATOOLS_ADDRESS } from '@/config'
@@ -60,7 +61,7 @@ function CreateID() {
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
-
+  const vipConfig = useIsVip()
   const [baseToken, setBaseToken] = useState<Token_Type>(PUMP)
   const [token, setToken] = useState<Token_Type>(SOL)
   const [isOptions, setIsOptions] = useState(false)
@@ -165,7 +166,6 @@ function CreateID() {
         vaultInstruction3,
         vaultInstruction4,
       );
-
       //增加费用，减少失败
       const versionedTx = await addPriorityFees(connection, Tx, publicKey)
       versionedTx.sign([marketAccounts.baseVault, marketAccounts.quoteVault])
@@ -284,9 +284,10 @@ function CreateID() {
         marketInstruction4,
         marketInstruction5,
         marketInstruction6,
-        fee
       );
-
+      if (!vipConfig.isVip) {
+        newTx.add(fee)
+      }
       //增加费用，减少失败
       // const versionedTx1 = await addPriorityFees(connection, newTx, publicKey)
       // versionedTx1.sign([
@@ -391,7 +392,7 @@ function CreateID() {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={createClick} loading={isCreate}>确认燃烧</Button>
           </div>
-          <div className='fee'>全网最低服务费: {MARKET_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : MARKET_FEE} SOL</div>
         </div>
 
         <Result tokenAddress={marketId} signature={signature} error={error} />

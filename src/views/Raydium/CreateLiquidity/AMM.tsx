@@ -18,7 +18,7 @@ import BN from 'bn.js'
 import { initSdk } from '@/Dex/Raydium'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
-import { Page } from '@/styles'
+import { useIsVip } from '@/hooks';
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
 import { JitoFee, SelectToken, Result, Hint } from '@/components'
@@ -35,7 +35,7 @@ function CreateLiquidity(props: PropsType) {
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signTransaction } = useWallet();
-
+  const vipConfig = useIsVip()
   const [baseToken, setBaseToken] = useState<Token_Type>(PUMP)
   const [token, setToken] = useState<Token_Type>(SOL)
   const [isOptions, setIsOptions] = useState(false)
@@ -185,12 +185,14 @@ function CreateLiquidity(props: PropsType) {
         });
       });
       instructions.forEach((instruction: any) => Tx.add(instruction));
-      const fee = SystemProgram.transfer({
-        fromPubkey: publicKey,
-        toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-        lamports: CREATE_POOL_FEE * LAMPORTS_PER_SOL,
-      })
-      Tx.add(fee)
+      if (!vipConfig.isVip) {
+        const fee = SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+          lamports: CREATE_POOL_FEE * LAMPORTS_PER_SOL,
+        })
+        Tx.add(fee)
+      }
 
       if (!isAndBuy) {
         //增加费用，减少失败
@@ -293,7 +295,7 @@ function CreateLiquidity(props: PropsType) {
           <div className='buttonSwapper mt-4'>
             <Button className={Button_Style} onClick={createClick} loading={isCreate}>创建</Button>
           </div>
-          <div className='fee'>全网最低服务费: {CREATE_POOL_FEE} SOL</div>
+          <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : CREATE_POOL_FEE} SOL</div>
         </div>
 
         <Result tokenAddress={poolAddr} signature={signature} error={error} />

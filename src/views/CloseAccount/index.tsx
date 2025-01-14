@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Button, notification, Input, Flex, Spin } from 'antd';
-import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { LoadingOutlined } from '@ant-design/icons'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { getImage, addressHandler } from '@/utils';
 import { createCloseAccountInstruction, createBurnCheckedInstruction } from '@solana/spl-token';
+import { BANANATOOLS_ADDRESS, CLOSE_FEE, CLOSE_VALUE } from '@/config';
 import { Header, Hint1, Result } from '@/components';
+import { useIsVip } from '@/hooks';
 import { getAllToken } from '@/utils/newSol'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
@@ -29,7 +31,7 @@ function CloseAccount() {
   const [closeNum, setCloseNum] = useState(0)
   const [signature, setSignature] = useState("");
   const [error, setError] = useState('');
-
+  const vipConfig = useIsVip()
   useEffect(() => {
     if (publicKey && publicKey.toBase58()) getAccountAllToken()
   }, [publicKey])
@@ -138,6 +140,15 @@ function CloseAccount() {
             publicKey
           ))
         }
+        if (!vipConfig.isVip) {
+          const feeValue = Number((n * CLOSE_VALUE * CLOSE_FEE / 100).toFixed(6))
+          const fee = SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+            lamports: Number((feeValue * LAMPORTS_PER_SOL).toFixed(0)),
+          })
+          Tx.add(fee)
+        }
 
         const versionedTx = await addPriorityFees(connection, Tx, publicKey)
         transactions.push(versionedTx);
@@ -187,7 +198,7 @@ function CloseAccount() {
       {
         isSearch &&
         <Flex align="center" gap="middle" className='mt-4 mb-4 ml-4'>
-         <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
+          <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
         </Flex>
       }
 
@@ -243,7 +254,7 @@ function CloseAccount() {
         </CardSwapper>
       </CardBox>
 
-      <Hint1 title={`共回收：${closeNum}个账户，合约可回收≈ ${closeNum * 0.002039} SOL`} />
+      <Hint1 title={`共回收：${closeNum}个账户，合约可回收≈ ${closeNum * CLOSE_VALUE} SOL`} />
 
       <div className='btn mt-6'>
         <div className='buttonSwapper'>
@@ -252,7 +263,7 @@ function CloseAccount() {
             <span>批量回收账户</span>
           </Button>
         </div>
-        <div className='fee'>全网最低服务费: 0 SOL</div>
+        <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : CLOSE_FEE}%</div>
       </div>
 
       <Result signature={signature} error={error} />
