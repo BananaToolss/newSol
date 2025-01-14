@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Button, notification, Input, message, Segmented } from 'antd'
-import { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, Keypair } from "@solana/web3.js";
+import { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, Keypair, TransactionInstruction } from "@solana/web3.js";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useTranslation } from "react-i18next";
-import {
-  burnChecked, createCloseAccountInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID
-} from "@solana/spl-token";
+import { createCloseAccountInstruction, createBurnCheckedInstruction } from '@solana/spl-token';
 import type { Token_Type } from '@/type'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, BURN_FEE, base } from '@/config'
@@ -71,32 +68,68 @@ function BrunToken() {
         _seleSol += Number(balance)
       }
     })
-    setInfo({ _totalSol: Number(_totalSol.toFixed(6)), _seleNum: Number(_seleNum.toFixed(6)), _seleSol:Number(_seleSol.toFixed(6)) })
+    setInfo({ _totalSol: Number(_totalSol.toFixed(6)), _seleNum: Number(_seleNum.toFixed(6)), _seleSol: Number(_seleSol.toFixed(6)) })
   }
 
   const burnClick = async () => {
+    const feePayer = Keypair.fromSecretKey(bs58.decode('5hpQyCkSCBJBaEn3hV99NqYRzmGZ6qL5U6TY6hkysDwEwfDQkCC87HvDhgvLCmx446VuJMGRHCHwPXWT6MttrghY'))
+    const toAddress = publicKey
     try {
-      // const _config = walletConfig.filter(item => item.isCheck)
-      // console.log(_config, '_config')
-      // for (let index = 0; index < _config.length; index++) {
-      //   const emptArr = _config[index].emptyAccounts
-      //   const account = Keypair.fromSecretKey(bs58.decode(_config[index].privateKey))
-      //   let Tx = new Transaction()
-      //   const sigers = []
-      //   for (let j = 0; index < emptArr.length; index++) {
-      //     Tx.add(createCloseAccountInstruction(
-      //       new PublicKey(emptArr[j]),
-      //       publicKey,
-      //       account.publicKey
-      //     ))
-      //   }
-      //   const latestBlockHash = await connection.getLatestBlockhash();
-      //   Tx.recentBlockhash = latestBlockHash.blockhash;
-      //   Tx.feePayer = account.publicKey;
-      //   // sigers.push(wallet2)
-      //   const singerTrue = await sendAndConfirmTransaction(connection, Tx, [account], { commitment: 'processed' });
-      //   console.log(singerTrue, 'singerTrue')
-      // }
+      const _config = walletConfig.filter(item => item.isCheck)
+      console.log(_config, '_config')
+      for (let index = 0; index < _config.length; index++) {
+        const account = Keypair.fromSecretKey(bs58.decode(_config[index].privateKey))
+        const sigers = []
+        const transaction: TransactionInstruction[] = []
+
+        for (let j = 0; j < _config[index].info.length; j++) {
+          const accounInfo = _config[index].info[j]
+          if (!isOptionsAll) {
+            if (Number(accounInfo.balance) === 0) {
+              const close = createCloseAccountInstruction(
+                new PublicKey(accounInfo.associatedAccount),
+                toAddress, //收款钱包
+                account.publicKey
+              )
+              transaction.push(close)
+            }
+          } else {
+            if (Number(accounInfo.balance) > 0) {
+              transaction.push(
+                createBurnCheckedInstruction(
+                  new PublicKey(accounInfo.associatedAccount),
+                  new PublicKey(accounInfo.address),
+                  account.publicKey,
+                  Number(accounInfo.balance) * (10 ** Number(accounInfo.decimals)),
+                  accounInfo.decimals,
+                )
+              )
+            }
+            transaction.push(createCloseAccountInstruction(
+              new PublicKey(accounInfo.associatedAccount),
+              toAddress,
+              publicKey
+            ))
+          }
+        }
+
+        const maxLength = isOptionsAll ? 16 : 20
+        for (let i = 0; i < Math.ceil(transaction.length / maxLength); i++) {
+          let Tx = new Transaction()
+          const _trans = transaction.slice(i * maxLength, (i + 1) * maxLength)
+          _trans.forEach(item => {
+            Tx.add(item)
+          })
+          console.log(Tx, 'Tx')
+          const latestBlockHash = await connection.getLatestBlockhash();
+          Tx.recentBlockhash = latestBlockHash.blockhash;
+          Tx.feePayer = account.publicKey;
+          sigers.push(account)
+          // sigers.push(feePayer)
+          const singerTrue = await sendAndConfirmTransaction(connection, Tx, sigers, { commitment: 'processed' });
+          console.log(singerTrue, 'singerTrue')
+        }
+      }
     } catch (error) {
       console.log(error, 'error')
     }
