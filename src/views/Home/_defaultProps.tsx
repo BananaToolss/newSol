@@ -5,11 +5,13 @@ import {
   BsHouseFill,
   BsDatabaseFill,
   BsRobot,
+  BsEyeSlash,
   BsUnlock,
   BsSend,
   BsPersonLock,
   BsGraphUp,
   BsArrowUpCircle,
+  BsEvStation
 } from "react-icons/bs";
 import {
   BiSolidBot,
@@ -112,10 +114,10 @@ export default {
           {
             path: 'createLiquidity',
             name: '创建流动性',
-            icon: <AiOutlinePlusCircle color={COLOR} style={{ marginRight: '6px' }} />,
+            icon: <BsEvStation color={COLOR} style={{ marginRight: '6px' }} />,
           },
           {
-            path: 'removeLiquidity',
+            path: 'BsEyeSlash',
             name: '移除流动性',
             icon: <AiOutlinePlusCircle color={COLOR} style={{ marginRight: '6px' }} />,
           },
@@ -149,6 +151,11 @@ export default {
         ]
       },
       {
+        path: 'swapbot',
+        name: '市值管理',
+        icon: <img src={getImage('close.svg')} width={16} height={16} />,
+      },
+      {
         path: '/tool',
         name: '批量工具',
         icon: <BsSend color={COLOR} />,
@@ -170,11 +177,7 @@ export default {
           },
         ]
       },
-      {
-        path: 'swapbot',
-        name: '市值管理',
-        icon: <img src={getImage('close.svg')} width={16} height={16} />,
-      },
+
     ],
   },
   location: {
