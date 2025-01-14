@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Button, notification, Input, message, Segmented } from 'antd'
+import { Button, notification, Input, message, Segmented, Switch } from 'antd'
 import { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, Keypair, TransactionInstruction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useTranslation } from "react-i18next";
 import { createCloseAccountInstruction, createBurnCheckedInstruction } from '@solana/spl-token';
 import type { Token_Type } from '@/type'
 import { getTxLink, addPriorityFees } from '@/utils'
+import { printSOLBalance } from '@/utils/util'
 import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, CLOSE_FEE, CLOSE_VALUE } from '@/config'
 import { Page } from '@/styles';
 import { Header, SelectToken, Result } from '@/components'
@@ -14,6 +15,7 @@ import { signAllTransactions } from '@metaplex-foundation/umi';
 import { getClaimValue } from './WalletInfoCollection'
 import WalletInfoCollection from './WalletInfoCollection';
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
+import { base58 } from 'ethers/lib/utils';
 
 const SegmentedOptions = [
   { label: "多钱包", value: 1 },
@@ -37,10 +39,16 @@ function BrunToken() {
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
-  const [token, setToken] = useState<Token_Type>(null)
-  const [burnAmount, setBurnAmount] = useState('')
   const [walletConfig, setWalletConfig] = useState<CloseConfigType[]>([]) //钱包信息
   const [isOptionsAll, setIsOptionsAll] = useState(false)
+  const [toAddress, setToAddress] = useState('')
+
+  const [openFee, setOpenFee] = useState(false)
+  const [feeConfig, setFeeConfig] = useState({
+    key: '',
+    address: "",
+    solb: ""
+  })
 
   const [isBurning, setIsBurning] = useState<boolean>(false);
   const [signature, setSignature] = useState("");
@@ -55,7 +63,17 @@ function BrunToken() {
   useEffect(() => {
     getInfo()
   }, [walletConfig, isOptionsAll])
-
+  useEffect(() => {
+    if (feeConfig.key) getFeeConfig()
+  }, [feeConfig.key])
+  const feeConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFeeConfig({ address: '', key: e.target.value, solb: '' })
+  }
+  const getFeeConfig = async () => {
+    const account = Keypair.fromSecretKey(bs58.decode(feeConfig.key))
+    const blance = await printSOLBalance(connection, account.publicKey)
+    setFeeConfig({ address: account.publicKey.toBase58(), key: feeConfig.key, solb: blance.toString() })
+  }
   const getInfo = () => {
     let _totalSol = 0
     let _seleNum = 0
@@ -72,11 +90,10 @@ function BrunToken() {
   }
 
   const burnClick = async () => {
-    const feePayer = Keypair.fromSecretKey(bs58.decode('5hpQyCkSCBJBaEn3hV99NqYRzmGZ6qL5U6TY6hkysDwEwfDQkCC87HvDhgvLCmx446VuJMGRHCHwPXWT6MttrghY'))
-    const toAddress = publicKey
+    const to = toAddress ? new PublicKey(toAddress) : null
     try {
+      setIsBurning(true)
       const _config = walletConfig.filter(item => item.isCheck)
-      console.log(_config, '_config')
       for (let index = 0; index < _config.length; index++) {
         const account = Keypair.fromSecretKey(bs58.decode(_config[index].privateKey))
         const sigers = []
@@ -88,7 +105,7 @@ function BrunToken() {
             if (Number(accounInfo.balance) === 0) {
               const close = createCloseAccountInstruction(
                 new PublicKey(accounInfo.associatedAccount),
-                toAddress, //收款钱包
+                to ? to : account.publicKey, //收款钱包
                 account.publicKey
               )
               transaction.push(close)
@@ -107,7 +124,7 @@ function BrunToken() {
             }
             transaction.push(createCloseAccountInstruction(
               new PublicKey(accounInfo.associatedAccount),
-              toAddress,
+              to ? to : account.publicKey, //收款钱包,
               account.publicKey
             ))
           }
@@ -120,9 +137,11 @@ function BrunToken() {
           _trans.forEach(item => {
             Tx.add(item)
           })
-
           const feeValue = Number((_trans.length * CLOSE_VALUE * CLOSE_FEE / 100).toFixed(6))
-          console.log(feeValue, 'feeValue')
+          let feePayer = account
+          if (openFee && feeConfig.key) {
+            feePayer = Keypair.fromSecretKey(bs58.decode(feeConfig.key))
+          }
           const fee = SystemProgram.transfer({
             fromPubkey: feePayer.publicKey,
             toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
@@ -131,20 +150,24 @@ function BrunToken() {
           Tx.add(fee)
           const latestBlockHash = await connection.getLatestBlockhash();
           Tx.recentBlockhash = latestBlockHash.blockhash;
-          Tx.feePayer = account.publicKey;
+          Tx.feePayer = feePayer.publicKey;
           sigers.push(account)
-          sigers.push(feePayer)
+          if (openFee && feeConfig.key) {
+            sigers.push(feePayer)
+          }
           try {
             const singerTrue = await sendAndConfirmTransaction(connection, Tx, sigers, { commitment: 'processed' });
             console.log(singerTrue, 'singerTrue')
           } catch (error) {
             console.log(error)
+            api.error({ message: error.toString() })
           }
-          // await delay(40)
         }
         api.success({ message: "回收完成" })
+        setIsBurning(false)
       }
     } catch (error) {
+      setIsBurning(false)
       console.log(error, 'error')
       api.error({ message: error.toString() })
     }
@@ -177,6 +200,32 @@ function BrunToken() {
             <div>所选账户数量：{info._seleNum}</div>
             <div>选中账户可领取的SOL：{info._seleSol}</div>
           </div>
+        </div>
+
+        <div className='mt-3'>
+          <div className='flex items-center'>
+            <div className='mb-1 mr-2'>代付GAS</div>
+            <Switch checked={openFee} onChange={e => setOpenFee(e)} />
+          </div>
+          {openFee &&
+            <>
+              <div className=''>
+                <div>私钥</div>
+                <Input className={Input_Style} placeholder={t('请输入支付gas钱包的私钥')}
+                  value={feeConfig.key} onChange={feeConfigChange} name='key' />
+              </div>
+              <div className='mt-2'>
+                <div>钱包地址：{feeConfig.address}</div>
+                <div>SOL余额：{feeConfig.solb}</div>
+              </div>
+            </>
+          }
+        </div>
+
+        <div className='mt-3'>
+          <div className='mb-1'>回收SOL到指定地址</div>
+          <Input className={Input_Style} placeholder={t('回收SOL到指定地址，如不填写则回收至对应账户')}
+            value={toAddress} onChange={(e) => setToAddress(e.target.value)} />
         </div>
 
         <div className='btn'>
