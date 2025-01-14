@@ -22,16 +22,13 @@ const SegmentedOptions = [
   { label: "单钱包", value: 2 },
 ]
 
-export interface ConfigType {
+export interface CloseConfigType {
+  account: string
+  info: Token_Type[]
   privateKey: string
-  address: string
-  allAccount: string
-  emptyAccount: string
-  value: string
-  value1: string
+  emptyNumber: number
   isCheck: boolean
-  state: boolean
-  emptyAccounts: any[]
+  state: number
 }
 
 function BrunToken() {
@@ -42,7 +39,7 @@ function BrunToken() {
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
   const [token, setToken] = useState<Token_Type>(null)
   const [burnAmount, setBurnAmount] = useState('')
-  const [walletConfig, setWalletConfig] = useState<ConfigType[]>([]) //钱包信息
+  const [walletConfig, setWalletConfig] = useState<CloseConfigType[]>([]) //钱包信息
 
   const [isBurning, setIsBurning] = useState<boolean>(false);
   const [signature, setSignature] = useState("");
@@ -51,27 +48,27 @@ function BrunToken() {
 
   const burnClick = async () => {
     try {
-      const _config = walletConfig.filter(item => item.isCheck)
-      console.log(_config, '_config')
-      for (let index = 0; index < _config.length; index++) {
-        const emptArr = _config[index].emptyAccounts
-        const account = Keypair.fromSecretKey(bs58.decode(_config[index].privateKey))
-        let Tx = new Transaction()
-        const sigers = []
-        for (let j = 0; index < emptArr.length; index++) {
-          Tx.add(createCloseAccountInstruction(
-            new PublicKey(emptArr[j]),
-            publicKey,
-            account.publicKey
-          ))
-        }
-        const latestBlockHash = await connection.getLatestBlockhash();
-        Tx.recentBlockhash = latestBlockHash.blockhash;
-        Tx.feePayer = account.publicKey;
-        // sigers.push(wallet2)
-        const singerTrue = await sendAndConfirmTransaction(connection, Tx, [account], { commitment: 'processed' });
-        console.log(singerTrue, 'singerTrue')
-      }
+      // const _config = walletConfig.filter(item => item.isCheck)
+      // console.log(_config, '_config')
+      // for (let index = 0; index < _config.length; index++) {
+      //   const emptArr = _config[index].emptyAccounts
+      //   const account = Keypair.fromSecretKey(bs58.decode(_config[index].privateKey))
+      //   let Tx = new Transaction()
+      //   const sigers = []
+      //   for (let j = 0; index < emptArr.length; index++) {
+      //     Tx.add(createCloseAccountInstruction(
+      //       new PublicKey(emptArr[j]),
+      //       publicKey,
+      //       account.publicKey
+      //     ))
+      //   }
+      //   const latestBlockHash = await connection.getLatestBlockhash();
+      //   Tx.recentBlockhash = latestBlockHash.blockhash;
+      //   Tx.feePayer = account.publicKey;
+      //   // sigers.push(wallet2)
+      //   const singerTrue = await sendAndConfirmTransaction(connection, Tx, [account], { commitment: 'processed' });
+      //   console.log(singerTrue, 'singerTrue')
+      // }
     } catch (error) {
       console.log(error, 'error')
     }

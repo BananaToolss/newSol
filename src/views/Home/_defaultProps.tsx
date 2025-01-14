@@ -83,20 +83,20 @@ export default {
         ]
       },
       {
-        path: 'close/account',
+        path: 'close',
         name: '租金回收',
         icon: <img src={getImage('close.svg')} width={16} height={16} />,
         routes: [
-          // {
-          //   path: 'account',
-          //   name: '租金回收',
-          //   icon: <img src={getImage('close.svg')} width={16} height={16} />,
-          // },
-          // {
-          //   path: 'batch',
-          //   name: '批量回收租金',
-          //   icon: <img src={getImage('close.svg')} width={16} height={16} />,
-          // },
+          {
+            path: 'account',
+            name: '租金回收',
+            icon: <img src={getImage('close.svg')} width={16} height={16} />,
+          },
+          {
+            path: 'batch',
+            name: '批量回收租金',
+            icon: <img src={getImage('close.svg')} width={16} height={16} />,
+          },
         ],
       },
       {

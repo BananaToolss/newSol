@@ -8,25 +8,31 @@ import {
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { BsCopy } from "react-icons/bs";
 import { DeleteOutlined, ArrowRightOutlined } from '@ant-design/icons'
-import { getAllToken } from '@/utils/newSol'
+import {
+  getMint,
+  getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  AccountLayout
+} from "@solana/spl-token";
 import copy from 'copy-to-clipboard';
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { addressHandler } from '@/utils'
 import { LoadingOut } from '@/components'
 import { Button_Style1 } from '@/config'
 import { SOL_TOKEN } from '@/config/Token';
-import type { Token_Type } from '@/type'
-import type { CloseConfigType } from '../index'
+import type { CollocetionType } from '@/type'
 import PrivateKeyPage from './PrivateKeyPage'
 import { delay, SliceAddress } from "@/utils";
+import { ConfigType } from '../index'
 import {
   WalletInfoPage
 } from './style'
 
 
 interface PropsType {
-  config: CloseConfigType[]
-  setConfig: Dispatch<SetStateAction<CloseConfigType[]>>
+  config: ConfigType[]
+  setConfig: Dispatch<SetStateAction<ConfigType[]>>
 }
 
 function WalletInfo(props: PropsType) {
@@ -43,10 +49,6 @@ function WalletInfo(props: PropsType) {
   const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
   const [isLoading, setIsLoading] = useState(false)
   const [isOptionsAll, setIsOptionsAll] = useState(false)
-
-  useEffect(() => {
-    privateChange()
-  }, [config])
 
   const privateChange = () => {
     const _privateKeys = []
@@ -70,41 +72,39 @@ function WalletInfo(props: PropsType) {
       setSelectedItems([])
 
       const config = keys ? keys : privateKeys
-      const _config: CloseConfigType[] = []
+      const _config = []
       setIsLoading(true)
       for (let index = 0; index < config.length; index++) {
+        const emptyArr: any[] = [];
         const user = Keypair.fromSecretKey(bs58.decode(config[index]));
         const walletPubkey = user.publicKey;
-        const data = await getAllToken(walletPubkey.toBase58())
-
-        const tokenArr: Token_Type[] = []
-        const tokenArr0: Token_Type[] = []
-        data.forEach((item) => {
-          const token: Token_Type = {
-            address: item.address,
-            name: item.info.name,
-            symbol: item.info.symbol,
-            decimals: item.info.decimals,
-            image: item.info.image,
-            balance: item.balance,
-            isSelect: false,
-            associatedAccount: item.associated_account,
+        const accountList = await connection.getParsedTokenAccountsByOwner(
+          walletPubkey as any,
+          {
+            programId: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
+          },
+        );
+        accountList.value.forEach(account => {
+          const tokenAccountPubkey = account.pubkey;
+          const tokenAccountAmount = account.account.data.parsed.info.tokenAmount;
+          if (tokenAccountAmount.uiAmount == 0) {
+            emptyArr.push(tokenAccountPubkey.toString())
           }
-          tokenArr.push(token)
-          if (Number(item.balance) == 0) tokenArr0.push(token)
-        })
-        const _accounInfo: CloseConfigType = {
-          account: walletPubkey.toBase58(),
-          info: tokenArr,
+        });
+        const accountConfig: ConfigType = {
           privateKey: config[index],
-          emptyNumber: tokenArr0.length,
+          address: walletPubkey.toBase58(),
+          allAccount: accountList.value.length.toString(),
+          emptyAccount: emptyArr.length.toString(),
+          value: Number(emptyArr.length * 0.002039).toFixed(6),
+          value1: Number(accountList.value.length * 0.002039).toFixed(6),
           isCheck: false,
-          state: 0
+          state: false,
+          emptyAccounts: emptyArr
         }
-        _config.push(_accounInfo)
+        _config.push(accountConfig)
         await delay(40)
       }
-
       setConfig(_config)
       setIsLoading(false)
     } catch (error) {
@@ -115,7 +115,7 @@ function WalletInfo(props: PropsType) {
   }
 
   const deleteClick = (account: string, index: number) => {
-    const _config = config.filter(item => item.account !== account)
+    const _config = config.filter(item => item.address !== account)
     setConfig(_config)
   }
 
@@ -172,16 +172,6 @@ function WalletInfo(props: PropsType) {
     setConfig(_config)
   }
 
-  const getClaimValue = (item: CloseConfigType) => {
-    let balance = '0'
-    if (!isOptionsAll) {
-      balance = (item.emptyNumber * 0.002039).toFixed(6)
-    } else {
-      balance = (item.info.length * 0.002039).toFixed(6)
-    }
-    return balance
-  }
-
   return (
     <WalletInfoPage>
       {contextHolder}
@@ -216,7 +206,7 @@ function WalletInfo(props: PropsType) {
         {!isLoading &&
           <div className='waletSwapper'>
             {config.map((item, index) => (
-              <div className='walletInfo' key={item.account}>
+              <div className='walletInfo' key={item.address}>
                 <div>
                   <span>
                     <Checkbox className='mr-2' checked={item.isCheck} onChange={itemOnCheckChange} name={`${index}`} />
@@ -224,15 +214,15 @@ function WalletInfo(props: PropsType) {
                   </span>
                 </div>
                 <div className='flex items-center'>
-                  <span>{addressHandler(item.account)} </span>
-                  <BsCopy className='ml-2' onClick={() => copyClick(item.account)} />
+                  <span>{addressHandler(item.address)} </span>
+                  <BsCopy className='ml-2' onClick={() => copyClick(item.address)} />
                 </div>
-                <div>{item.info.length}</div>
-                <div>{item.emptyNumber}</div>
-                <div>{getClaimValue(item)}</div>
+                <div>{item.allAccount}</div>
+                <div>{item.emptyAccount}</div>
+                <div>{item.value}</div>
                 <div>{!item.state ? <Button>未领取</Button> : <Tag color="#568ee6">成功</Tag>}
                 </div>
-                <div><DeleteOutlined onClick={() => deleteClick(item.account, index)} /></div>
+                <div><DeleteOutlined onClick={() => deleteClick(item.address, index)} /></div>
               </div>
             ))}
           </div>
