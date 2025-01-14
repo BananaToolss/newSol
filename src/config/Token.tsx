@@ -37,7 +37,7 @@ export const PUMP: Token_Type = {
   address: '6Rzy39yQvjp2ZFtMQby4jvzBWDFy4vXhhV33fvQJFHpL',
   name: 'PUMP',
   symbol: 'PUMP',
-  decimals: 9,
+  decimals: 6,
   image: getImage('pump.svg'),
   balance: ''
 }

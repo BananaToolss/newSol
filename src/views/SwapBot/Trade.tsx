@@ -487,7 +487,7 @@ export const getAmountIn = async (
         amountIn = getRandomNumber(min, max) / BASE_NUMBER
       }
       amountIn = amountIn <= tokenB ? amountIn : 0
-      amountIn = amountIn <= + 0.00001 ? 0 : amountIn
+      // amountIn = amountIn <= + 0.00001 ? 0 : amountIn
     }
     return { balance, amountIn }
   } catch (error) {

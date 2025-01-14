@@ -81,23 +81,32 @@ function WalletInfo(props: PropsType) {
       for (let index = 0; index < config.length; index++) {
         const user = Keypair.fromSecretKey(bs58.decode(config[index]));
         const walletPubkey = user.publicKey;
-        const data = await getAllToken(walletPubkey.toBase58())
-
+        const accountList = await connection.getParsedTokenAccountsByOwner(
+          walletPubkey as any,
+          {
+            programId: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
+          },
+        );
+        const data = accountList.value
+        // const data = await getAllToken(walletPubkey.toBase58())
         const tokenArr: Token_Type[] = []
         const tokenArr0: Token_Type[] = []
         data.forEach((item) => {
+          const associatedAccount = item.pubkey;
+          const tokenAccountAmount = item.account.data.parsed.info.tokenAmount;
+
           const token: Token_Type = {
-            address: item.address,
-            name: item.info.name,
-            symbol: item.info.symbol,
-            decimals: item.info.decimals,
-            image: item.info.image,
-            balance: item.balance,
+            address: item.account.data.parsed.info.mint,
+            name: '',
+            symbol: '',
+            decimals: tokenAccountAmount.decimals,
+            image: '',
+            balance: tokenAccountAmount.uniAmount,
             isSelect: false,
-            associatedAccount: item.associated_account,
+            associatedAccount: associatedAccount.toBase58(),
           }
           tokenArr.push(token)
-          if (Number(item.balance) == 0) tokenArr0.push(token)
+          if (Number(tokenAccountAmount.uniAmount) == 0) tokenArr0.push(token)
         })
         const _accounInfo: CloseConfigType = {
           account: walletPubkey.toBase58(),
