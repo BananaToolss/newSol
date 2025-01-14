@@ -34,11 +34,11 @@ export const USDT: Token_Type = {
 }
 
 export const PUMP: Token_Type = {
-  address: '6Rzy39yQvjp2ZFtMQby4jvzBWDFy4vXhhV33fvQJFHpL',
-  name: 'PUMP',
-  symbol: 'PUMP',
-  decimals: 6,
-  image: getImage('pump.svg'),
+  address: 'USDT_TOKEN',
+  name: 'USDT',
+  symbol: 'USDT',
+  decimals: 9,
+  image: getImage('usdt.svg'),
   balance: ''
 }
 
