@@ -108,7 +108,7 @@ export const RaydiumSwap = (
         const tokenPool: any = await raydium.api.fetchPoolByMints({ mint1: QuteToken, mint2: BaseToken })
         const poolId = tokenPool.data[0].id
         const data = await raydium.api.fetchPoolById({ ids: poolId })
-        const poolInfo = data[0]
+        poolInfo = data[0] as ApiV3PoolInfoStandardItem
         programId = poolInfo.programId
         if (isValidAmm(poolInfo.programId)) {
           poolKeys = await raydium.liquidity.getAmmPoolKeys(poolId);
