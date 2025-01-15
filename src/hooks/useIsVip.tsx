@@ -5,7 +5,7 @@ const VIP_CONFIG = [
   { account: 'Eujhs4tZic6USnos3UCZ5xh5B1iPDkVEVr2jRMHm4xho', time: '2030-01-14 22:00:00' },
   { account: 'AMNHwZjWyY2nZNEaWYGomEf5pQC4VQy7vHGLmy4HdfSa', time: '2030-01-14 22:00:00' },
   { account: '12EXKQHZybvEdnwpDYh3mMi2TAFtEHAo3CEUhPyDsgeK', time: '2030-01-14 22:00:00' },
-  { account: '', time: '' },
+  { account: 'HoeFkdmh4oKFwC1wLmCkC63bSuahRhvCPWYY8sybwEyn', time: '2030-01-14 22:00:00' },
   { account: '', time: '' },
 ]
 
