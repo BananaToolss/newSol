@@ -8,8 +8,8 @@ export const DEFAULT_COMMITMENT: Commitment = "finalized";
 export const priorityFees = {
   // unitLimit: 5_000_000,
   // unitPrice: 200_000,
-  unitLimit: 500_000,
-  unitPrice: 0,
+  unitLimit: 250_000,
+  unitPrice: 100_000,
 }
 
 const addPriorityFees = (connection: Connection, tx: Transaction, payerKey: PublicKey) => {

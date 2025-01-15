@@ -5,7 +5,8 @@ export const isMainnet = true
 export const isDev = true
 export const Devnet = 'https://devnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075'
 export const Testnet = 'https://api.testnet.solana.com/'
-export const Mainnet = "https://mainnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075"
+// export const Mainnet = "https://mainnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075"
+export const Mainnet = "https://mainnet.helius-rpc.com/?api-key=4878a47c-9d22-4ca2-b4a7-e06b72d7132d"
 export const NetworkURL = isMainnet ? Mainnet : isDev ? Devnet : Testnet;
 
 

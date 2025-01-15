@@ -268,6 +268,13 @@ function SwapBot() {
                 logsArrChange('刷量任务完成', HASH_COLOR)
                 stopClick()
                 waitingForConfirmation = true
+                return
+              }
+              if(Number(config.modeType) === 2 && Number(config.amountType) == 2 && Number(config.minAmount) === 100) {
+                stopClick()
+                waitingForConfirmation = true
+                logsArrChange('砸盘任务完成', HASH_COLOR)
+                return
               }
             } else {
               walletIndexes++
