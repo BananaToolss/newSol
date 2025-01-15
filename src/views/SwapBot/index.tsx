@@ -517,12 +517,14 @@ function SwapBot() {
             <div className='mt-4'>
               当前代币价格：{tokenPrice}
             </div>
-            <div className='flex items-center'>
-              <div className='mr-3'>目标价格</div>
-              <div>
-                <Input value={config.targetPrice} onChange={configChange} name='targetPrice' />
+            {Number(config.modeType) !== 3 &&
+              <div className='flex items-center'>
+                <div className='mr-3'>目标价格</div>
+                <div>
+                  <Input value={config.targetPrice} onChange={configChange} name='targetPrice' />
+                </div>
               </div>
-            </div>
+            }
           </div>
 
           <div className='btn mt-5'>
