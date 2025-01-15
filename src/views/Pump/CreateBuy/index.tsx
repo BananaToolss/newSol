@@ -146,6 +146,7 @@ function CreateToken() {
         const explorerUrl = `https://explorer.jito.wtf/bundle/${bundleId}`;
         console.log(explorerUrl)
         setSignature(explorerUrl)
+        setTokenAddress(mint.publicKey.toBase58())
         getBundleStatuses(bundleId, 0)
       } else {
         api.error({ message: result.message })
