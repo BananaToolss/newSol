@@ -117,7 +117,7 @@ export default {
             icon: <BsEvStation color={COLOR} style={{ marginRight: '6px' }} />,
           },
           {
-            path: 'BsEyeSlash',
+            path: 'removeLiquidity',
             name: '移除流动性',
             icon: <AiOutlinePlusCircle color={COLOR} style={{ marginRight: '6px' }} />,
           },

@@ -324,7 +324,7 @@ function WalletInfo(props: PropsType) {
                   <BsCopy className='ml-2' onClick={() => copyClick(item.walletAddr)} />
                 </div>
                 <div>{item.balance}</div>
-                <div>{item.baseTBalace}</div>
+                {isBot && <div>{item.baseTBalace}</div>}
                 <div>{item.tokenBalance}</div>
                 {!isBot &&
                   <div>{item.state === 0 ? <Button>未执行</Button> :

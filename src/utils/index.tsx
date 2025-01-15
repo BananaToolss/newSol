@@ -4,7 +4,7 @@ import { isMainnet } from '@/config'
 
 export { default as addPriorityFees } from './addPriorityFees'
 export { default as addPriorityFeesJito } from './addPriorityFeesJito'
-export { default as uploadData } from './uploadData'
+
 
 
 

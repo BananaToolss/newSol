@@ -72,6 +72,7 @@ function SwapBot() {
     targetPrice: '1', //目标价格
     loop: '2', //刷量次数
   })
+  const [isThread, setIsThread] = useState(false)
   const [info, setInfo] = useState({
     _totalSol: 0,
     _totalTokenB: 0,
@@ -430,15 +431,19 @@ function SwapBot() {
           <div className='box mt-3'>
             <div className='header'>通用设置</div>
             <div className='flex justify-between mt-4 bb1'>
-              <div className='flex-1 mr-4 bb2'>
-                <div>多线程(多笔交易同时进行)</div>
-                <Input type='number' className={Input_Style}
-                  value={config.thread} onChange={configChange} name='thread' />
-              </div>
-              <div className='flex-1'>
+              {isThread &&
+                <div className=' mr-4 bb2'>
+                  <div>多线程(多笔交易同时进行)</div>
+                  <Input type='number'
+                    value={config.thread} onChange={configChange} name='thread' />
+                </div>
+              }
+              <div className=''>
                 <div>任务执行间隔(秒)</div>
-                <Input type='number' className={Input_Style}
-                  value={config.spaceTime} onChange={configChange} name='spaceTime' />
+                <div>
+                  <Input type='number'
+                    value={config.spaceTime} onChange={configChange} name='spaceTime' />
+                </div>
               </div>
             </div>
             <div className='flex items-center mt-4'>
@@ -446,6 +451,10 @@ function SwapBot() {
               <div>
                 <Input value={config.slippage} onChange={configChange} name='slippage' />
               </div>
+            </div>
+            <div className='flex mt-5'>
+              <div className='mr-2'>启用多线程</div>
+              <Switch checked={isThread} onChange={(e) => setIsThread(e)} />
             </div>
             {/* <div className='flex mt-5'>
               <div className='mr-2'>jito MEV模式</div>

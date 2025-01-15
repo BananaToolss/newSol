@@ -5,14 +5,15 @@ import {
 } from '@solana/web3.js';
 
 export const DEFAULT_COMMITMENT: Commitment = "finalized";
+export const priorityFees = {
+  unitLimit: 5_000_000,
+  // unitPrice: 200_000,
+  unitPrice: 2000,
+}
 
 const addPriorityFees = (connection: Connection, tx: Transaction, payerKey: PublicKey) => {
   return new Promise(async (resolve: (value: VersionedTransaction) => void, reject) => {
     try {
-      const priorityFees = {
-        unitLimit: 5_000_000,
-        unitPrice: 200_000,
-      }
       if (priorityFees) {
         const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
           units: priorityFees.unitLimit,

@@ -390,7 +390,7 @@ function CreateID() {
 
         <div className='btn'>
           <div className='buttonSwapper mt-4'>
-            <Button className={Button_Style} onClick={createClick} loading={isCreate}>确认燃烧</Button>
+            <Button className={Button_Style} onClick={createClick} loading={isCreate}>确认创建</Button>
           </div>
           <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : MARKET_FEE} SOL</div>
         </div>

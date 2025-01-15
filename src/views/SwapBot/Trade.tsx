@@ -20,6 +20,7 @@ import { fetcher } from '@/utils'
 import { initSdk, txVersion } from '@/Dex/Raydium'
 import { BANANATOOLS_ADDRESS, SWAP_BOT_FEE, PUMP_SWAP_BOT_FEE, isMainnet } from '@/config'
 import { SOL_TOKEN } from '@/config/Token'
+import { priorityFees } from '@/utils/addPriorityFees'
 import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp } from './utils';
 import { getTxLink, addPriorityFees } from '@/utils'
 import { isValidAmm, isValidCpmm } from '../Raydium/RemoveLiquidity/utils'
@@ -28,10 +29,7 @@ import { rejects } from "assert";
 const isAMM = true
 const AMM_POOL = 'CGjmakq9tEteMMsBNmhyCBeM3Spqax58VYyFpa9XERw9'
 const CPMM_POOL = 'DZtjekDo2LEgCnhsWmCzUcqG7cZstFHyp7biG1A8nhzQ'
-const priorityFees = {
-  unitLimit: 5_000_000,
-  unitPrice: 200_000,
-}
+
 const BASE_NUMBER = 10000
 
 export const PumpFunSwap = (
@@ -223,8 +221,8 @@ export const RaydiumAMMSwap = (
         inputMint: mintIn.address,
         txVersion,
         computeBudgetConfig: {
-          units: priorityFees.unitLimit,
-          microLamports: priorityFees.unitPrice,
+          units: priorityFees.unitLimit ?? null,
+          microLamports: priorityFees.unitPrice ?? null,
         },
       });
 
@@ -267,8 +265,8 @@ export const RaydiumAMMSwap = (
           inputMint: mintOut.address,
           txVersion,
           computeBudgetConfig: {
-            units: priorityFees.unitLimit,
-            microLamports: priorityFees.unitPrice,
+            units: priorityFees.unitLimit ?? null,
+            microLamports: priorityFees.unitPrice ?? null,
           },
         });
         const transaction1 = execute1.transaction;
@@ -350,8 +348,8 @@ export const RaydiumCPMMSwap = (
         slippage: slippage, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%, //滑点 // range: 1 ~ 0.0001, means 100% ~ 0.01%),
         baseIn,
         computeBudgetConfig: {
-          units: priorityFees.unitLimit,
-          microLamports: priorityFees.unitPrice,
+          units: priorityFees.unitLimit ?? null,
+          microLamports: priorityFees.unitPrice ?? null,
         },
       });
       // 提取交易对象

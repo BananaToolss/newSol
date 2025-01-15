@@ -523,7 +523,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
                   <span>{t('Next step')}</span>
                 </Button>
               </div>
-              <div className='fee'>全网最低，每批次交易只需要0.008SOL</div>
+              <div className='fee'>全网最低，每批次交易只需要{vipConfig.isVip ? 0 : MULTISEND_FEE}SOL</div>
             </div>
           </> :
           <>
