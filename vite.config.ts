@@ -21,4 +21,13 @@ export default defineConfig({
     }
   },
   plugins: [react(), nodePolyfills()],
+  server: {
+    proxy: {
+      "/upload": {
+        target: "https://upload.bananatools.xyz",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/upload/, ""),
+      },
+    },
+  },
 })
