@@ -84,7 +84,7 @@ function BrunToken() {
       );
       setSignature(signature)
       setIsBurning(false);
-      api.success({ message: 'freezeAccount success' })
+      api.success({ message: 'mint success' })
     } catch (error) {
       console.log(error)
       setIsBurning(false);
