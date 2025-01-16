@@ -186,9 +186,9 @@ function BrunToken() {
 
       <BurnPage>
 
-        <div className='flex mb-5'>
+        {/* <div className='flex mb-5'>
           <Segmented options={SegmentedOptions} size='large' />
-        </div>
+        </div> */}
 
 
         <WalletInfoCollection isOptionsAll={isOptionsAll} setIsOptionsAll={setIsOptionsAll}
