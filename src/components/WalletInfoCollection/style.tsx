@@ -96,5 +96,8 @@ export const WalletInfoPage = styled.div`
     .buttonSwapper {
       width: 100%;
     }
+    .wallet {
+      padding: 0;
+    }
   }
 `

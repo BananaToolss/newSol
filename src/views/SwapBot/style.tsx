@@ -95,6 +95,9 @@ export const RightPage = styled.div`
    .logs a{
     word-break:break-all;
    }
+   @media screen and (max-width:968px) {
+    margin-left: 0;
+   }
 `
 export const Card = styled.div`
     margin: 20px 0;
