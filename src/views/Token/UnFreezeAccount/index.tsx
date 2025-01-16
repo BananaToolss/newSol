@@ -114,14 +114,14 @@ function BrunToken() {
           <SelectToken callBack={backClick} selecToken={token} />
         </div>
         <div className='mt-5 '>
-          <div className='title'>冻结地址</div>
-          <Input className={Input_Style} placeholder={t('请输入需要冻结的钱包地址')}
+          <div className='title'>解冻地址</div>
+          <Input className={Input_Style} placeholder={t('请输入需要解冻的钱包地址')}
             value={freezeAccount} onChange={freezeAccountChange} />
         </div>
 
         <div className='btn'>
           <div className='buttonSwapper mt-4'>
-            <Button className={Button_Style} onClick={freezeAccountClick} loading={isBurning}>确认冻结</Button>
+            <Button className={Button_Style} onClick={freezeAccountClick} loading={isBurning}>确认解冻</Button>
           </div>
           <div className='fee'>全网最低服务费: {vipConfig.isVip ? 0 : FREE_TOKEN_FEE} SOL</div>
         </div>
