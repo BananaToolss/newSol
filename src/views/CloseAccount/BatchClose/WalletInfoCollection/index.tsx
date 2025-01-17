@@ -94,20 +94,20 @@ function WalletInfo(props: PropsType) {
         data.forEach((item) => {
           const associatedAccount = item.pubkey;
           const tokenAccountAmount = item.account.data.parsed.info.tokenAmount;
-
           const token: Token_Type = {
             address: item.account.data.parsed.info.mint,
             name: '',
             symbol: '',
             decimals: tokenAccountAmount.decimals,
             image: '',
-            balance: tokenAccountAmount.uniAmount,
+            balance: tokenAccountAmount.uiAmount,
             isSelect: false,
             associatedAccount: associatedAccount.toBase58(),
           }
           tokenArr.push(token)
-          if (Number(tokenAccountAmount.uniAmount) == 0) tokenArr0.push(token)
+          if (Number(tokenAccountAmount.uiAmount) == 0) tokenArr0.push(token)
         })
+        console.log(tokenArr0, 'tokenArr0')
         const _accounInfo: CloseConfigType = {
           account: walletPubkey.toBase58(),
           info: tokenArr,
