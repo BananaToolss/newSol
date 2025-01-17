@@ -460,7 +460,7 @@ function SwapBot() {
               </div>
             </div>
             <div className='flex mt-5'>
-              <div className='mr-2'>启用多线程</div>
+              <div className='mr-2'>启用多线程(测试中)</div>
               <Switch checked={isThread} onChange={(e) => setIsThread(e)} />
             </div>
             {/* <div className='flex mt-5'>
