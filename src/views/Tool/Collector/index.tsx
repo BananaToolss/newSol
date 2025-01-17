@@ -10,6 +10,7 @@ import {
   Transaction,
   SystemProgram,
   sendAndConfirmTransaction,
+  ComputeBudgetProgram
 } from "@solana/web3.js";
 import { BigNumber, ethers } from 'ethers';
 import copy from 'copy-to-clipboard';
@@ -22,7 +23,7 @@ import {
   createTransferInstruction,
   createTransferCheckedInstruction
 } from "@solana/spl-token";
-import bs58 from "bs58";
+import { priorityFees } from '@/utils/addPriorityFees'
 import { useTranslation } from "react-i18next";
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
@@ -188,6 +189,16 @@ function Authority() {
           })
 
           tx.feePayer = _accounts[0].publicKey
+          if (priorityFees) {
+            const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+              units: priorityFees.unitLimit,
+            });
+            const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
+              microLamports: priorityFees.unitPrice,
+            });
+            tx.add(modifyComputeUnits);
+            tx.add(addPriorityFee);
+          }
           // sigers.push(accounts[0])
           const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed" })
           console.log(signerTrue, 'signerTrue')
@@ -236,7 +247,16 @@ function Authority() {
           tx.recentBlockhash = latestBlockHash.blockhash;
           tx.feePayer = _accounts[0].publicKey
           // sigers.push(accounts[0])
-
+          if (priorityFees) {
+            const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+              units: priorityFees.unitLimit,
+            });
+            const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
+              microLamports: priorityFees.unitPrice,
+            });
+            tx.add(modifyComputeUnits);
+            tx.add(addPriorityFee);
+          }
           const signerTrue = await sendAndConfirmTransaction(connection, tx, sigers, { commitment: "processed" })
           console.log(signerTrue, 'signerTrue')
           signerTrueArr.push(signerTrue)
