@@ -478,6 +478,7 @@ export const getAmountIn = async (
         const max = maxAmount * BASE_NUMBER
         amountIn = getRandomNumber(min, max) / BASE_NUMBER
       }
+      amountIn = Number(amountIn.toFixed(9))
       amountIn = amountIn < Solb - (SWAP_BOT_FEE + 0.00005) ? amountIn : 0
     }
     if (modeType === 2) { //砸盘
@@ -491,6 +492,7 @@ export const getAmountIn = async (
         const max = maxAmount * BASE_NUMBER
         amountIn = getRandomNumber(min, max) / BASE_NUMBER
       }
+      amountIn = Number(amountIn.toFixed(9))
       amountIn = amountIn <= tokenB ? amountIn : 0
       // amountIn = amountIn <= + 0.00001 ? 0 : amountIn
     }
