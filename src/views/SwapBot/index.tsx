@@ -86,11 +86,13 @@ function SwapBot() {
   const [tokenPrice, setTokenPrice] = useState('') //代币价格
 
   useEffect(() => {
-    if (token) getTonePrice()
-    if (dexCount == 2) {
+    if (baseToken) getTonePrice()
+  }, [token, baseToken])
+  useEffect(() => {
+    if (dexCount === 1 && Number(config.modeType) === 3) {
       setConfig({ ...config, modeType: 1 })
     }
-  }, [dexCount, token, baseToken])
+  }, [dexCount])
   useEffect(() => {
     getInfo()
   }, [walletConfig])
@@ -270,7 +272,7 @@ function SwapBot() {
                 waitingForConfirmation = true
                 return
               }
-              if(Number(config.modeType) === 2 && Number(config.amountType) == 2 && Number(config.minAmount) === 100) {
+              if (Number(config.modeType) === 2 && Number(config.amountType) == 2 && Number(config.minAmount) === 100) {
                 stopClick()
                 waitingForConfirmation = true
                 logsArrChange('砸盘任务完成', HASH_COLOR)
