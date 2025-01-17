@@ -22,7 +22,7 @@ export const OPENBOOK_PROGRAM_ID_DEVNET = 'EoTcMgcDRTJVZDMZWBoU6rhYHZfkNTVEAfz3u
 //   EoTcMgcDRTJVZDMZWBoU6rhYHZfkNTVEAfz3uUJRcYGj
 export const OPENBOOK_PROGRAM_ID = isMainnet ? OPENBOOK_PROGRAM_ID_MAINNET : OPENBOOK_PROGRAM_ID_DEVNET;
 
-export const PROJECT_NAME = 'BananaTools'
+export const PROJECT_NAME = 'Bananatools|Solana链发币平台'
 export const BANANATOOLS_ADDRESS = 'HoeFkdmh4oKFwC1wLmCkC63bSuahRhvCPWYY8sybwEyn'
 
 export const CREATE_TOKEN_FEE = 0.1 //创建代币费用

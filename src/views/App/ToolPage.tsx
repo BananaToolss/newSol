@@ -31,7 +31,7 @@ const Card = styled.div`
     font-size: 20px;
    }
    .t3 {
-    margin: 10px 0 60px;
+    margin: 10px 0 30px;
    }
    .buttonSwapper {
     button {
@@ -58,19 +58,19 @@ function ToolPageApp() {
     <ToolPage>
       <Flex justify="center" className="header">
         <img src={getImage('tool.png')} alt="一键发币，一键NFT，代币空投，代币归集" />
-        <div className="title3 ml20">智能合约工具</div>
+        <div className="title3 ml20">Solanan链代币工具</div>
       </Flex>
 
       <CardSwapper>
 
         <Card>
-          <div className="t1">
+          <div className="t1 text-center">
             <BsCoin />
           </div>
-          <strong className="t2">一键发币</strong>
-          <div className="t3 hitcolor">快速发行代币，支持多种经济模式，支持定制机制，支持多链</div>
+          <strong className="t2">创建SPL代币</strong>
+          <div className="t3 hitcolor">快速发行代币，简单、便宜，构建自己的Solana代币</div>
           <div className="buttonSwapper">
-            <a href="/#/token/Standard" title="创建代币">
+            <a href="/#/token/create" title="创建代币">
               <Button type="primary" size='large'>创建代币</Button>
             </a>
           </div>
@@ -80,11 +80,11 @@ function ToolPageApp() {
           <div className="t1">
             <BsFileImage />
           </div>
-          <strong className="t2">创建NFT</strong>
-          <div className="t3 hitcolor">一键创建NFT, 无需编程, 无需审核, 支持多种方式的创建</div>
+          <strong className="t2">PumpFun开盘</strong>
+          <div className="t3 hitcolor">Pump.fun开盘时，其他地址同时进行代币买入操作，快人一步</div>
           <div className="buttonSwapper">
-            <a href="/#/nft/create" title="创建NFT">
-              <Button type="primary" size='large'>创建NFT</Button>
+            <a href="/#/pump/create" title="创建NFT">
+              <Button type="primary" size='large'>PumpFun开盘</Button>
             </a>
           </div>
         </Card>
@@ -94,9 +94,9 @@ function ToolPageApp() {
             <BsSend />
           </div>
           <strong className="t2">批量转账</strong>
-          <div className="t3 hitcolor">批量发送Token到上千个钱包。省时省力</div>
+          <div className="t3 hitcolor">Solana链上最好用的空投工具，批量发送代币</div>
           <div className="buttonSwapper">
-            <a href="/#/multisend" title="批量转账">
+            <a href="/#/tool/multisend" title="批量转账">
               <Button type="primary" size='large'>批量转账</Button>
             </a>
           </div>
@@ -109,7 +109,7 @@ function ToolPageApp() {
           <strong className="t2">批量归集</strong>
           <div className="t3 hitcolor">多钱包归集到主钱包，速度快、节省GAS费用</div>
           <div className="buttonSwapper">
-            <a href="/#/Collection" title="批量归集">
+            <a href="/#/tool/collector" title="批量归集">
               <Button type="primary" size='large'>批量归集</Button>
             </a>
           </div>
