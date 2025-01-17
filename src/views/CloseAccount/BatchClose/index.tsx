@@ -93,6 +93,7 @@ function BrunToken() {
   const burnClick = async () => {
     const to = toAddress ? new PublicKey(toAddress) : null
     try {
+      if (info._seleNum == 0) return api.info({ message: "请选择需要回收的钱包" })
       setIsBurning(true)
       const _config = walletConfig.filter(item => item.isCheck)
       for (let index = 0; index < _config.length; index++) {
