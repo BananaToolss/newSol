@@ -86,11 +86,11 @@ function Authority() {
       }
     })
     setInfo({
-      _totalSol,
-      _totalTokenB,
+      _totalSol: Number(_totalSol.toFixed(4)),
+      _totalTokenB: Number(_totalTokenB.toFixed(4)),
       _seleNum,
-      _seleSol,
-      _seleTokenB
+      _seleSol: Number(_seleSol.toFixed(4)),
+      _seleTokenB: Number(_seleTokenB.toFixed(4))
     })
   }
 
