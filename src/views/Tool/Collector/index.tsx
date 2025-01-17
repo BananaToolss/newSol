@@ -174,7 +174,7 @@ function Authority() {
           _accounts.forEach((item, index) => {
             let amount = Number(_sendAmounts[index].toFixed(0))
             if (modeType === 1 && index == 0) {
-              amount -= _accounts.length * 0.005 * 10 ** 9
+              amount -= 1 * 0.0005 * 10 ** 9
             }
             if (_sendAmounts[index] > 0) {
               const transfer = SystemProgram.transfer({
