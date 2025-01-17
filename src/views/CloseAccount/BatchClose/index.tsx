@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Button, notification, Input, message, Segmented, Switch } from 'antd'
-import { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, Keypair, TransactionInstruction, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import {
+  PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, Keypair,
+  TransactionInstruction, LAMPORTS_PER_SOL, ComputeBudgetProgram
+} from "@solana/web3.js";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useTranslation } from "react-i18next";
 import { createCloseAccountInstruction, createBurnCheckedInstruction } from '@solana/spl-token';
 import type { Token_Type } from '@/type'
-import { getTxLink, addPriorityFees } from '@/utils'
+import { priorityFees } from '@/utils/addPriorityFees'
 import { printSOLBalance } from '@/utils/util'
 import { Input_Style, Button_Style, BANANATOOLS_ADDRESS, CLOSE_FEE, CLOSE_VALUE } from '@/config'
 import { Page } from '@/styles';
@@ -39,7 +42,6 @@ function BrunToken() {
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
   const { connection } = useConnection();
-  const { publicKey, sendTransaction, signAllTransactions } = useWallet();
   const [walletConfig, setWalletConfig] = useState<CloseConfigType[]>([]) //钱包信息
   const [isOptionsAll, setIsOptionsAll] = useState(false)
   const [toAddress, setToAddress] = useState('')
@@ -94,7 +96,9 @@ function BrunToken() {
     const to = toAddress ? new PublicKey(toAddress) : null
     try {
       if (info._seleNum == 0) return api.info({ message: "请选择需要回收的钱包" })
+      if (info._totalSol <= 0) return api.info({ message: "选中账户可领取的SOL为0" })
       setIsBurning(true)
+      const _stateArr = []
       const _config = walletConfig.filter(item => item.isCheck)
       for (let index = 0; index < _config.length; index++) {
         const account = Keypair.fromSecretKey(bs58.decode(_config[index].privateKey))
@@ -155,20 +159,42 @@ function BrunToken() {
           const latestBlockHash = await connection.getLatestBlockhash();
           Tx.recentBlockhash = latestBlockHash.blockhash;
           Tx.feePayer = feePayer.publicKey;
+          if (priorityFees) {
+            const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+              units: priorityFees.unitLimit,
+            });
+            const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
+              microLamports: priorityFees.unitPrice,
+            });
+            Tx.add(modifyComputeUnits);
+            Tx.add(addPriorityFee);
+          }
           sigers.push(account)
           if (openFee && feeConfig.key) {
             sigers.push(feePayer)
           }
           try {
+            console.log('first')
             const singerTrue = await sendAndConfirmTransaction(connection, Tx, sigers, { commitment: 'processed' });
             console.log(singerTrue, 'singerTrue')
+            _stateArr.push({ account: _config[index].account, state: 1 })
           } catch (error) {
-            // console.log(error)
+            console.log(error, 'error')
             // api.error({ message: error.toString() })
+            _stateArr.push({ account: _config[index].account, state: 2 })
           }
         }
       }
-      api.success({ message: "回收完成" })
+      const _walletConfig = [...walletConfig]
+      _walletConfig.forEach((item, index) => {
+        const findIndex = _stateArr.findIndex(element => element.account == item.account)
+        if (findIndex >= 0) {
+          const _state = _stateArr[findIndex].state
+          _walletConfig[index].state = _state
+        }
+      })
+      setWalletConfig(_walletConfig)
+      api.success({ message: "执行完成" })
       setIsBurning(false)
     } catch (error) {
       setIsBurning(false)

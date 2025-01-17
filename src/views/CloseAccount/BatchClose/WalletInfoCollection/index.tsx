@@ -264,7 +264,9 @@ function WalletInfo(props: PropsType) {
                 <div>{item.info.length}</div>
                 <div>{item.emptyNumber}</div>
                 <div>{getClaimValue(item, isOptionsAll)}</div>
-                <div>{!item.state ? <Button>未领取</Button> : <Tag color="#568ee6">成功</Tag>}
+                <div>{item.state === 0 ? <Button>未领取</Button> :
+                  item.state === 1 ? <Tag color="#568ee6">成功</Tag> : <Tag color="#df1926">失败</Tag>
+                }
                 </div>
                 <div><DeleteOutlined onClick={() => deleteClick(item.account, index)} /></div>
               </div>

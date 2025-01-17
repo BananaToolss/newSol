@@ -33,28 +33,28 @@ export default () => {
     if (!isMobile) setIsCollapsed(false)
   }, [isMobile])
 
-  // if (import.meta.env.MODE !== 'development') {
-  //   (() => {
-  //     function block() {
-  //       if (
-  //         window.outerHeight - window.innerHeight > 200 ||
-  //         window.outerWidth - window.innerWidth > 200
-  //       ) {
-  //         document.body.innerHTML =
-  //           "";
-  //       }
-  //       setInterval(() => {
-  //         (function () {
-  //           return false;
-  //         }
-  //         ["constructor"]("debugger")["call"]());
-  //       }, 50);
-  //     }
-  //     try {
-  //       block();
-  //     } catch (err) { }
-  //   })()
-  // }
+  if (import.meta.env.MODE !== 'development') {
+    (() => {
+      function block() {
+        if (
+          window.outerHeight - window.innerHeight > 200 ||
+          window.outerWidth - window.innerWidth > 200
+        ) {
+          document.body.innerHTML =
+            "";
+        }
+        setInterval(() => {
+          (function () {
+            return false;
+          }
+          ["constructor"]("debugger")["call"]());
+        }, 50);
+      }
+      try {
+        block();
+      } catch (err) { }
+    })()
+  }
 
   return (
     <div

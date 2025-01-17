@@ -201,7 +201,7 @@ function SwapBot() {
       console.log(_walletConfig)
       const raydiums: Raydium[] = []
       if (dexCount === 1) {
-        console.log('钱包准备中')
+        console.log('准备中')
         for (let i = 0; i < _walletConfig.length; i++) {
           const account = Keypair.fromSecretKey(bs58.decode(_walletConfig[i].privateKey))
           let raydium: Raydium | null
@@ -213,7 +213,7 @@ function SwapBot() {
           if (raydium) raydiums.push(raydium)
           await delay(150)
         }
-        console.log(`钱包准备就绪`)
+        console.log(`准备就绪`)
       }
 
       const url = `${window.location.origin}/worker1.js`
