@@ -171,12 +171,18 @@ function Authority() {
           const _accounts = accounts.slice(i * SOLNUM, (i + 1) * SOLNUM)
           const _sendAmounts = sendAmounts.slice(i * SOLNUM, (i + 1) * SOLNUM)
 
-          _accounts.forEach((item, index) => {
+          for (let index = 0; index < _accounts.length; index++) {
+            const item = _accounts[index];
             let amount = Number(_sendAmounts[index].toFixed(0))
+            if (modeType === 1) {
+              amount = await connection.getBalance(item.publicKey)
+              console.log(amount, '余额')
+            }
             if (modeType === 1 && index == 0) {
-              amount -= 1 * 0.0005 * 10 ** 9
+              amount -= 0.001 * 10 ** 9
             }
             if (_sendAmounts[index] > 0) {
+              console.log(amount, 'fas')
               const transfer = SystemProgram.transfer({
                 fromPubkey: item.publicKey,
                 toPubkey: toPubkey,
@@ -186,8 +192,7 @@ function Authority() {
               sigers.push(item)
               fee += 1
             }
-          })
-
+          }
           tx.feePayer = _accounts[0].publicKey
           if (priorityFees) {
             const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
