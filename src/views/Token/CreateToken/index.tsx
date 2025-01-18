@@ -298,7 +298,7 @@ function CreateToken() {
           <div>代币合约地址</div>
           <div className='tokenInput'>
             <div className='input'>
-              <Input type="text" className={Input_Style} placeholder='请输入要更新的代币合约地址'
+              <Input type="text" className={Input_Style} placeholder='请输入要克隆的代币合约地址'
                 value={tokenAddress} onChange={(e) => setTokenAddress(e.target.value)}
               />
             </div>
