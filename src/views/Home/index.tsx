@@ -124,7 +124,7 @@ export default () => {
             >
               <h3>需要帮助？</h3>
               <div>请查看我们的操作文档</div>
-              <a href="https://docs.bananatools.top/" target="_blank">
+              <a href="https://soldocs.bananatools.top/token/create" target="_blank">
                 <Button style={{ margin: '10px 0' }} type="primary" size='large'>官方文档</Button>
               </a>
               <div style={{ margin: '10px 0' }}>
