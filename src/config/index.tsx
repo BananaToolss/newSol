@@ -39,8 +39,8 @@ export const COLLECT_FEE = 0.01 //批量归集
 
 export const PUMP_CREATE_FEE = 0.05// pump创建代币
 export const PUMP_CREATE_BIND_FEE = 0.01 //捆绑买入
-export const SWAP_BOT_FEE = 0.001 //市值每笔收费
-export const PUMP_SWAP_BOT_FEE = 0.001 //pump市值收费
+export const SWAP_BOT_FEE = 0.0001 //市值每笔收费
+export const PUMP_SWAP_BOT_FEE = 0.0001 //pump市值收费
 export const CLOSE_FEE = 1 //1%
 export const CLOSE_VALUE = 0.002039
 
