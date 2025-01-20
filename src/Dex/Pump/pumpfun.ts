@@ -246,7 +246,7 @@ export class PumpFunSDK {
         const fee = SystemProgram.transfer({
           fromPubkey: wallet.publicKey,
           toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-          lamports: _fee * LAMPORTS_PER_SOL,
+          lamports: Number((_fee * LAMPORTS_PER_SOL).toFixed(0)),
         })
         walletTx.add(fee)
       }
