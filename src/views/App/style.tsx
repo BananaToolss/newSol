@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import bg_png from '../../assets/bg.png'
 
-export const AppPage = styled.div`
+export const AppPage = styled.body`
  text-align: center;
  letter-spacing: 1px;
  padding: 40px;
