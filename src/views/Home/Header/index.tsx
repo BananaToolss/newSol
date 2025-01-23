@@ -5,7 +5,7 @@ import Setting from './Setting'
 function Header() {
   return (
     <div className="flex items-center">
-      <Setting />
+      {/* <Setting /> */}
       <Language />
       <WalletMultiButton />
     </div>

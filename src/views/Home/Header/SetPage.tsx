@@ -12,39 +12,38 @@ const Options = [
   { label: '极速', value: 2, va: '$0.41348' },
 ]
 
+const MAINCONFIG = [{
+  label: '通用地区',
+  value: "https://vivianne-g1n6x7-fast-mainnet.helius-rpc.com/",
+  time: '',
+  color: '',
+},
+{
+  label: '🇳🇱阿姆斯特丹',
+  value: "https://mainnet.helius-rpc.com/?api-key=1ebd5af0-f37c-4aaa-861e-2d8f5e656516",
+  time: '',
+  color: '',
+},
+{
+  label: '通用地区',
+  value: "https://helius-rpc.slerf.tools/",
+  time: '',
+  color: '',
+},
+{
+  label: '通用地区',
+  value: "https://mainnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075",
+  time: '',
+  color: '',
+}]
+
 function SettingConfig() {
   const disPatch = useDispatch()
   const _rpcUrl = useSelector(rpcUrl)
   const isMain = useSelector(isMainnet)
-
   const [gasPrice, setGasPrice] = useState(0)
-
-  const [rpcOptions, setRpcOptions] = useState([
-    {
-      label: '通用地区',
-      value: "https://vivianne-g1n6x7-fast-mainnet.helius-rpc.com/",
-      time: '',
-      color: '',
-    },
-    {
-      label: '🇳🇱阿姆斯特丹',
-      value: "https://mainnet.helius-rpc.com/?api-key=1ebd5af0-f37c-4aaa-861e-2d8f5e656516",
-      time: '',
-      color: '',
-    },
-    {
-      label: '通用地区',
-      value: "https://helius-rpc.slerf.tools/",
-      time: '',
-      color: '',
-    },
-    {
-      label: '通用地区',
-      value: "https://mainnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075",
-      time: '',
-      color: '',
-    },
-  ])
+  const [rpcOptions, setRpcOptions] = useState(MAINCONFIG)
+  const [addRpc, setAddRpc] = useState('')
 
   useEffect(() => {
     getAllTime()
@@ -96,6 +95,20 @@ function SettingConfig() {
     }
   }
 
+  const RadioChange = (item) => {
+    disPatch(rpcUrlChange(item.value))
+  }
+
+  const AddRpcClick = () => {
+    setRpcOptions([...rpcOptions, {
+      label: '通用地区',
+      value: addRpc,
+      time: '',
+      color: '',
+    }])
+    disPatch(rpcUrlChange(addRpc))
+  }
+
   return (
     <SettingPage>
       <div className='ht'>启用优先费用功能</div>
@@ -115,7 +128,7 @@ function SettingConfig() {
         {rpcOptions.map((item, index) => (
           <div className='net' key={index}>
             <div className='flex'>
-              <Radio />
+              <Radio checked={item.value === _rpcUrl} onChange={() => RadioChange(item)} />
               <div>端点{index + 1}</div>
             </div>
             <div style={{ color: item.color }} className='flex'>
@@ -128,7 +141,8 @@ function SettingConfig() {
       </div>
 
       <div>
-        <Input placeholder='自定义节点URL' addonAfter={<div>确认</div>} />
+        <Input placeholder='自定义节点URL' value={addRpc} onChange={(e) => setAddRpc(e.target.value)}
+          addonAfter={<div onClick={AddRpcClick}>确认</div>} />
       </div>
 
       <div className='rpc mb-3'>网络选择</div>
