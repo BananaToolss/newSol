@@ -4,7 +4,8 @@ font-size: 14px;
   position: absolute;
   left: -250px;
   background-color: #ffffff;
-  padding: 10px 30px;
+  padding: 20px;
+  border-radius: 6px;
   line-height: 1.5;
   box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
   width: 500px;
@@ -39,5 +40,10 @@ font-size: 14px;
     border-top: 1px solid #9f9c9c;
     padding-top: 10px;
     margin-top: 20px;
+  }
+  .net {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
   }
 `
