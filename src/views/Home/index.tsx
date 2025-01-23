@@ -6,13 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { isMobile } from 'react-device-detect'
 import { Button } from "antd";
 import { BsTelegram } from "react-icons/bs";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import {
-  LogoText,
-  Language
-} from '@/components'
+import { LogoText,} from '@/components'
 import { PROJECT_NAME, TELEGRAMLINK } from '@/config'
 import { getImage } from '@/utils'
+import Header from './Header'
 import defaultProps from './_defaultProps';
 import Footer from './Footer'
 
@@ -109,8 +106,7 @@ export default () => {
           //   <w3m-button />
           // ]
           return [
-            <Language />,
-            <WalletMultiButton />
+            <Header />
           ]
         }}
         menuFooterRender={(props) => {
