@@ -12,6 +12,7 @@ import { BsChevronDown } from "react-icons/bs";
 import { Input_Style } from '@/config'
 import { getImage, IsAddress, addressHandler, fetcher } from '@/utils'
 import { getAsset } from '@/utils/sol'
+import { useConfig } from '@/hooks';
 import { getSPLBalance, printSOLBalance } from '@/utils/util'
 import { getAllToken } from '@/utils/newSol'
 import { SOL, USDC, USDT } from '../../config/Token'
@@ -29,6 +30,7 @@ const App = (props: PropsType) => {
   const { connection } = useConnection()
   const { publicKey } = useWallet()
   const { t } = useTranslation()
+  const { _rpcUrl, network } = useConfig()
   const [messageApi, contextHolder] = message.useMessage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tokenAddress, setTokenAddress] = useState('')
@@ -65,7 +67,7 @@ const App = (props: PropsType) => {
   const getAccountAllToken = async () => {
     try {
       setIsSearch(true)
-      const data = await getAllToken(publicKey.toBase58())
+      const data = await getAllToken(publicKey.toBase58(), network)
       const tokenArr: Token_Type[] = []
       data.forEach((item) => {
         const token = {
@@ -95,7 +97,7 @@ const App = (props: PropsType) => {
       setIsSearch(true)
       setNotFound(false)
 
-      const { name, symbol, image, decimals } = await getAsset(connection, tokenAddress)
+      const { name, symbol, image, decimals } = await getAsset(connection, tokenAddress, _rpcUrl)
       let balance = 0
       if (publicKey) {
         balance = await getSPLBalance(connection, new PublicKey(tokenAddress), publicKey)

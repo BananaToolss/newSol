@@ -10,13 +10,13 @@ import Routers from './router'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <StoreProvider>
-    <Web3Modal>
-      <Provider store={store}>
-        <HashRouter>
+  <Provider store={store}>
+    <HashRouter>
+      <StoreProvider>
+        <Web3Modal>
           <Routers />
-        </HashRouter>
-      </Provider>
-    </Web3Modal>
-  </StoreProvider>,
+        </Web3Modal>
+      </StoreProvider>
+    </HashRouter>
+  </Provider>
 )

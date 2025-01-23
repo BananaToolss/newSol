@@ -1,27 +1,6 @@
 export const TELEGRAMLINK = 'https://t.me/BananaTools'
 
 
-export const isMainnet = false
-export const isDev = true
-export const Devnet = 'https://devnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075'
-export const Testnet = 'https://api.testnet.solana.com/'
-// export const Mainnet = "https://mainnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075"
-export const Mainnet = "https://vivianne-g1n6x7-fast-mainnet.helius-rpc.com/"
-export const NetworkURL = isMainnet ? Mainnet : isDev ? Devnet : Testnet;
-
-
-export const KEY = 'dCV9zeef_E-v4OVl'
-export const base = 'https://api.shyft.to'
-export const network = isMainnet ? 'mainnet-beta' : isDev ? 'devnet' : 'testnet'
-
-
-
-
-export const OPENBOOK_PROGRAM_ID_MAINNET = 'srmqPvymJeFKQ4zGQed1GFppgkRHL9kaELCbyksJtPX'
-export const OPENBOOK_PROGRAM_ID_DEVNET = 'EoTcMgcDRTJVZDMZWBoU6rhYHZfkNTVEAfz3uUJRcYGj'
-//   EoTcMgcDRTJVZDMZWBoU6rhYHZfkNTVEAfz3uUJRcYGj
-export const OPENBOOK_PROGRAM_ID = isMainnet ? OPENBOOK_PROGRAM_ID_MAINNET : OPENBOOK_PROGRAM_ID_DEVNET;
-
 export const PROJECT_NAME = 'Bananatools|Solana链发币平台'
 export const BANANATOOLS_ADDRESS = 'HoeFkdmh4oKFwC1wLmCkC63bSuahRhvCPWYY8sybwEyn'
 

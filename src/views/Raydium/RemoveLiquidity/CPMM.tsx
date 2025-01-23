@@ -16,8 +16,8 @@ import Decimal from 'decimal.js'
 import { getMint } from '@solana/spl-token';
 import { PoolFetchType, } from "@raydium-io/raydium-sdk-v2";
 import { initSdk, RaydiumApi } from '@/Dex/Raydium'
-import { Input_Style, Button_Style, REMOVE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
-import { Page } from '@/styles'
+import { Input_Style, Button_Style, REMOVE_POOL_FEE, BANANATOOLS_ADDRESS } from '@/config'
+import { useConfig } from '@/hooks';
 import { getAsset } from '@/utils/sol'
 import { useIsVip } from '@/hooks';
 import { getTxLink, addPriorityFees, getImage } from '@/utils'
@@ -52,6 +52,7 @@ const JITOFEEARR = [
 ]
 
 function CreateLiquidity() {
+  const { _rpcUrl, _isMainnet } = useConfig()
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
@@ -90,7 +91,7 @@ function CreateLiquidity() {
         connection: connection,
       });
 
-      if (isMainnet) {
+      if (_isMainnet) {
         const data = await raydium.api.fetchPoolById({ ids: poolId })
         poolInfo = data[0] as ApiV3PoolInfoStandardItemCpmm
       } else {
@@ -101,8 +102,8 @@ function CreateLiquidity() {
       const quoteMint = poolInfo.mintB.address
       const pubkey = poolAddr
       const marketProgramId = 'poolInfo.marketId'
-      const { symbol: baseSymbol, image: baseImage } = await getAsset(connection, baseMint)
-      const { symbol, image } = await getAsset(connection, quoteMint)
+      const { symbol: baseSymbol, image: baseImage } = await getAsset(connection, baseMint, _rpcUrl)
+      const { symbol, image } = await getAsset(connection, quoteMint, _rpcUrl)
       const lpMint = new PublicKey(poolInfo.lpMint.address)
       const mintAccount = await getMint(connection, lpMint, 'processed')
       const lpReserve = Number(mintAccount.supply) / 10 ** mintAccount.decimals
@@ -146,8 +147,8 @@ function CreateLiquidity() {
       const allPoolConfig: PoolType[] = []
       for (let index = 0; index < _result.length; index++) {
         const item = _data[index];
-        const { symbol: baseSymbol, image: baseImage } = await getAsset(connection, item.baseMint)
-        const { symbol, image } = await getAsset(connection, item.quoteMint)
+        const { symbol: baseSymbol, image: baseImage } = await getAsset(connection, item.baseMint, _rpcUrl)
+        const { symbol, image } = await getAsset(connection, item.quoteMint, _rpcUrl)
         const lpMint = new PublicKey(item.lpMint)
         const mintAccount = await getMint(connection, lpMint, 'processed')
         const lpReserve = Number(mintAccount.supply) / 10 ** mintAccount.decimals
@@ -212,7 +213,7 @@ function CreateLiquidity() {
         connection: connection,
       });
 
-      if (isMainnet) {
+      if (_isMainnet) {
         const data = await raydium.api.fetchPoolById({ ids: poolId })
         poolInfo = data[0] as ApiV3PoolInfoStandardItemCpmm
       } else {

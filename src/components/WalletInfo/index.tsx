@@ -7,10 +7,10 @@ import {
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 import { BsCopy } from "react-icons/bs";
-import { LoadingOutlined } from '@ant-design/icons';
 import { DeleteOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { addressHandler } from '@/utils'
+import { useConfig } from '@/hooks';
 import { getMultipleAccounts } from '@/utils/sol'
 import { LoadingOut } from '@/components'
 import { Button_Style1 } from '@/config'
@@ -28,7 +28,7 @@ interface PropsType {
 
 function WalletInfo(props: PropsType) {
   const { config, setConfig } = props
-
+  const { _rpcUrl } = useConfig()
   const [api, contextHolder1] = notification.useNotification();
   const [messageApi, contextHolder] = message.useMessage();
   const [privateKeys, setPrivateKeys] = useState([]) //私钥数组
@@ -61,7 +61,7 @@ function WalletInfo(props: PropsType) {
         }
       })
 
-      const balances = await getMultipleAccounts(_addressArr)
+      const balances = await getMultipleAccounts(_addressArr, _rpcUrl)
       const _config: WalletConfigType[] = []
       _addressArr.forEach((item, index) => {
         const wallet: WalletConfigType = {

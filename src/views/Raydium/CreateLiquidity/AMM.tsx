@@ -17,8 +17,9 @@ import * as BufferLayout from 'buffer-layout';
 import BN from 'bn.js'
 import { initSdk } from '@/Dex/Raydium'
 import { getTxLink, addPriorityFees } from '@/utils'
-import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
+import { Input_Style, Button_Style, CREATE_POOL_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { useIsVip } from '@/hooks';
+import { useConfig } from '@/hooks';
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
 import { JitoFee, SelectToken, Result, Hint } from '@/components'
@@ -31,7 +32,7 @@ declare type AssociatedName = "amm_associated_seed" | "lp_mint_associated_seed" 
 
 function CreateLiquidity(props: PropsType) {
   const { isAndBuy } = props
-
+  const { _isMainnet, OPENBOOK_PROGRAM_ID } = useConfig()
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signTransaction } = useWallet();
@@ -140,10 +141,10 @@ function CreateLiquidity(props: PropsType) {
       const quoteAmount = new BN(Number(config.quoteAmount) * (10 ** token.decimals))
 
       const execute = await raydium.liquidity.createPoolV4({
-        programId: isMainnet ? AMM_V4 : DEVNET_PROGRAM_ID.AmmV4,
+        programId: _isMainnet ? AMM_V4 : DEVNET_PROGRAM_ID.AmmV4,
         marketInfo: {
           marketId,
-          programId: isMainnet ? OPEN_BOOK_PROGRAM : DEVNET_PROGRAM_ID.OPENBOOK_MARKET,
+          programId: _isMainnet ? OPEN_BOOK_PROGRAM : DEVNET_PROGRAM_ID.OPENBOOK_MARKET,
         },
         baseMintInfo: {
           mint: baseMint,
@@ -163,7 +164,7 @@ function CreateLiquidity(props: PropsType) {
         associatedOnly: false,
         txVersion,
         checkCreateATAOwner: true,
-        feeDestinationId: isMainnet ? FEE_DESTINATION_ID : DEVNET_PROGRAM_ID.FEE_DESTINATION_ID, // devnet
+        feeDestinationId: _isMainnet ? FEE_DESTINATION_ID : DEVNET_PROGRAM_ID.FEE_DESTINATION_ID, // devnet
         // optional: set up priority fee here
         // computeBudgetConfig: {
         //   units: 600000,

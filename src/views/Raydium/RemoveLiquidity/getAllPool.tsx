@@ -1,5 +1,5 @@
 import { gql, GraphQLClient } from "graphql-request";
-import { KEY, isMainnet } from '@/config'
+import { KEY } from '@/hooks'
 
 const main = `https://programs.shyft.to/v0/graphql/?api_key=${KEY}&network=mainnet-beta`
 const dev = `https ://programs.shyft.to/v0/graphql/?api_key=${KEY}&network=devnet`

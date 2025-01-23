@@ -12,6 +12,7 @@ import { getMint, createSetAuthorityInstruction, AuthorityType } from '@solana/s
 import {
   Input_Style, Button_Style, BANANATOOLS_ADDRESS, AUTHORITY_FEE
 } from '@/config'
+import { useConfig } from '@/hooks';
 import { getAsset } from '@/utils/sol'
 import { Page } from '@/styles';
 import { Result } from '@/components'
@@ -22,6 +23,7 @@ import { AuthorityPage } from './style'
 
 function Authority() {
   const { t } = useTranslation()
+  const { _rpcUrl } = useConfig()
   const [messageApi, contextHolder] = message.useMessage();
   const [api, contextHolder1] = notification.useNotification();
   const { publicKey, sendTransaction } = useWallet();
@@ -123,7 +125,7 @@ function Authority() {
         tx.add(transaction)
       }
       if (options.isMutable) {
-        const data = await getAsset(connection, tokenAddr)
+        const data = await getAsset(connection, tokenAddr, _rpcUrl)
         const metadataPDA = PublicKey.findProgramAddressSync(
           [
             Buffer.from("metadata"),

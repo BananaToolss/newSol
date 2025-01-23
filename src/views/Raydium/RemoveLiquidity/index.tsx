@@ -1,47 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Button, notification, Segmented, Input, Flex, Spin } from 'antd'
-import { LoadingOutlined } from '@ant-design/icons'
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL, TransactionInstruction } from '@solana/web3.js'
-import {
-  TxVersion,
-  AmmV4Keys,
-  AmmV5Keys,
-  ApiV3PoolInfoStandardItem,
-} from '@raydium-io/raydium-sdk-v2'
-import BN from 'bn.js'
-import Decimal from 'decimal.js'
-import { getMint } from '@solana/spl-token';
-import { PoolFetchType, } from "@raydium-io/raydium-sdk-v2";
-import { initSdk, RaydiumApi } from '@/Dex/Raydium'
-import { Input_Style, Button_Style, REMOVE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet } from '@/config'
 import { Page } from '@/styles'
-import { getAsset } from '@/utils/sol'
-import { getAt } from '@/utils/getAta'
-import { getTxLink, addPriorityFees, getImage } from '@/utils'
-import { SOL, PUMP } from '@/config/Token'
-import type { Token_Type } from '@/type'
 import { Header, SelectToken, Result } from '@/components'
-import { isValidAmm } from './utils'
-import queryLpByToken from './getAllPool'
-import { CreatePool } from './style'
-import { getSPLBalance } from '@/utils/util';
 import AMM from './AMM'
 import CPMM from './CPMM'
 
-interface PoolType {
-  lpReserve: number
-  baseMint: string
-  quoteMint: string
-  pubkey: string
-  marketProgramId: string //交易所
-  baseSymbol: string
-  baseImage: string
-  symbol: string
-  image: string
-  balance: number
-  lpMint: string
-}
 
 const SGECONFIG = [
   { label: 'AMM OpenBook ID', value: 1 },

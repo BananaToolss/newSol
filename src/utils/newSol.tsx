@@ -1,8 +1,8 @@
 
 
-import { base, KEY, network } from '@/config'
+import { base, KEY } from '@/hooks'
 
-export const getAllToken = (account: string) => {
+export const getAllToken = (account: string, network: string) => {
   return new Promise(async (resolve: (value: any) => void, reject) => {
     try {
       const myHeaders = new Headers();

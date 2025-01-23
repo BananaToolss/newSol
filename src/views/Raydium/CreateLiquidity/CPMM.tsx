@@ -13,7 +13,8 @@ import { useIsVip } from '@/hooks';
 import BN from 'bn.js'
 import { initSdk, txVersion } from '@/Dex/Raydium'
 import { getTxLink, addPriorityFees } from '@/utils'
-import { Input_Style, Button_Style, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet, base } from '@/config'
+import { Input_Style, Button_Style, CREATE_POOL_FEE, BANANATOOLS_ADDRESS } from '@/config'
+import { useConfig } from '@/hooks';
 import { SOL, PUMP } from '@/config/Token'
 import type { Token_Type } from '@/type'
 import { Header, SelectToken, Result, Hint } from '@/components'
@@ -23,6 +24,7 @@ import { CreatePool } from './style'
 function CreateLiquidity() {
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
+  const { _isMainnet } = useConfig()
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
   const vipConfig = useIsVip()
   const [baseToken, setBaseToken] = useState<Token_Type>(PUMP)
@@ -76,7 +78,7 @@ function CreateLiquidity() {
       const mintB = await raydium.token.getTokenInfo(token.address)
       const feeConfigs = await raydium.api.getCpmmConfigs()
 
-      if (!isMainnet) {
+      if (!_isMainnet) {
         feeConfigs.forEach((config) => {
           config.id = getCpmmPdaAmmConfigId(DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM, config.index).publicKey.toBase58()
         })
@@ -87,8 +89,8 @@ function CreateLiquidity() {
 
       const execute = await raydium.cpmm.createPool({
         // poolId: // your custom publicKey, default sdk will automatically calculate pda pool id
-        programId: isMainnet ? CREATE_CPMM_POOL_PROGRAM : DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM, // devnet: DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM
-        poolFeeAccount: isMainnet ? CREATE_CPMM_POOL_FEE_ACC : DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_FEE_ACC, // devnet:  DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_FEE_ACC
+        programId: _isMainnet ? CREATE_CPMM_POOL_PROGRAM : DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM, // devnet: DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM
+        poolFeeAccount: _isMainnet ? CREATE_CPMM_POOL_FEE_ACC : DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_FEE_ACC, // devnet:  DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_FEE_ACC
         mintA,
         mintB,
         mintAAmount: baseAmount,

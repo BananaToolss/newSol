@@ -7,6 +7,7 @@ import { Button, Input, message, notification } from 'antd'
 import { BsXCircleFill, BsCheckCircleFill } from "react-icons/bs";
 import { Header, UpdataImage, Result } from '@/components';
 import { getAsset } from '@/utils/sol'
+import { useConfig } from '@/hooks';
 import { upLoadImage } from '@/utils/updataNFTImage'
 import { Page } from '@/styles';
 import { useIsVip } from '@/hooks';
@@ -21,6 +22,7 @@ const { TextArea } = Input
 
 function Update() {
   const { t } = useTranslation()
+  const { _rpcUrl } = useConfig()
   const [messageApi, contextHolder] = message.useMessage();
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection()
@@ -65,7 +67,7 @@ function Update() {
   const getTokenMetadata = async () => {
     try {
       setIsSearch(true)
-      const data = await getAsset(connection, tokenAddress)
+      const data = await getAsset(connection, tokenAddress, _rpcUrl)
       console.log(data, 'data')
       const {
         name, symbol, description, website, twitter,

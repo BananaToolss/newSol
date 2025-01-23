@@ -3,6 +3,7 @@ import {
   ConnectionProvider,
   WalletProvider,
 } from "@solana/wallet-adapter-react";
+import { useDispatch, useSelector } from 'react-redux';
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { Connection } from "@solana/web3.js";
 import { createTheme, styled, ThemeProvider } from "@mui/material/styles";
@@ -19,13 +20,11 @@ import {
   LedgerWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import "@solana/wallet-adapter-react-ui/styles.css";
+import { rpcUrl } from '@/store/countterSlice'
 
-
-import { NetworkURL } from "../config";
 
 function Web3Modal({ children }) {
-
-  const [networkURL, setNetworkURL] = useState(NetworkURL);
+  const networkURL = useSelector(rpcUrl)
   const [umi, setUmi] = useState(createUmi(new Connection(networkURL)));
   const [endpoint, setEndpoint] = useState(umi.rpc.getEndpoint());
 

@@ -9,11 +9,11 @@ import { AnchorProvider } from "@coral-xyz/anchor";
 import { ethers } from 'ethers';
 import bs58 from "bs58";
 import BN from "bn.js";
-import Decimal from 'decimal.js'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { Header, SelectToken, Segmentd, WalletInfoCollection, JitoFee } from '@/components'
 import type { Token_Type, CollocetionType } from '@/type'
 import { SOL, PUMP, RAYAMM, SOL_TOKEN, CPMM } from '@/config/Token'
+import { useConfig } from '@/hooks';
 import { Input_Style, Button_Style, SWAP_BOT_FEE } from '@/config'
 import { initSdk, txVersion } from '@/Dex/Raydium'
 import { PumpFunSDK } from "@/Dex/Pump";
@@ -49,6 +49,7 @@ const options = [
 function SwapBot() {
   const { connection } = useConnection();
   const wallet = useWallet()
+  const { _isMainnet } = useConfig()
   const [messageApi, contextHolder] = message.useMessage();
   const [api, contextHolder1] = notification.useNotification();
   const [baseToken, setBseToken] = useState<Token_Type>(PUMP) //
@@ -142,7 +143,7 @@ function SwapBot() {
       if (dexCount === 1) {
         const account = Keypair.generate()
         const raydium = await initSdk({ owner: account.publicKey, connection: connection })
-        price = await getRayDiumPrice(raydium, new PublicKey(token.address), new PublicKey(baseToken.address))
+        price = await getRayDiumPrice(raydium, new PublicKey(token.address), new PublicKey(baseToken.address), _isMainnet)
       }
       if (dexCount === 2) {
         price = await getPumpPrice(sdk, new PublicKey(baseToken.address), solPrice)
@@ -323,7 +324,7 @@ function SwapBot() {
           console.log(amountIn, 'amountIn')
           if (dexCount === 1) {
             const { signature, price } = await RaydiumSwap(vipConfig.isVip, connection, raydium, account, Number(config.modeType), QueteToken, BaseToken, amountIn,
-              Number(config.slippage) / 100,)
+              Number(config.slippage) / 100, _isMainnet)
             signer = signature
             const _price = ethers.utils.parseEther(price).mul(ethers.utils.parseEther(solPrice)).div(ethers.utils.parseEther('1'))
             _tokenPrice = ethers.utils.formatEther(_price)

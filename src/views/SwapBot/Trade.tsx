@@ -18,7 +18,7 @@ import BN from "bn.js";
 import { ethers } from 'ethers'
 import { fetcher } from '@/utils'
 import { initSdk, txVersion } from '@/Dex/Raydium'
-import { BANANATOOLS_ADDRESS, SWAP_BOT_FEE, PUMP_SWAP_BOT_FEE, isMainnet } from '@/config'
+import { BANANATOOLS_ADDRESS, SWAP_BOT_FEE, PUMP_SWAP_BOT_FEE } from '@/config'
 import { SOL_TOKEN } from '@/config/Token'
 import { priorityFees } from '@/utils/addPriorityFees'
 import { delay, getRandomNumber, getSPLBalance, getCurrentTimestamp } from './utils';
@@ -90,6 +90,7 @@ export const RaydiumSwap = (
   BaseToken: PublicKey,
   amountIn: number,//不需要精度
   slippage: number,
+  isMainnet: boolean
 ) => {
   return new Promise(async (resolve: ({ signature, price }) => void, reject) => {
     try {
@@ -394,7 +395,7 @@ export const getSolPrice = async () => {
 export const getPumpPrice = async (
   sdk: PumpFunSDK,
   BseToken: PublicKey,
-  solPrice: string
+  solPrice: string,
 ) => {
   try {
     const tokenPool = await sdk.getBondingCurveAccount(BseToken)
@@ -412,6 +413,7 @@ export const getRayDiumPrice = async (
   raydium: Raydium,
   QueteToken: PublicKey,
   BsetToken: PublicKey,
+  isMainnet: boolean
 ) => {
   try {
     let price = '' //价格

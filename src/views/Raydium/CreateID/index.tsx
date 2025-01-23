@@ -15,8 +15,9 @@ import { Header, SelectToken, Hint, Result } from '@/components'
 import { useIsVip } from '@/hooks';
 import { getTxLink, addPriorityFees } from '@/utils'
 import { SOL, PUMP } from '@/config/Token'
-import { Input_Style, Button_Style, OPENBOOK_PROGRAM_ID, MARKET_FEE, BANANATOOLS_ADDRESS } from '@/config'
+import { Input_Style, Button_Style, MARKET_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { Page } from '@/styles'
+import { useConfig } from '@/hooks';
 import type { Token_Type } from '@/type'
 import {
   EVENT_QUEUE_LENGTH,
@@ -62,6 +63,7 @@ function CreateID() {
   const { connection } = useConnection();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
   const vipConfig = useIsVip()
+  const { OPENBOOK_PROGRAM_ID } = useConfig()
   const [baseToken, setBaseToken] = useState<Token_Type>(PUMP)
   const [token, setToken] = useState<Token_Type>(SOL)
   const [isOptions, setIsOptions] = useState(false)

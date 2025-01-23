@@ -16,6 +16,7 @@ import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-
 import { Input_Style, Button_Style, Text_Style, BANANATOOLS_ADDRESS, CREATE_TOKEN_FEE, Text_Style1 } from '@/config'
 import { getTxLink, addPriorityFees } from '@/utils'
 import { useIsVip } from '@/hooks';
+import { useConfig } from '@/hooks';
 import { getAsset } from '@/utils/sol'
 import type { TOKEN_TYPE } from '@/type'
 import { Vanity, UpdataImage, Header, Hint, Result } from '@/components'
@@ -27,7 +28,7 @@ const { TextArea } = Input
 export const DEFAULT_COMMITMENT: Commitment = "finalized";
 
 function CreateToken() {
-
+  const { _rpcUrl } = useConfig()
   const { publicKey, sendTransaction } = useWallet()
   const { t } = useTranslation()
   const [messageApi, contextHolder] = message.useMessage();
@@ -92,7 +93,7 @@ function CreateToken() {
   const getTokenMetadata = async () => {
     try {
       setIsSearch(true)
-      const data = await getAsset(connection, tokenAddress)
+      const data = await getAsset(connection, tokenAddress, _rpcUrl)
       console.log(data, 'data')
       const {
         name, symbol, description, website, twitter,

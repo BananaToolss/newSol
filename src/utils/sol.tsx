@@ -1,10 +1,9 @@
 import axios from 'axios'
 import { PublicKey, Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Metadata, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
-import { NetworkURL } from '@/config'
 import { fetcher } from './'
 
-export const getAsset = (connection: Connection, token: string) => {
+export const getAsset = (connection: Connection, token: string, NetworkURL: string) => {
   return new Promise(async (resolve: (value: any) => void, reject) => {
     try {
       let _data = JSON.stringify({
@@ -97,7 +96,7 @@ export const getAsset = (connection: Connection, token: string) => {
   })
 }
 
-export const getTokenAccountsByOwner = async (token: string) => {
+export const getTokenAccountsByOwner = async (token: string, NetworkURL: string) => {
   try {
     let _data = JSON.stringify({
       "jsonrpc": "2.0",
@@ -131,7 +130,7 @@ export const getTokenAccountsByOwner = async (token: string) => {
   }
 }
 
-export const getMultipleAccounts = (accounts: string[]) => {
+export const getMultipleAccounts = (accounts: string[], NetworkURL: string) => {
   return new Promise(async (resolve: (value: number[]) => void, reject) => {
     try {
       let _data = JSON.stringify({

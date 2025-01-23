@@ -9,6 +9,7 @@ import { createCloseAccountInstruction, createBurnCheckedInstruction } from '@so
 import { BANANATOOLS_ADDRESS, CLOSE_FEE, CLOSE_VALUE } from '@/config';
 import { Header, Hint1, Result } from '@/components';
 import { useIsVip } from '@/hooks';
+import { useConfig } from '@/hooks';
 import { getAllToken } from '@/utils/newSol'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
@@ -22,6 +23,7 @@ import {
 function CloseAccount() {
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
   const { connection } = useConnection();
+  const { network } = useConfig()
   const [api, contextHolder1] = notification.useNotification();
   const [allTokenArr, setAllTokenArr] = useState<Token_Type[]>([]) //有余额
   const [allTokenArr0, setAllTokenArr0] = useState<Token_Type[]>([]) //余额未0
@@ -47,7 +49,7 @@ function CloseAccount() {
   const getAccountAllToken = async () => {
     try {
       setIsSearch(true)
-      const data = await getAllToken(publicKey.toBase58())
+      const data = await getAllToken(publicKey.toBase58(), network)
 
       const tokenArr: Token_Type[] = []
       const tokenArr0: Token_Type[] = []

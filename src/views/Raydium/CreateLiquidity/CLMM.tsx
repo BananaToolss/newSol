@@ -13,8 +13,9 @@ import Decimal from 'decimal.js'
 import BN from 'bn.js'
 import { initSdk, txVersion } from '@/Dex/Raydium'
 import { getTxLink, addPriorityFees } from '@/utils'
-import { Input_Style, Button_Style, CREATE_POOL_FEE, BANANATOOLS_ADDRESS, isMainnet, base } from '@/config'
+import { Input_Style, Button_Style, CREATE_POOL_FEE, BANANATOOLS_ADDRESS } from '@/config'
 import { SOL, PUMP, USDT } from '@/config/Token'
+import { useConfig } from '@/hooks';
 import type { Token_Type } from '@/type'
 import { Header, SelectToken, Result, Hint } from '@/components'
 import { devConfigs } from './utils'
@@ -24,6 +25,7 @@ import { CreatePool } from './style'
 function CreateLiquidity() {
   const [api, contextHolder1] = notification.useNotification();
   const { connection } = useConnection();
+  const { _isMainnet } = useConfig()
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
 
   const [baseToken, setBaseToken] = useState<Token_Type>(PUMP)
@@ -79,7 +81,7 @@ function CreateLiquidity() {
       //  const clmmConfigs = devConfigs // devnet configs
 
       const execute = await raydium.clmm.createPool({
-        programId: isMainnet ? CLMM_PROGRAM_ID : DEVNET_PROGRAM_ID.CLMM,
+        programId: _isMainnet ? CLMM_PROGRAM_ID : DEVNET_PROGRAM_ID.CLMM,
         // programId: DEVNET_PROGRAM_ID.CLMM,
         mint1,
         mint2,

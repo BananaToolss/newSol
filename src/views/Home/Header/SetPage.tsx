@@ -1,7 +1,9 @@
 
 import { useState, useEffect } from 'react'
-import type { MenuProps } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
 import { Dropdown, Segmented, Radio, Input, Button } from 'antd';
+import { rpcUrl, isMainnet } from '@/store/countterSlice'
+import { rpcUrlChange, isMainnetChange } from '@/store/countterSlice';
 import { SettingPage } from './style'
 
 const Options = [
@@ -11,30 +13,51 @@ const Options = [
 ]
 
 function SettingConfig() {
+  const disPatch = useDispatch()
+  const _rpcUrl = useSelector(rpcUrl)
+  const isMain = useSelector(isMainnet)
 
   const [gasPrice, setGasPrice] = useState(0)
-  const [isMain, setIsMain] = useState(false)
+
   const [rpcOptions, setRpcOptions] = useState([
     {
       label: '通用地区',
-      value: "https://mainnet.block-engine.jito.wtf",
+      value: "https://vivianne-g1n6x7-fast-mainnet.helius-rpc.com/",
       time: '',
       color: '',
     },
     {
       label: '🇳🇱阿姆斯特丹',
-      value: "https://amsterdam.mainnet.block-engine.jito.wtf",
+      value: "https://mainnet.helius-rpc.com/?api-key=1ebd5af0-f37c-4aaa-861e-2d8f5e656516",
+      time: '',
+      color: '',
+    },
+    {
+      label: '通用地区',
+      value: "https://helius-rpc.slerf.tools/",
+      time: '',
+      color: '',
+    },
+    {
+      label: '通用地区',
+      value: "https://mainnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075",
       time: '',
       color: '',
     },
   ])
-  const [rpcUrl, setRpcUrl] = useState(rpcOptions[0].value)
+
   useEffect(() => {
     getAllTime()
-  }, [rpcUrl])
+  }, [_rpcUrl])
 
   const segmChange = (e) => {
     setGasPrice(Number(e))
+  }
+  const isMainChange = (e) => {
+    if (isMain) { //dev
+      disPatch(rpcUrlChange('https://devnet.helius-rpc.com/?api-key=812db19f-55d0-417a-8e7e-0ade8df22075'))
+    }
+    disPatch(isMainnetChange(!isMain))
   }
 
   const getUrlTime = (url: string) => {
@@ -110,8 +133,8 @@ function SettingConfig() {
 
       <div className='rpc mb-3'>网络选择</div>
       <div className='flex'>
-        <div className='mr-6'><Radio checked={isMain} onChange={() => setIsMain(!isMain)} />主网</div>
-        <div><Radio checked={!isMain} onChange={() => setIsMain(!isMain)} />测试网</div>
+        <div className='mr-6'><Radio checked={isMain} onChange={isMainChange} />主网</div>
+        <div><Radio checked={!isMain} onChange={isMainChange} />测试网</div>
       </div>
     </SettingPage>
   )
