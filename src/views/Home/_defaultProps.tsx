@@ -177,7 +177,11 @@ export default {
           },
         ]
       },
-
+      {
+        path: 'https://www.bananatools.top',
+        name: 'BSC一键发币',
+        icon: <img src={getImage('bnb.png')} width={16} height={16} />,
+      },
     ],
   },
   location: {

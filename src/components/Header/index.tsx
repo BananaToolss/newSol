@@ -1,7 +1,7 @@
 import styled from 'styled-components'
 import { Text_Style } from '@/config'
 
-const HeaderS = styled.div`
+const HeaderS = styled.header`
   .hint {
     font-size: 14px;
     color: #706c6c;
@@ -24,7 +24,7 @@ function Header(props: PropsType) {
   return (
     <HeaderS>
       <h1 className={`${Text_Style} text-4xl`}>{title}</h1>
-      <p className='hint'>{hint}</p>
+      <h2 className='hint'>{hint}</h2>
     </HeaderS>
   )
 }

@@ -1,0 +1,8 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow:
+Allow: /
+# Host
+Host: https://sol.bananatools.top/
+# Sitemaps
+Sitemap: https://sol.bananatools.top/sitemap.txt

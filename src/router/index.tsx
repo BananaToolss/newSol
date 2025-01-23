@@ -25,8 +25,8 @@ const Routers = () => {
     {
       path: '/', element: <Home />,
       children: [
-        // { path: '/', element: <App /> },
-        { index: true, element: <Navigate to='token/create' /> },
+        { path: '/', element: <App /> },
+        // { index: true, element: <Navigate to='token/create' /> },
         { path: '/404', element: <NotFound /> },
         { path: '*', element: <Navigate to="/404" replace /> },
         { path: '/swapbot', element: <SwapBot />, },
