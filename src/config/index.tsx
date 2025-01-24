@@ -1,7 +1,7 @@
 export const TELEGRAMLINK = 'https://t.me/BananaTools'
 
 
-export const PROJECT_NAME = 'Bananatools|Solana链发币平台'
+export const PROJECT_NAME = 'Bananatools一键发币平台'
 export const BANANATOOLS_ADDRESS = 'HoeFkdmh4oKFwC1wLmCkC63bSuahRhvCPWYY8sybwEyn'
 
 export const CREATE_TOKEN_FEE = 0.1 //创建代币费用
