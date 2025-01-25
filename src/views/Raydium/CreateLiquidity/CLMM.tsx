@@ -180,7 +180,7 @@ function CreateLiquidity() {
           </>
         }
 
-        <Hint title='当创建流动性至Raydium时，Raydium官方将收取0.4 SOL的手续费。为确保操作成功，请确保账户中预留至少0.5 SOL，以避免因余额不足导致添加流动性失败。' showClose />
+      
 
         <div className='btn'>
           <div className='buttonSwapper mt-4'>
