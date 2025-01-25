@@ -19,7 +19,7 @@ export const USDC: Token_Type = {
   address: USDC_TOKEN,
   name: 'USDC',
   symbol: 'USDC',
-  decimals: 9,
+  decimals: 6,
   image: getImage('usdc.png'),
   balance: ''
 }
@@ -28,7 +28,7 @@ export const USDT: Token_Type = {
   address: USDT_TOKEN,
   name: 'USDT',
   symbol: 'USDT',
-  decimals: 9,
+  decimals: 6,
   image: getImage('usdt.svg'),
   balance: ''
 }
