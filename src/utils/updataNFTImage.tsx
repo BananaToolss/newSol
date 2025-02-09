@@ -1,72 +1,99 @@
 import axios from "axios";
 import type { TOKEN_TYPE } from '../type'
 
-const BASE_URL = 'https://upload.bananatools.xyz/upload'
+const JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIyNGFhMzUwYy0zMTJhLTRhNjMtYTg4NC0zZjM3YjA1NGZhMDMiLCJlbWFpbCI6ImNjYzE4NTQxNkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJGUkExIn0seyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiYTAzZWMxMTFhMTAxMGNhYzc5ZTYiLCJzY29wZWRLZXlTZWNyZXQiOiI4MWRmMTkzZjk3OWRiZjZiMTI1YjdmMDIxNGNkYmMzNjlkNWU3YWE2NDk5NGMyZjVjNjk0NDk5MDcyMWVmYjZkIiwiZXhwIjoxNzY5OTQ0MzcxfQ.vE2k9fnJt825oVcui4c_foKxMi7fYFU3pKkrcY1LX3k'
+// const BASE_URL = 'https://scarlet-peculiar-aphid-944.mypinata.cloud/ipfs/'
+const BASE_URL = 'https://gateway.pinata.cloud/ipfs/'
+// const BASE_URL = 'https://harlequin-worried-basilisk-670.mypinata.cloud/ipfs/'
+// // const BASE_URL = 'https://ipfs.io/ipfs/'
+// const JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIyNTg0YjVmMi0yYWY0LTRmNTAtODQzMC1kYWQ0NDFmNzM1YzQiLCJlbWFpbCI6InllcjIyMDcyN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJGUkExIn0seyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiOTRlZTc4YjExN2U4ZWE4MGE4ZjkiLCJzY29wZWRLZXlTZWNyZXQiOiI5MWJhYzM4MjQyMmJjMmRjNzE4YTI1MDU0NGJlZDViYzc2YWQ1ZTJjYjAzNzc3MjQ2ZmQ1ZDIzZDAwOTA0ZGM0IiwiZXhwIjoxNzY5MDc0NDg5fQ.suamCNyBdU037TKqjp4uA5IvG6oiLkO2lwURbGE-zkc'
 
 export const upLoadImage = (data: TOKEN_TYPE, selectedFile: File | string, isFile: boolean) => {
   return new Promise(async (resolve: (value: string) => void, reject) => {
     try {
       let image_url = ''
       if (isFile) {
-        const formdata = new FormData();
-        formdata.append("logo", selectedFile);
-        const requestOptions = {
-          method: "POST",
-          body: formdata,
-        };
-        const res = await fetch(BASE_URL, requestOptions)
-        const resData = await res.text();
-        console.log(resData, 'resData')
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        const metadata = JSON.stringify({
+          name: data.symbol,
+        });
+        formData.append("pinataMetadata", metadata);
+
+        const options = JSON.stringify({
+          cidVersion: 0,
+        });
+        formData.append("pinataOptions", options);
+
+        const res = await fetch(
+          "https://api.pinata.cloud/pinning/pinFileToIPFS",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${JWT}`,
+            },
+            body: formData,
+          }
+        );
+        const resData = await res.json();
         //得到图片链接
-        image_url = `https://upload.bananatools.xyz/${resData}`
+        image_url = `${BASE_URL}${resData.IpfsHash}`
       } else {
         image_url = selectedFile as string
       }
-
       //上传元数据
       const meta_data = {
-        name: data.name, //NFT名称
-        symbol: data.symbol,
-        description: '',  //NFT描述
-        image: image_url, //NFT图像
-        extensions: {
+        pinataContent: {
+          name: data.name, //NFT名称
+          symbol: data.symbol,
+          description: '',  //NFT描述
+          image: image_url, //NFT图像
+          extensions: {
+          },
+          tags: []
         },
-        tags: []
+        pinataMetadata: {
+          name: `${data.symbol}.json`  //NFT的存储名称
+        }
       }
-      console.log(meta_data, 'meta_data')
+
+
       if (data.website) {
-        meta_data.extensions['website'] = data.website
+        meta_data.pinataContent.extensions['website'] = data.website
       }
       if (data.telegram) {
-        meta_data.extensions['telegram'] = data.telegram
+        meta_data.pinataContent.extensions['telegram'] = data.telegram
       }
       if (data.twitter) {
-        meta_data.extensions['twitter'] = data.twitter
+        meta_data.pinataContent.extensions['twitter'] = data.twitter
       }
       if (data.discord) {
-        meta_data.extensions['discord'] = data.discord
+        meta_data.pinataContent.extensions['discord'] = data.discord
       }
       if (data.description) {
-        meta_data.description = data.description
+        meta_data.pinataContent.description = data.description
       }
+      // if (data.tags) {
+      //   const tags = data.tags.split(/[,，]+/)
+      //   meta_data.pinataContent.tags = tags
+      // }
+
       console.log(meta_data, 'meta_data')
       //将NFT数据转化成JSON格式存储到变量中
-      const formdata = new FormData();
-      const metaDataFile = new File(
-        [JSON.stringify(meta_data)],
-        "metadata.json",
-        { type: "application/json" }
-      );
-      formdata.append("logo", metaDataFile);
-      const requestOptions = {
-        method: "POST",
-        body: formdata,
-      };
-      const res = await fetch(BASE_URL, requestOptions)
-      const resData = await res.text();
-      resolve(`https://upload.bananatools.xyz/${resData}`)
+      const _data = JSON.stringify(meta_data)
+
+      const result = await axios.post("https://api.pinata.cloud/pinning/pinJSONToIPFS", _data, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${JWT}`
+        }
+      });
+
+      const _url = `${BASE_URL}${result.data.IpfsHash}`
+      resolve(_url)
     } catch (error) {
-      reject(error)
+      reject(error);
     }
   })
 }
+
