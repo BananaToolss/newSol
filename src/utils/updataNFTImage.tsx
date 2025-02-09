@@ -13,7 +13,7 @@ export const upLoadImage = (data: TOKEN_TYPE, selectedFile: File | string, isFil
         formdata.append("logo", selectedFile);
       } else {
         formdata.append("image", selectedFile);
-        BASE_URL = `${BASE_URL}1`
+        BASE_URL = `${BASE_URL}s`
       }
 
       formdata.append("name", data.name);
