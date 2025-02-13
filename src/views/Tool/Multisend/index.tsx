@@ -249,6 +249,10 @@ function Multisend() {
       setTotalTx(nbTx);
 
       const totalSiner: VersionedTransaction[][] = []
+      let from = null
+      if(token.address !== SOL.address) {
+        from = await getAt(new PublicKey(token.address), wallet.publicKey);
+      }
       //比如201     nbtx = 3
       for (let i = 0; i < nbTx; i++) { //全部地址按100地址分组
         let Txtotal: VersionedTransaction[] = []
@@ -270,7 +274,6 @@ function Multisend() {
                 })
               );
             } else {
-              let from = await getAt(new PublicKey(token.address), wallet.publicKey);
               //获取at
               let to = await getAt(new PublicKey(token.address), receiverPubkey);
               //获取ata
