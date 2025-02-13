@@ -344,6 +344,8 @@ function Multisend() {
       }
       if (index < totalSiner.length - 1) {
         signAllTransactions1(totalSiner, index + 1)
+      } else {
+        setIsSending(false);
       }
     } catch (error) {
       console.log(error, 'error')
