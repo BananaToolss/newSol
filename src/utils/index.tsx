@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 
-
+export { default as addPriorityFees_no } from './addPriorityFees_no'
 export { default as addPriorityFees } from './addPriorityFees'
 export { default as addPriorityFeesJito } from './addPriorityFeesJito'
 

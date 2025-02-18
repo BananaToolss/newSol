@@ -7,7 +7,8 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
-  VersionedTransaction
+  VersionedTransaction,
+  SimulateTransactionConfig
 } from "@solana/web3.js";
 import copy from 'copy-to-clipboard';
 import {
@@ -21,13 +22,16 @@ import {
   getMint,
   getTokenMetadata,
 } from "@solana/spl-token";
+import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios'
+import { rpcUrl, isMainnet } from '@/store/countterSlice'
 import { ethers, BigNumber } from 'ethers'
 import { useTranslation } from "react-i18next";
 import { Header } from '@/components'
 import { isMobile } from 'react-device-detect'
 import { useIsVip } from '@/hooks';
 import { Button_Style, BANANATOOLS_ADDRESS, MULTISEND_FEE, Input_Style } from '@/config'
-import { IsAddress, addPriorityFees, addressHandler } from '@/utils'
+import { IsAddress, addPriorityFees, addressHandler, addPriorityFees_no } from '@/utils'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
 import { Modal, Upload, SelectToken, ResultArr, Hint } from '@/components'
@@ -42,7 +46,8 @@ interface Receiver_Type {
   amount: string
   remove: number,
   state: number //0失败 1成功
-  key: number
+  key: number,
+  to?: string
 }
 
 const nbPerTx = 100 //100个地址签名一次
@@ -56,12 +61,13 @@ function Multisend() {
   const { connection } = useConnection();
   const wallet = useWallet();
   const { publicKey, sendTransaction, signAllTransactions } = useWallet();
+  const _rpcUrl = useSelector(rpcUrl)
   const [textValue, setTextValue] = useState('')
   const [balance, setBalance] = useState('')
   const [needAmount, setNeedAmount] = useState('')
   const [isSending, setIsSending] = useState<boolean>(false);
   const vipConfig = useIsVip()
-  const [signature, setSignature] = useState<string[]>([]);
+
   const [isFile, setIsFile] = useState(false)
   const [token, setToken] = useState<Token_Type>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -81,11 +87,7 @@ function Multisend() {
   useEffect(() => {
     setErrorText([])
   }, [textValue])
-  useEffect(() => {
-    if (signature.length > 0 && signature.length === totalSender) {
-      getSignatureState()
-    }
-  }, [signature])
+
 
   const textValueChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTextValue(e.target.value)
@@ -192,14 +194,8 @@ function Multisend() {
         nbTx = Math.floor(Receivers.length / nbPerTx) + 1;
       }
       setTotalTx(nbTx);
-      //比如201     nbtx = 3
-      for (let i = 0; i < nbTx; i++) { //全部地址按100地址分组
-        const newReceivers = Receivers.slice(i * nbPerTx, (i + 1) * nbPerTx)
-        for (let j = 0; j < newReceivers.length / NUM; j++) {
-          totalTrans += 1
-        }
-      }
-      setTotalSender(totalTrans)
+ 
+      setTotalSender(Math.ceil(Receivers.length / NUM))
     } catch (error) {
       console.log(error, 'error')
       messageApi.error("Please enter at least one receiver and one amount!");
@@ -236,157 +232,153 @@ function Multisend() {
     try {
       if (Number(needAmount) > Number(token.balance)) return api.error({ message: "代币余额不足" })
       setIsSendEnd(false)
-      setSignature([]);
-      const Receivers: Receiver_Type[] = senderConfig;
+
       setIsSending(true);
-      const NUM = token.address === SOL.address ? SendSolNum : SendTokenNum
-      let nbTx: number; // 总签名次数
-      if (Receivers.length % nbPerTx == 0) {
-        nbTx = Receivers.length / nbPerTx;
-      } else {
-        nbTx = Math.floor(Receivers.length / nbPerTx) + 1;
-      }
-      setTotalTx(nbTx);
 
-      const totalSiner: VersionedTransaction[][] = []
+      ///new
+      const isSol = token.address === SOL.address ? true : false
+      const senderLength = isSol ? 19 : 9
+
+      let Receivers: Receiver_Type[] = []
       let from = null
-      if(token.address !== SOL.address) {
+      if (!isSol) {
         from = await getAt(new PublicKey(token.address), wallet.publicKey);
+        for (let index = 0; index < senderConfig.length; index++) {
+          let to = await getAt(new PublicKey(token.address), new PublicKey(senderConfig[index].receiver))
+          const user = { ...senderConfig[index] }
+          user.to = to.toBase58()
+          Receivers.push(user)
+        }
+      } else {
+        Receivers = senderConfig
       }
-      //比如201     nbtx = 3
-      for (let i = 0; i < nbTx; i++) { //全部地址按100地址分组
-        let Txtotal: VersionedTransaction[] = []
-        const newReceivers = Receivers.slice(i * nbPerTx, (i + 1) * nbPerTx)
+      console.log(Receivers, 'Receivers')
 
-        for (let j = 0; j < newReceivers.length / NUM; j++) {
-          const _newReceivers = newReceivers.slice(j * NUM, (j + 1) * NUM) //总交易次数
+      let Txtotal: VersionedTransaction[] = []
+      for (let i = 0; i < Math.ceil(Receivers.length / senderLength); i++) {
+        const _Receivers = Receivers.slice(i * senderLength, (i + 1) * senderLength)
 
-          let Tx = new Transaction();
-          for (let index = 0; index < _newReceivers.length; index++) {
-            const receiverPubkey = new PublicKey(_newReceivers[index].receiver);
-            const amount = Number(_newReceivers[index].amount);
-            if (token.address === SOL.address) {
-              Tx.add(
-                SystemProgram.transfer({
-                  fromPubkey: wallet.publicKey,
-                  toPubkey: receiverPubkey,
-                  lamports: amount * LAMPORTS_PER_SOL,
-                })
-              );
-            } else {
-              //获取at
-              let to = await getAt(new PublicKey(token.address), receiverPubkey);
-              //获取ata
-              let ata = await getAta(new PublicKey(token.address), receiverPubkey);
-              if (ata == undefined) {
-                //创建
-                Tx.add(
-                  createAssociatedTokenAccountInstruction(
-                    wallet.publicKey,
-                    to,
-                    new PublicKey(receiverPubkey),
-                    new PublicKey(token.address),
-                    TOKEN_PROGRAM_ID,
-                    ASSOCIATED_TOKEN_PROGRAM_ID
-                  )
-                );
-              }
-              //转账
-              Tx.add(
-                createTransferCheckedInstruction(
-                  from,
-                  new PublicKey(token.address),
-                  to,
-                  wallet.publicKey,
-                  amount * 10 ** token.decimals,
-                  token.decimals
-                )
-              )
-            }
-          }
-          if (!vipConfig.isVip) {
-            const fee = SystemProgram.transfer({
-              fromPubkey: publicKey,
-              toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-              lamports: MULTISEND_FEE * LAMPORTS_PER_SOL,
+        let Tx = new Transaction();
+        if (isSol) {
+          for (let j = 0; j < _Receivers.length; j++) {
+            const receiverPubkey = new PublicKey(_Receivers[j].receiver)
+            const amount = Number(_Receivers[j].amount)
+            const transfer = SystemProgram.transfer({
+              fromPubkey: wallet.publicKey,
+              toPubkey: receiverPubkey,
+              lamports: amount * LAMPORTS_PER_SOL,
             })
-            Tx.add(fee)
+            Tx.add(transfer)
           }
-          const versionedTx = await addPriorityFees(connection, Tx, publicKey)
+        } else {
+          const toArr = []
+          for (let j = 0; j < _Receivers.length; j++) {
+            toArr.push(_Receivers[j].to)
+          }
+          let _data = JSON.stringify({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "getMultipleAccounts",
+            "params": [
+              toArr,
+              {
+                "encoding": "jsonParsed"
+              }
+            ]
+          });
+          let config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: _rpcUrl,
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            data: _data
+          };
+          const response = await axios.request(config)
+          const value = response.data.result.value
 
-          Txtotal.push(versionedTx)
+          for (let j = 0; j < _Receivers.length; j++) {
+            const receiverPubkey = new PublicKey(_Receivers[j].receiver)
+            const amount = Number(_Receivers[j].amount)
+            const to = new PublicKey(_Receivers[j].to)
+            if (!value[j]) {
+              const create = createAssociatedTokenAccountInstruction(
+                wallet.publicKey,
+                to,
+                new PublicKey(receiverPubkey),
+                new PublicKey(token.address),
+                TOKEN_PROGRAM_ID,
+                ASSOCIATED_TOKEN_PROGRAM_ID
+              )
+              Tx.add(create)
+            }
+            const tranfer = createTransferCheckedInstruction(
+              from,
+              new PublicKey(token.address),
+              to,
+              wallet.publicKey,
+              amount * 10 ** token.decimals,
+              token.decimals
+            )
+            Tx.add(tranfer)
+          }
         }
-        console.log(Txtotal, 'Txtotal')
-        totalSiner.push(Txtotal)
+        if (!vipConfig.isVip) {
+          const fee = SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+            lamports: MULTISEND_FEE * LAMPORTS_PER_SOL,
+          })
+          Tx.add(fee)
+        }
+        const versionedTx = await addPriorityFees_no(connection, Tx, publicKey)
+        Txtotal.push(versionedTx)
       }
-      signAllTransactions1(totalSiner, 0)
-    } catch (error) {
-      console.log(error, 'error')
-      setIsSending(false);
-      const err = (error as any)?.message;
-      api.error({ message: err })
-    }
-  }
+      console.log(Txtotal, 'Txtotal')
 
-  const signAllTransactions1 = async (totalSiner: VersionedTransaction[][], index: number) => {
-    try {
-      setCurrentTx(index + 1)
-      const signedTransactions = await signAllTransactions(totalSiner[index])
-      for (const signedTx of signedTransactions) {
-        try {
-          const createAccountSignature = await connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: true })
-          console.log(createAccountSignature, 'createAccountSignature')
-          setSignature((item) => [...item, createAccountSignature])
-          await new Promise(resolve => setTimeout(resolve, 200));
-        } catch (error) {
-          console.error("Transaction failed:", error);
-          setIsSending(false);
-          const _err = (error as any)?.message;
-          api.error({ message: _err })
+      const signedTransactions = await signAllTransactions(Txtotal)
+      const config: SimulateTransactionConfig = {
+        commitment: 'confirmed'
+      }
+
+      const signerArr = []
+      const errorArr = []
+      console.log('开始')
+      for (let index = 0; index < signedTransactions.length; index++) {
+        const result = await connection.simulateTransaction(Txtotal[index], config)
+        if (result.value.err) {
+          console.log(result, '执行报错')
+          errorArr.push(index)
+        } else {
+          const createAccountSignature = await connection.sendRawTransaction(signedTransactions[index].serialize(), { skipPreflight: true })
+          console.log(createAccountSignature, 'createAccountSignature', index)
+          signerArr.push(createAccountSignature)
         }
       }
-      if (index < totalSiner.length - 1) {
-        signAllTransactions1(totalSiner, index + 1)
-      } 
-    } catch (error) {
-      console.log(error, 'error')
-      setIsSending(false);
-      const err = (error as any)?.message;
-      api.error({ message: err })
-    }
-  }
-  // 最终结果
-  const getSignatureState = async () => {
-    try {
-      const result = await connection.getSignatureStatuses(signature)
+      const result = await connection.getSignatureStatuses(signerArr)
       console.log(result, 'result')
-      let isAll = true
+
       const state = []
       result.value.forEach(item => {
-        if (!item) isAll = false
+        // state.push(item.err ? 0 : 1)
+        state.push(1)
       })
-      if (isAll) {
-        result.value.forEach(item => {
-          state.push(item.err ? 0 : 1)
-        })
-      }
-      if (result.value.length !== signature.length || !isAll) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        getSignatureState()
-      } else {
+      errorArr.forEach(item => {
+        state.splice(item, 0, 0)
+      })
 
-        const NUM = token.address === SOL.address ? SendSolNum : SendTokenNum
-        const _config = [...senderConfig]
-        state.forEach((item, index) => {
-          for (let i = 0; i < NUM; i++) {
-            if (_config[i + index * NUM]) _config[i + index * NUM].state = item
-          }
-        })
-        setSenderConfig(_config)
-        setIsSendEnd(true)
-        setIsSending(false);
-        api.success({ message: "执行完成" })
-      }
+      const _config = [...senderConfig]
+      state.forEach((item, index) => {
+        for (let i = 0; i < senderLength; i++) {
+          if (_config[i + index * senderLength]) _config[i + index * senderLength].state = item
+        }
+      })
+
+      setSenderConfig(_config)
+      setIsSendEnd(true)
+      setIsSending(false);
+      api.success({ message: "执行完成" })
     } catch (error) {
       console.log(error, 'error')
       setIsSending(false);
@@ -568,7 +560,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
             </div>
           </>
         }
-
+{/* 
         <div className="my-2">
           {isSending && currentTx != null && totalTx != null ? (
             <div className="font-semibold text-xl mt-4 text-teal-500">
@@ -577,7 +569,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
           ) : (
             <div className="h-[27px]"></div>
           )}
-        </div>
+        </div> */}
       </MultisendPage>
     </Page >
   )
