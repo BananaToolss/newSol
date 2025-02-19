@@ -8,7 +8,8 @@ import {
   SystemProgram,
   Transaction,
   VersionedTransaction,
-  SimulateTransactionConfig
+  SimulateTransactionConfig,
+  ComputeBudgetProgram
 } from "@solana/web3.js";
 import copy from 'copy-to-clipboard';
 import {
@@ -31,13 +32,13 @@ import { Header } from '@/components'
 import { isMobile } from 'react-device-detect'
 import { useIsVip } from '@/hooks';
 import { Button_Style, BANANATOOLS_ADDRESS, MULTISEND_FEE, Input_Style } from '@/config'
-import { IsAddress, addPriorityFees, addressHandler, addPriorityFees_no } from '@/utils'
+import { IsAddress, getAdaptivePriorityFee, addressHandler, addPriorityFees_no, delay } from '@/utils'
 import { Page } from '@/styles';
 import type { Token_Type } from '@/type'
 import { Modal, Upload, SelectToken, ResultArr, Hint } from '@/components'
 import { MultisendPage, SENDINFO, ERROR_PAGE } from './style'
 import { SOL } from '@/config/Token';
-
+import Decimal from 'decimal.js';
 
 const { TextArea } = Input
 
@@ -194,7 +195,7 @@ function Multisend() {
         nbTx = Math.floor(Receivers.length / nbPerTx) + 1;
       }
       setTotalTx(nbTx);
- 
+
       setTotalSender(Math.ceil(Receivers.length / NUM))
     } catch (error) {
       console.log(error, 'error')
@@ -226,159 +227,218 @@ function Multisend() {
     }
   };
 
-
+  function removeDuplicates(array: Receiver_Type[]) {
+    const seen = new Set();
+    return array.reduce((acc: Receiver_Type[], item: any) => {
+      if (!seen.has(item.receiver)) {
+        seen.add(item.receiver);
+        acc.push(item);
+      }
+      return acc;
+    }, []);
+  }
   //发送
   const senderTransfer = async () => {
     try {
       if (Number(needAmount) > Number(token.balance)) return api.error({ message: "代币余额不足" })
-      setIsSendEnd(false)
-
+      // const uniqueList = removeDuplicates(senderConfig);
+      // const deweight = uniqueList.length < senderConfig.length;
+      // if (deweight == true) {
+      //   return message.error(t("有重复的钱包地址"))
+      // }
       setIsSending(true);
-
       ///new
       const isSol = token.address === SOL.address ? true : false
       const senderLength = isSol ? 19 : 9
+      const totalAddresses = senderConfig.length
 
-      let Receivers: Receiver_Type[] = []
+      let Receivers: Receiver_Type[] = senderConfig
       let from = null
+
+      let sumJudgment: any[] = []
+      const senderToArr: PublicKey[] = [];
+
       if (!isSol) {
         from = await getAt(new PublicKey(token.address), wallet.publicKey);
         for (let index = 0; index < senderConfig.length; index++) {
           let to = await getAt(new PublicKey(token.address), new PublicKey(senderConfig[index].receiver))
-          const user = { ...senderConfig[index] }
-          user.to = to.toBase58()
-          Receivers.push(user)
+          senderToArr.push(to)
         }
-      } else {
-        Receivers = senderConfig
+        const sumToSlice = [];
+        for (let i = 0; i < senderToArr.length; i += 100) {
+          sumToSlice.push(senderToArr.slice(i, i + 100));
+        }
+        for (const account of sumToSlice) {
+          const judgment = await connection.getMultipleAccountsInfo(account, "processed")
+          sumJudgment = [...sumJudgment, ...judgment];
+        }
+        console.log(sumJudgment, "余额");
       }
       console.log(Receivers, 'Receivers')
+      let sumFee = 0
+      if (vipConfig.isVip) {
+        sumFee = 0
+      } else {
+        sumFee = Math.ceil(totalAddresses / senderLength) * 0.008
+      }
+      let sumRent: number = 0
+      sumJudgment.forEach((item: any) => {
+        if (item == undefined) {
+          sumRent += 0.00204
+        }
+      })
+      const sumGas = Math.ceil(totalAddresses / 8) * 0.00026
+      const sum = Number((sumFee + sumRent + sumGas).toFixed(9))
+      const ye = await connection.getBalance(wallet.publicKey, "processed")
+      if ((ye / 10 ** 9) < sum) {
+        setIsSending(false)
+        return message.error(t(`钱包SOL可能不足,交易失败率高`));
+      }
 
-      let Txtotal: VersionedTransaction[] = []
-      for (let i = 0; i < Math.ceil(Receivers.length / senderLength); i++) {
-        const _Receivers = Receivers.slice(i * senderLength, (i + 1) * senderLength)
+      const newAccountLists: Receiver_Type[][] = [] //200个一组 发送对象
+      const tokenToArr = []
+      const tokenToBa = []
 
-        let Tx = new Transaction();
-        if (isSol) {
-          for (let j = 0; j < _Receivers.length; j++) {
-            const receiverPubkey = new PublicKey(_Receivers[j].receiver)
-            const amount = Number(_Receivers[j].amount)
-            const transfer = SystemProgram.transfer({
-              fromPubkey: wallet.publicKey,
-              toPubkey: receiverPubkey,
-              lamports: amount * LAMPORTS_PER_SOL,
-            })
-            Tx.add(transfer)
+      const length = isSol ? 228 : 225
+      for (let i = 0; i < Receivers.length; i += length) {
+        newAccountLists.push(Receivers.slice(i, i + length))
+        tokenToArr.push(senderToArr.slice(i, i + length))
+        tokenToBa.push(sumJudgment.slice(i, i + length))
+      }
+
+      const fee = await getAdaptivePriorityFee(connection, "medium")
+      let signerArrArr = []
+      for (let j = 0; j < newAccountLists.length; j++) {
+        const oneAccountList = newAccountLists[j]
+        const toes = tokenToArr[j];
+        let judgments: any[] = tokenToBa[j]
+
+        let i = 0;
+        const cachedAccounts = new Map();
+        for (const account of oneAccountList) {
+          const accountKey = account.receiver;
+          const amount = account.amount
+          if (isSol) {
+            cachedAccounts.set(accountKey, { amount });
+          } else {
+            const to = toes[i]
+            const ata = judgments[i]
+            cachedAccounts.set(accountKey, { amount, to, ata });
           }
-        } else {
-          const toArr = []
-          for (let j = 0; j < _Receivers.length; j++) {
-            toArr.push(_Receivers[j].to)
-          }
-          let _data = JSON.stringify({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "getMultipleAccounts",
-            "params": [
-              toArr,
-              {
-                "encoding": "jsonParsed"
-              }
-            ]
+          i++
+        }
+        const chunks:Receiver_Type[][] = [];
+        for (let i = 0; i < oneAccountList.length; i += senderLength) {
+          chunks.push(oneAccountList.slice(i, i + senderLength));
+        }
+        const txs = []
+        for (const chunk of chunks) {
+          const tx = new Transaction();
+          const instruction1 = ComputeBudgetProgram.setComputeUnitLimit({
+            units: 600000,
           });
-          let config = {
-            method: 'post',
-            maxBodyLength: Infinity,
-            url: _rpcUrl,
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            data: _data
-          };
-          const response = await axios.request(config)
-          const value = response.data.result.value
-
-          for (let j = 0; j < _Receivers.length; j++) {
-            const receiverPubkey = new PublicKey(_Receivers[j].receiver)
-            const amount = Number(_Receivers[j].amount)
-            const to = new PublicKey(_Receivers[j].to)
-            if (!value[j]) {
-              const create = createAssociatedTokenAccountInstruction(
-                wallet.publicKey,
-                to,
-                new PublicKey(receiverPubkey),
-                new PublicKey(token.address),
-                TOKEN_PROGRAM_ID,
-                ASSOCIATED_TOKEN_PROGRAM_ID
-              )
-              Tx.add(create)
+          const instruction2 = ComputeBudgetProgram.setComputeUnitPrice({
+            microLamports: 1_000_000,
+          });
+          tx.add(
+            instruction1,
+            instruction2
+          )
+          for (const account of chunk) {
+            const cachedData = cachedAccounts.get(account.receiver);
+            if (isSol) {
+              const transfer = SystemProgram.transfer({
+                fromPubkey: wallet.publicKey,
+                toPubkey: new PublicKey(account.receiver),
+                lamports: Number(account.amount) * LAMPORTS_PER_SOL,
+              })
+              tx.add(transfer)
+            } else {
+              const to = cachedData.to;
+              const ata = cachedData.ata;
+              if (ata == undefined) {
+                tx.add(
+                  createAssociatedTokenAccountInstruction(
+                    wallet.publicKey,
+                    to,
+                    new PublicKey(account.receiver),
+                    new PublicKey(token.address),
+                    TOKEN_PROGRAM_ID,
+                    ASSOCIATED_TOKEN_PROGRAM_ID
+                  )
+                );
+              }
+              tx.add(
+                createTransferCheckedInstruction(
+                  from,
+                  new PublicKey(token.address),
+                  to,
+                  wallet.publicKey,
+                  Number(account.amount) * 10 ** token.decimals,
+                  token.decimals
+                )
+              );
             }
-            const tranfer = createTransferCheckedInstruction(
-              from,
-              new PublicKey(token.address),
-              to,
-              wallet.publicKey,
-              amount * 10 ** token.decimals,
-              token.decimals
-            )
-            Tx.add(tranfer)
           }
+          if (!vipConfig.isVip) {
+            const fee = SystemProgram.transfer({
+              fromPubkey: publicKey,
+              toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
+              lamports: MULTISEND_FEE * LAMPORTS_PER_SOL,
+            })
+            tx.add(fee)
+          }
+          txs.push(tx)
         }
-        if (!vipConfig.isVip) {
-          const fee = SystemProgram.transfer({
-            fromPubkey: publicKey,
-            toPubkey: new PublicKey(BANANATOOLS_ADDRESS),
-            lamports: MULTISEND_FEE * LAMPORTS_PER_SOL,
-          })
-          Tx.add(fee)
+        const { blockhash } = await connection.getLatestBlockhash("processed");
+        for (const tx of txs) {
+          tx.recentBlockhash = blockhash;
+          tx.feePayer = wallet.publicKey;
         }
-        const versionedTx = await addPriorityFees_no(connection, Tx, publicKey)
-        Txtotal.push(versionedTx)
-      }
-      console.log(Txtotal, 'Txtotal')
+        const signedTransactions = await wallet.signAllTransactions!(txs);
+        console.log('开始')
+        const signerArr = []
 
-      const signedTransactions = await signAllTransactions(Txtotal)
-      const config: SimulateTransactionConfig = {
-        commitment: 'confirmed'
-      }
-
-      const signerArr = []
-      const errorArr = []
-      console.log('开始')
-      for (let index = 0; index < signedTransactions.length; index++) {
-        const result = await connection.simulateTransaction(Txtotal[index], config)
-        if (result.value.err) {
-          console.log(result, '执行报错')
-          errorArr.push(index)
-        } else {
+        for (let index = 0; index < signedTransactions.length; index++) {
           const createAccountSignature = await connection.sendRawTransaction(signedTransactions[index].serialize(), { skipPreflight: true })
           console.log(createAccountSignature, 'createAccountSignature', index)
           signerArr.push(createAccountSignature)
+          await delay(300)
         }
+        signerArrArr = signerArrArr.concat(signerArr)
       }
-      const result = await connection.getSignatureStatuses(signerArr)
+      await delay(3000)
+      const signatureresult = await connection.getSignatureStatuses(signerArrArr)
+
+      let result: any[] = []
+      signatureresult.value.forEach(i => {
+        result.push(i)
+      })
+      let state = []
       console.log(result, 'result')
-
-      const state = []
-      result.value.forEach(item => {
-        // state.push(item.err ? 0 : 1)
-        state.push(1)
-      })
-      errorArr.forEach(item => {
-        state.splice(item, 0, 0)
-      })
-
-      const _config = [...senderConfig]
-      state.forEach((item, index) => {
-        for (let i = 0; i < senderLength; i++) {
-          if (_config[i + index * senderLength]) _config[i + index * senderLength].state = item
+      let cg = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      let er = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      if (!isSol) {
+        cg = [1, 1, 1, 1, 1, 1, 1, 1, 1]
+        er = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      }
+      result.forEach(item => {
+        if (item) {
+          state = state.concat(cg)
+        } else {
+          state = state.concat(er)
         }
       })
-
+      console.log(state, 'state')
+      const _config = [...senderConfig]
+      _config.forEach((item, index) => {
+        item.state = state[index]
+      })
       setSenderConfig(_config)
       setIsSendEnd(true)
       setIsSending(false);
       api.success({ message: "执行完成" })
+      ///////
     } catch (error) {
       console.log(error, 'error')
       setIsSending(false);
@@ -560,7 +620,7 @@ GuWnPhdeCvffhmRzkd6qrfPbS2bDDe57SND2uWAtD4b,0.2`} />
             </div>
           </>
         }
-{/* 
+        {/* 
         <div className="my-2">
           {isSending && currentTx != null && totalTx != null ? (
             <div className="font-semibold text-xl mt-4 text-teal-500">
