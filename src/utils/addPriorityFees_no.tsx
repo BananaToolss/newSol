@@ -6,11 +6,30 @@ import {
 
 export const DEFAULT_COMMITMENT: Commitment = "finalized";
 
+export const priorityFees = {
+  unitLimit: 6000_000,
+  unitPrice: 500_000,
+  // unitLimit: 500_000,
+  // unitPrice: 100_000,
+}
+
 const addPriorityFees = (connection: Connection, tx: Transaction, payerKey: PublicKey) => {
   return new Promise(async (resolve: (value: VersionedTransaction) => void, reject) => {
     try {
       // const blockHash = (await connection.getLatestBlockhash(DEFAULT_COMMITMENT))
       //   .blockhash;
+      if (priorityFees) {
+        const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+          units: priorityFees.unitLimit,
+        });
+
+        const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: priorityFees.unitPrice,
+        });
+        tx.add(modifyComputeUnits);
+        tx.add(addPriorityFee);
+      }
+      
       const { blockhash } = await connection.getLatestBlockhash("processed");
       let messageV0 = new TransactionMessage({
         payerKey: payerKey,
