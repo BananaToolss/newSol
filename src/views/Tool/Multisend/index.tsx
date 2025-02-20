@@ -350,7 +350,7 @@ function Multisend() {
               const transfer = SystemProgram.transfer({
                 fromPubkey: wallet.publicKey,
                 toPubkey: new PublicKey(account.receiver),
-                lamports: Number(account.amount) * LAMPORTS_PER_SOL,
+                lamports: Number((Number(account.amount) * LAMPORTS_PER_SOL).toFixed(0))
               })
               tx.add(transfer)
             } else {
@@ -374,7 +374,7 @@ function Multisend() {
                   new PublicKey(token.address),
                   to,
                   wallet.publicKey,
-                  Number(account.amount) * 10 ** token.decimals,
+                  Number((Number(account.amount) * 10 ** token.decimals).toFixed(0)),
                   token.decimals
                 )
               );
