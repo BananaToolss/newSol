@@ -335,7 +335,7 @@ function Multisend() {
         for (const chunk of chunks) {
           const tx = new Transaction();
           const instruction1 = ComputeBudgetProgram.setComputeUnitLimit({
-            units: 600000,
+            units: 300000,
           });
           const instruction2 = ComputeBudgetProgram.setComputeUnitPrice({
             microLamports: 1_000_000,
