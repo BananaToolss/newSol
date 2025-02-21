@@ -7,7 +7,7 @@ import {
 export const DEFAULT_COMMITMENT: Commitment = "finalized";
 export const priorityFees = {
   unitLimit: 300000,
-  unitPrice: 1_000_000,
+  unitPrice: 500_000,
   // unitLimit: 500_000,
   // unitPrice: 100_000,
 }
